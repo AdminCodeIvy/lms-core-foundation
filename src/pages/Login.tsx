@@ -14,7 +14,7 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, user } = useAuth();
+  const { signIn, user, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -22,10 +22,11 @@ const Login = () => {
   const from = (location.state as any)?.from?.pathname || '/';
 
   useEffect(() => {
-    if (user) {
+    // Only redirect when user is authenticated AND profile is loaded
+    if (user && profile && !authLoading) {
       navigate(from, { replace: true });
     }
-  }, [user, navigate, from]);
+  }, [user, profile, authLoading, navigate, from]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
