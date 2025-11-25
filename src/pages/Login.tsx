@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { Building2 } from 'lucide-react';
+import { Building2, AlertTriangle } from 'lucide-react';
+import { isSupabaseConfigured } from '@/lib/supabase';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -68,6 +70,19 @@ const Login = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {!isSupabaseConfigured && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Configuration Required</AlertTitle>
+              <AlertDescription>
+                Supabase is not configured. Please create a <code className="text-xs">.env</code> file and add:{' '}
+                <code className="text-xs">VITE_SUPABASE_URL</code> and{' '}
+                <code className="text-xs">VITE_SUPABASE_ANON_KEY</code>.
+                <br />
+                <span className="text-xs mt-2 block">See SETUP-GUIDE.md for detailed instructions.</span>
+              </AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
