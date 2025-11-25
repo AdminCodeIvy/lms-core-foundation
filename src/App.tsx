@@ -12,6 +12,8 @@ import Dashboard from "./pages/Dashboard";
 import UserManagement from "./pages/admin/UserManagement";
 import UserForm from "./pages/admin/UserForm";
 import LookupManagement from "./pages/admin/LookupManagement";
+import CustomerList from "./pages/customers/CustomerList";
+import CustomerDetail from "./pages/customers/CustomerDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +38,24 @@ const App = () => (
               }
             >
               <Route index element={<Dashboard />} />
+              
+              {/* Customer Routes */}
+              <Route
+                path="customers"
+                element={
+                  <ProtectedRoute allowedRoles={['INPUTTER', 'APPROVER', 'VIEWER', 'ADMINISTRATOR']}>
+                    <CustomerList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="customers/:id"
+                element={
+                  <ProtectedRoute allowedRoles={['INPUTTER', 'APPROVER', 'VIEWER', 'ADMINISTRATOR']}>
+                    <CustomerDetail />
+                  </ProtectedRoute>
+                }
+              />
               
               {/* Admin Routes */}
               <Route
