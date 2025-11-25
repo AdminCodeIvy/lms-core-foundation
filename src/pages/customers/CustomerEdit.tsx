@@ -43,13 +43,20 @@ const CustomerEdit = () => {
 
       if (error) throw error;
       
-      // Extract the first element from arrays or use null if empty
-      const personData = Array.isArray(data.customer_person) && data.customer_person.length > 0 ? data.customer_person[0] : null;
-      const businessData = Array.isArray(data.customer_business) && data.customer_business.length > 0 ? data.customer_business[0] : null;
-      const governmentData = Array.isArray(data.customer_government) && data.customer_government.length > 0 ? data.customer_government[0] : null;
-      const mosqueHospitalData = Array.isArray(data.customer_mosque_hospital) && data.customer_mosque_hospital.length > 0 ? data.customer_mosque_hospital[0] : null;
-      const nonProfitData = Array.isArray(data.customer_non_profit) && data.customer_non_profit.length > 0 ? data.customer_non_profit[0] : null;
-      const contractorData = Array.isArray(data.customer_contractor) && data.customer_contractor.length > 0 ? data.customer_contractor[0] : null;
+      // Handle both array and object responses from Supabase
+      const extractData = (value: any) => {
+        if (!value) return null;
+        if (Array.isArray(value)) return value.length > 0 ? value[0] : null;
+        if (typeof value === 'object') return value;
+        return null;
+      };
+
+      const personData = extractData(data.customer_person);
+      const businessData = extractData(data.customer_business);
+      const governmentData = extractData(data.customer_government);
+      const mosqueHospitalData = extractData(data.customer_mosque_hospital);
+      const nonProfitData = extractData(data.customer_non_profit);
+      const contractorData = extractData(data.customer_contractor);
       
       setCustomer({ 
         ...data, 
