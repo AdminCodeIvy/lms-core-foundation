@@ -8,12 +8,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { Building2, AlertTriangle } from 'lucide-react';
-import { isSupabaseConfigured } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const { signIn, user, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -22,14 +23,15 @@ const Login = () => {
   const from = (location.state as any)?.from?.pathname || '/';
 
   useEffect(() => {
-    // Only redirect when user is authenticated AND profile is loaded
-    if (user && profile && !authLoading) {
+    // Auto-redirect authenticated users who directly visit the login page
+    if (!hasSubmitted && user && profile && !authLoading) {
       navigate(from, { replace: true });
     }
-  }, [user, profile, authLoading, navigate, from]);
+  }, [user, profile, authLoading, navigate, from, hasSubmitted]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setHasSubmitted(true);
     setLoading(true);
 
     try {
@@ -41,12 +43,51 @@ const Login = () => {
           title: 'Login Failed',
           description: error.message || 'Invalid email or password',
         });
-      } else {
-        toast({
-          title: 'Welcome back!',
-          description: 'You have successfully logged in.',
-        });
+        return;
       }
+
+      // Credentials are valid, now verify profile and role before redirecting
+      const { data: userResult, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !userResult?.user) {
+        toast({
+          variant: 'destructive',
+          title: 'Login Error',
+          description: 'Unable to retrieve your account details. Please try again.',
+        });
+        return;
+      }
+
+      const { data: profileResult, error: profileError } = await supabase
+        .from('users')
+        .select('id, role, is_active')
+        .eq('id', userResult.user.id)
+        .single();
+
+      if (profileError || !profileResult) {
+        toast({
+          variant: 'destructive',
+          title: 'Account Not Ready',
+          description: 'Your account is not fully configured. Please contact your administrator.',
+        });
+        return;
+      }
+
+      if (!profileResult.is_active) {
+        toast({
+          variant: 'destructive',
+          title: 'Account Deactivated',
+          description: 'Your account has been deactivated. Please contact your administrator.',
+        });
+        return;
+      }
+
+      toast({
+        title: 'Welcome back!',
+        description: 'You have successfully logged in.',
+      });
+
+      navigate(from, { replace: true });
     } catch (error: any) {
       toast({
         variant: 'destructive',
