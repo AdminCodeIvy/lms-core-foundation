@@ -39,7 +39,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 const CustomerDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const { toast } = useToast();
 
   const [customer, setCustomer] = useState<CustomerWithDetails | null>(null);
@@ -207,17 +207,26 @@ const CustomerDetail = () => {
         </div>
         <TooltipProvider>
           <div className="flex gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" disabled>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Coming in Phase 2B</p>
-              </TooltipContent>
-            </Tooltip>
+            {(profile?.role === 'INPUTTER' && customer.status === 'DRAFT' && customer.created_by === user?.id) ||
+             (profile?.role === 'APPROVER' && (customer.status === 'SUBMITTED' || customer.status === 'APPROVED' || customer.status === 'REJECTED')) ||
+             profile?.role === 'ADMINISTRATOR' ? (
+              <Button variant="outline" onClick={() => navigate(`/customers/${customer.id}/edit`)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" disabled>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>No permission to edit</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button disabled>

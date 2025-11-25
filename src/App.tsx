@@ -14,6 +14,8 @@ import UserForm from "./pages/admin/UserForm";
 import LookupManagement from "./pages/admin/LookupManagement";
 import CustomerList from "./pages/customers/CustomerList";
 import CustomerDetail from "./pages/customers/CustomerDetail";
+import CustomerNew from "./pages/customers/CustomerNew";
+import CustomerEdit from "./pages/customers/CustomerEdit";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,10 +51,26 @@ const App = () => (
                 }
               />
               <Route
+                path="customers/new"
+                element={
+                  <ProtectedRoute allowedRoles={['INPUTTER', 'ADMINISTRATOR']}>
+                    <CustomerNew />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="customers/:id"
                 element={
                   <ProtectedRoute allowedRoles={['INPUTTER', 'APPROVER', 'VIEWER', 'ADMINISTRATOR']}>
                     <CustomerDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="customers/:id/edit"
+                element={
+                  <ProtectedRoute allowedRoles={['INPUTTER', 'APPROVER', 'ADMINISTRATOR']}>
+                    <CustomerEdit />
                   </ProtectedRoute>
                 }
               />
