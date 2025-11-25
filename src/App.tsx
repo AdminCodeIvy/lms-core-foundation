@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
 import UserManagement from "./pages/admin/UserManagement";
+import UserForm from "./pages/admin/UserForm";
 import LookupManagement from "./pages/admin/LookupManagement";
 import NotFound from "./pages/NotFound";
 
@@ -42,6 +43,22 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={['ADMINISTRATOR']}>
                     <UserManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin/users/new"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMINISTRATOR']}>
+                    <UserForm />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin/users/edit"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMINISTRATOR']}>
+                    <UserForm />
                   </ProtectedRoute>
                 }
               />
