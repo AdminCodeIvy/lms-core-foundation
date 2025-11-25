@@ -219,7 +219,7 @@ const CustomerList = () => {
             </Button>
           )}
           {canCreate && (
-            <Button disabled>
+            <Button onClick={() => navigate('/customers/new')}>
               <Plus className="h-4 w-4 mr-2" />
               New Customer
             </Button>
