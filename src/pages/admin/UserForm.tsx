@@ -158,24 +158,15 @@ const UserForm = () => {
           options: {
             data: {
               full_name: formData.full_name,
+              role: formData.role,
             },
           },
         });
 
         if (authError) throw authError;
 
-        if (authData.user) {
-          const { error: profileError } = await supabase
-            .from('users')
-            .insert({
-              id: authData.user.id,
-              full_name: formData.full_name,
-              role: formData.role,
-              is_active: formData.is_active,
-            });
-
-          if (profileError) throw profileError;
-        }
+        // The database trigger will automatically create the user profile
+        // No need to manually insert into users table
 
         toast({
           title: 'Success',
