@@ -42,8 +42,26 @@ const CustomerEdit = () => {
         .single();
 
       if (error) throw error;
-      setCustomer({ ...data, person_data: data.customer_person?.[0], business_data: data.customer_business?.[0], government_data: data.customer_government?.[0], mosque_hospital_data: data.customer_mosque_hospital?.[0], non_profit_data: data.customer_non_profit?.[0], contractor_data: data.customer_contractor?.[0] });
+      
+      // Extract the first element from arrays or use null if empty
+      const personData = Array.isArray(data.customer_person) && data.customer_person.length > 0 ? data.customer_person[0] : null;
+      const businessData = Array.isArray(data.customer_business) && data.customer_business.length > 0 ? data.customer_business[0] : null;
+      const governmentData = Array.isArray(data.customer_government) && data.customer_government.length > 0 ? data.customer_government[0] : null;
+      const mosqueHospitalData = Array.isArray(data.customer_mosque_hospital) && data.customer_mosque_hospital.length > 0 ? data.customer_mosque_hospital[0] : null;
+      const nonProfitData = Array.isArray(data.customer_non_profit) && data.customer_non_profit.length > 0 ? data.customer_non_profit[0] : null;
+      const contractorData = Array.isArray(data.customer_contractor) && data.customer_contractor.length > 0 ? data.customer_contractor[0] : null;
+      
+      setCustomer({ 
+        ...data, 
+        person_data: personData,
+        business_data: businessData,
+        government_data: governmentData,
+        mosque_hospital_data: mosqueHospitalData,
+        non_profit_data: nonProfitData,
+        contractor_data: contractorData
+      });
     } catch (error: any) {
+      console.error('Error fetching customer:', error);
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to load customer' });
     } finally {
       setLoading(false);
@@ -74,6 +92,32 @@ const CustomerEdit = () => {
 
   if (loading) return <div className="space-y-6"><Skeleton className="h-8 w-64" /><Skeleton className="h-64 w-full" /></div>;
   if (!customer) return <div>Customer not found</div>;
+
+  // Check if customer has no type-specific data
+  const hasNoData = !customer.person_data && !customer.business_data && !customer.government_data && 
+                     !customer.mosque_hospital_data && !customer.non_profit_data && !customer.contractor_data;
+  
+  if (hasNoData) {
+    return (
+      <div className="space-y-6">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem><BreadcrumbLink asChild><Link to="/">Home</Link></BreadcrumbLink></BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem><BreadcrumbLink asChild><Link to="/customers">Customers</Link></BreadcrumbLink></BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem><BreadcrumbLink asChild><Link to={`/customers/${id}`}>{customer.reference_id}</Link></BreadcrumbLink></BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem><BreadcrumbPage>Edit</BreadcrumbPage></BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6">
+          <h2 className="text-xl font-semibold text-destructive mb-2">Cannot Edit Customer</h2>
+          <p className="text-muted-foreground">This customer ({customer.reference_id}) has no detailed information. It may have been created before Phase 2B was implemented. Please create a new customer instead.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
