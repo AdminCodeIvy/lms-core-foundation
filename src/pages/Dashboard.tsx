@@ -1,0 +1,126 @@
+import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { FileText, Clock, CheckCircle, XCircle, Users, Building, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
+const Dashboard = () => {
+  const { profile } = useAuth();
+  const navigate = useNavigate();
+
+  const stats = [
+    {
+      title: 'Drafts Pending Submission',
+      value: '0',
+      icon: FileText,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+    },
+    {
+      title: 'Waiting Approval',
+      value: '0',
+      icon: Clock,
+      color: 'text-yellow-600',
+      bgColor: 'bg-yellow-50',
+    },
+    {
+      title: 'Approved & Published',
+      value: '0',
+      icon: CheckCircle,
+      color: 'text-success',
+      bgColor: 'bg-success/10',
+    },
+    {
+      title: 'Rejections Needing Fixes',
+      value: '0',
+      icon: XCircle,
+      color: 'text-destructive',
+      bgColor: 'bg-destructive/10',
+    },
+  ];
+
+  const getQuickActions = () => {
+    switch (profile?.role) {
+      case 'INPUTTER':
+        return [
+          { label: 'New Customer', icon: Users, disabled: true },
+          { label: 'New Property', icon: Building, disabled: true },
+        ];
+      case 'APPROVER':
+        return [{ label: 'Review Queue', icon: CheckCircle, disabled: true }];
+      case 'ADMINISTRATOR':
+        return [
+          { label: 'Manage Users', icon: Users, action: () => navigate('/admin/users') },
+          { label: 'Manage Lookups', icon: Settings, action: () => navigate('/admin/lookups') },
+        ];
+      default:
+        return [];
+    }
+  };
+
+  const quickActions = getQuickActions();
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">Welcome, {profile?.full_name}</h1>
+        <p className="text-muted-foreground mt-1">
+          Role: <span className="font-medium text-foreground">{profile?.role}</span>
+        </p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat) => (
+          <Card key={stat.title}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+              <div className={`rounded-full p-2 ${stat.bgColor}`}>
+                <stat.icon className={`h-4 w-4 ${stat.color}`} />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stat.value}</div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {quickActions.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-3">
+            {quickActions.map((action) => (
+              <Button
+                key={action.label}
+                variant="outline"
+                className="gap-2"
+                disabled={action.disabled}
+                onClick={action.action}
+              >
+                <action.icon className="h-4 w-4" />
+                {action.label}
+                {action.disabled && ' (Coming Soon)'}
+              </Button>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      <Card className="border-info/20 bg-info/5">
+        <CardHeader>
+          <CardTitle className="text-info">System Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            This is Phase 1 of the Land Management System. Customer, Property, and Tax management
+            features will be available in upcoming phases.
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default Dashboard;
