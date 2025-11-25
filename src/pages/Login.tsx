@@ -10,15 +10,99 @@ import { useToast } from '@/hooks/use-toast';
 import { Building2, AlertTriangle } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 30 * 60 * 1000; // 30 minutes
+
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [isLockedOut, setIsLockedOut] = useState(false);
+  const [lockoutTimeRemaining, setLockoutTimeRemaining] = useState(0);
   const { signIn, user, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+
+  // Check for account lockout on mount and when email changes
+  useEffect(() => {
+    if (email) {
+      checkLockoutStatus();
+    }
+  }, [email]);
+
+  // Update lockout timer
+  useEffect(() => {
+    if (isLockedOut && lockoutTimeRemaining > 0) {
+      const timer = setInterval(() => {
+        setLockoutTimeRemaining((prev) => {
+          if (prev <= 1000) {
+            setIsLockedOut(false);
+            return 0;
+          }
+          return prev - 1000;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [isLockedOut, lockoutTimeRemaining]);
+
+  const checkLockoutStatus = () => {
+    const lockoutData = localStorage.getItem(`lockout_${email}`);
+    if (lockoutData) {
+      const { timestamp, attempts } = JSON.parse(lockoutData);
+      const timeSinceLockout = Date.now() - timestamp;
+      
+      if (attempts >= MAX_FAILED_ATTEMPTS && timeSinceLockout < LOCKOUT_DURATION_MS) {
+        setIsLockedOut(true);
+        setLockoutTimeRemaining(LOCKOUT_DURATION_MS - timeSinceLockout);
+      } else if (timeSinceLockout >= LOCKOUT_DURATION_MS) {
+        // Clear lockout if duration has passed
+        localStorage.removeItem(`lockout_${email}`);
+        setIsLockedOut(false);
+      }
+    }
+  };
+
+  const recordFailedAttempt = (email: string) => {
+    const lockoutData = localStorage.getItem(`lockout_${email}`);
+    let attempts = 1;
+    let timestamp = Date.now();
+
+    if (lockoutData) {
+      const data = JSON.parse(lockoutData);
+      const timeSinceLastAttempt = Date.now() - data.timestamp;
+      
+      // Reset attempts if more than lockout duration has passed
+      if (timeSinceLastAttempt >= LOCKOUT_DURATION_MS) {
+        attempts = 1;
+      } else {
+        attempts = data.attempts + 1;
+      }
+    }
+
+    localStorage.setItem(`lockout_${email}`, JSON.stringify({ attempts, timestamp }));
+
+    if (attempts >= MAX_FAILED_ATTEMPTS) {
+      setIsLockedOut(true);
+      setLockoutTimeRemaining(LOCKOUT_DURATION_MS);
+    }
+
+    return attempts;
+  };
+
+  const clearFailedAttempts = (email: string) => {
+    localStorage.removeItem(`lockout_${email}`);
+    setIsLockedOut(false);
+    setLockoutTimeRemaining(0);
+  };
+
+  const formatTimeRemaining = (ms: number) => {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
 
   const from = (location.state as any)?.from?.pathname || '/';
 
@@ -31,6 +115,17 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Check if account is locked out
+    if (isLockedOut) {
+      toast({
+        variant: 'destructive',
+        title: 'Account Locked',
+        description: `Too many failed attempts. Please try again in ${formatTimeRemaining(lockoutTimeRemaining)}.`,
+      });
+      return;
+    }
+
     setHasSubmitted(true);
     setLoading(true);
 
@@ -38,11 +133,22 @@ const Login = () => {
       const { error } = await signIn(email, password);
 
       if (error) {
-        toast({
-          variant: 'destructive',
-          title: 'Login Failed',
-          description: error.message || 'Invalid email or password',
-        });
+        const attempts = recordFailedAttempt(email);
+        const remainingAttempts = MAX_FAILED_ATTEMPTS - attempts;
+
+        if (remainingAttempts > 0) {
+          toast({
+            variant: 'destructive',
+            title: 'Login Failed',
+            description: `Invalid email or password. ${remainingAttempts} attempt(s) remaining before account lockout.`,
+          });
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'Account Locked',
+            description: 'Too many failed login attempts. Your account is locked for 30 minutes.',
+          });
+        }
         return;
       }
 
@@ -81,6 +187,9 @@ const Login = () => {
         });
         return;
       }
+
+      // Clear failed attempts on successful login
+      clearFailedAttempts(email);
 
       toast({
         title: 'Welcome back!',
@@ -158,9 +267,14 @@ const Login = () => {
                 disabled={loading}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign In'}
+            <Button type="submit" className="w-full" disabled={loading || isLockedOut}>
+              {loading ? 'Signing in...' : isLockedOut ? `Locked (${formatTimeRemaining(lockoutTimeRemaining)})` : 'Sign In'}
             </Button>
+            {isLockedOut && (
+              <p className="text-sm text-center text-destructive mt-2">
+                Account locked due to too many failed attempts. Try again in {formatTimeRemaining(lockoutTimeRemaining)}.
+              </p>
+            )}
           </form>
         </CardContent>
       </Card>
