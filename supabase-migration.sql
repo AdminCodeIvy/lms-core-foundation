@@ -89,12 +89,22 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = public
 AS $$
+DECLARE
+  user_role_value user_role;
 BEGIN
+  -- Safely cast the role from metadata
+  BEGIN
+    user_role_value := (NEW.raw_user_meta_data->>'role')::user_role;
+  EXCEPTION
+    WHEN invalid_text_representation THEN
+      user_role_value := 'VIEWER'::user_role;
+  END;
+  
   INSERT INTO public.users (id, full_name, role, is_active)
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'full_name', 'New User'),
-    COALESCE((NEW.raw_user_meta_data->>'role')::user_role, 'VIEWER'::user_role),
+    COALESCE(user_role_value, 'VIEWER'::user_role),
     true
   );
   RETURN NEW;
