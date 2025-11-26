@@ -185,8 +185,11 @@ CREATE INDEX IF NOT EXISTS idx_tax_payments_receipt ON public.tax_payments(recei
 -- 5. CREATE FUNCTIONS
 -- =====================================================
 
--- Function to generate reference ID for tax assessments
-CREATE OR REPLACE FUNCTION generate_tax_reference_id()
+-- Create sequence for tax reference IDs
+CREATE SEQUENCE IF NOT EXISTS tax_reference_seq START 1;
+
+-- Function to generate reference ID string
+CREATE OR REPLACE FUNCTION generate_tax_reference_id_string()
 RETURNS TEXT
 LANGUAGE plpgsql
 AS $$
@@ -199,8 +202,18 @@ BEGIN
 END;
 $$;
 
--- Create sequence for tax reference IDs
-CREATE SEQUENCE IF NOT EXISTS tax_reference_seq START 1;
+-- Trigger function to auto-generate reference ID
+CREATE OR REPLACE FUNCTION generate_tax_reference_id()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NEW.reference_id IS NULL OR NEW.reference_id = '' THEN
+    NEW.reference_id := generate_tax_reference_id_string();
+  END IF;
+  RETURN NEW;
+END;
+$$;
 
 -- Function to generate receipt number
 CREATE OR REPLACE FUNCTION generate_receipt_number()
@@ -275,10 +288,9 @@ $$;
 -- =====================================================
 
 -- Trigger to auto-generate reference ID
-CREATE TRIGGER tax_reference_id_trigger
+CREATE OR REPLACE TRIGGER tax_reference_id_trigger
 BEFORE INSERT ON public.tax_assessments
 FOR EACH ROW
-WHEN (NEW.reference_id IS NULL OR NEW.reference_id = '')
 EXECUTE FUNCTION generate_tax_reference_id();
 
 -- Trigger to calculate tax status
