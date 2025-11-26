@@ -35,6 +35,8 @@ import {
 import { format } from 'date-fns';
 import type { CustomerWithDetails, CustomerStatus } from '@/types/customer';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { SubmitConfirmationDialog } from '@/components/workflow/SubmitConfirmationDialog';
+import { RejectionBanner } from '@/components/workflow/RejectionBanner';
 
 const CustomerDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -45,6 +47,8 @@ const CustomerDetail = () => {
   const [customer, setCustomer] = useState<CustomerWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -108,6 +112,37 @@ const CustomerDetail = () => {
       title: 'Copied',
       description: 'Reference ID copied to clipboard',
     });
+  };
+
+  const handleSubmit = async () => {
+    if (!customer) return;
+
+    try {
+      setSubmitting(true);
+
+      const { error } = await supabase.functions.invoke('submit-customer', {
+        body: { customer_id: customer.id }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Customer submitted for approval',
+      });
+
+      setSubmitDialogOpen(false);
+      fetchCustomer();
+    } catch (err: any) {
+      console.error('Error submitting customer:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: err.message || 'Failed to submit customer',
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const getStatusBadgeVariant = (status: CustomerStatus) => {
@@ -186,6 +221,16 @@ const CustomerDetail = () => {
         </BreadcrumbList>
       </Breadcrumb>
 
+      {/* Rejection Banner */}
+      {customer.status === 'REJECTED' && customer.rejection_feedback && (
+        <RejectionBanner
+          approverName={customer.approved_by_user?.full_name}
+          rejectedDate={customer.updated_at}
+          feedback={customer.rejection_feedback}
+          onEditClick={() => navigate(`/customers/${customer.id}/edit`)}
+        />
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="space-y-2">
@@ -227,17 +272,13 @@ const CustomerDetail = () => {
                 </TooltipContent>
               </Tooltip>
             )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button disabled>
-                  <Send className="h-4 w-4 mr-2" />
-                  Submit
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Coming in Phase 2C</p>
-              </TooltipContent>
-            </Tooltip>
+            {(customer.status === 'DRAFT' && (customer.created_by === user?.id || profile?.role === 'ADMINISTRATOR')) ||
+             (customer.status === 'REJECTED' && (customer.created_by === user?.id || profile?.role === 'ADMINISTRATOR')) ? (
+              <Button onClick={() => setSubmitDialogOpen(true)}>
+                <Send className="h-4 w-4 mr-2" />
+                {customer.status === 'REJECTED' ? 'Resubmit' : 'Submit'}
+              </Button>
+            ) : null}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="destructive" disabled>
@@ -496,6 +537,13 @@ const CustomerDetail = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <SubmitConfirmationDialog
+        open={submitDialogOpen}
+        onOpenChange={setSubmitDialogOpen}
+        onConfirm={handleSubmit}
+        loading={submitting}
+      />
     </div>
   );
 };

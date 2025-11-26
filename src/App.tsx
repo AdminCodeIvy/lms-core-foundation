@@ -16,6 +16,7 @@ import CustomerList from "./pages/customers/CustomerList";
 import CustomerDetail from "./pages/customers/CustomerDetail";
 import CustomerNew from "./pages/customers/CustomerNew";
 import CustomerEdit from "./pages/customers/CustomerEdit";
+import { ReviewQueue } from "./pages/workflow/ReviewQueue";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -71,6 +72,16 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={['INPUTTER', 'APPROVER', 'ADMINISTRATOR']}>
                     <CustomerEdit />
+                  </ProtectedRoute>
+                }
+              />
+              
+              {/* Workflow Routes */}
+              <Route
+                path="review-queue"
+                element={
+                  <ProtectedRoute allowedRoles={['APPROVER', 'ADMINISTRATOR']}>
+                    <ReviewQueue />
                   </ProtectedRoute>
                 }
               />

@@ -17,6 +17,8 @@ export interface Customer {
   status: CustomerStatus;
   created_by: string;
   approved_by: string | null;
+  submitted_at: string | null;
+  rejection_feedback: string | null;
   created_at: string;
   updated_at: string;
 }
