@@ -33,9 +33,9 @@ export default function TaxList() {
   const [assessments, setAssessments] = useState<TaxAssessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [taxYear, setTaxYear] = useState('');
-  const [status, setStatus] = useState('');
-  const [districtId, setDistrictId] = useState('');
+  const [taxYear, setTaxYear] = useState('all');
+  const [status, setStatus] = useState('all');
+  const [districtId, setDistrictId] = useState('all');
   const [arrearsOnly, setArrearsOnly] = useState(false);
   const [districts, setDistricts] = useState<any[]>([]);
   const [pagination, setPagination] = useState({
@@ -77,9 +77,9 @@ export default function TaxList() {
       });
       
       if (search) params.append('search', search);
-      if (taxYear) params.append('tax_year', taxYear);
-      if (status) params.append('status', status);
-      if (districtId) params.append('district_id', districtId);
+      if (taxYear && taxYear !== 'all') params.append('tax_year', taxYear);
+      if (status && status !== 'all') params.append('status', status);
+      if (districtId && districtId !== 'all') params.append('district_id', districtId);
       if (arrearsOnly) params.append('arrears_only', 'true');
 
       const { data, error } = await supabase.functions.invoke('get-tax-assessments', {
@@ -170,7 +170,7 @@ export default function TaxList() {
                 <SelectValue placeholder="Tax Year" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Years</SelectItem>
+                <SelectItem value="all">All Years</SelectItem>
                 {yearOptions.map(year => (
                   <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
                 ))}
@@ -182,7 +182,7 @@ export default function TaxList() {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Statuses</SelectItem>
+                <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="NOT_ASSESSED">Not Assessed</SelectItem>
                 <SelectItem value="ASSESSED">Assessed</SelectItem>
                 <SelectItem value="PAID">Paid</SelectItem>
@@ -196,7 +196,7 @@ export default function TaxList() {
                 <SelectValue placeholder="District" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Districts</SelectItem>
+                <SelectItem value="all">All Districts</SelectItem>
                 {districts.map(district => (
                   <SelectItem key={district.id} value={district.id}>
                     {district.name}
