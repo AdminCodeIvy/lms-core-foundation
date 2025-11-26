@@ -21,6 +21,19 @@ CREATE TABLE IF NOT EXISTS public.notifications (
     CONSTRAINT notifications_entity_type_check CHECK (entity_type IN ('CUSTOMER', 'USER'))
 );
 
+-- Add read_at column if it doesn't exist (for partial migration recovery)
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'notifications' 
+        AND column_name = 'read_at'
+    ) THEN
+        ALTER TABLE public.notifications ADD COLUMN read_at TIMESTAMPTZ;
+    END IF;
+END $$;
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON public.notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON public.notifications(is_read);
