@@ -283,6 +283,17 @@ BEGIN
 END;
 $$;
 
+-- Function to auto-update updated_at timestamp
+CREATE OR REPLACE FUNCTION update_updated_at()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$;
+
 -- =====================================================
 -- 6. CREATE TRIGGERS
 -- =====================================================
