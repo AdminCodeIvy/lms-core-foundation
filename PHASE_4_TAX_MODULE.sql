@@ -132,6 +132,22 @@ CREATE TABLE IF NOT EXISTS public.tax_assessments (
   CONSTRAINT valid_dates CHECK (due_date > assessment_date)
 );
 
+-- Ensure reference_id column exists for existing tables
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'reference_id'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN reference_id TEXT;
+  END IF;
+END $$;
+
+-- Create unique index for reference_id if not exists
+CREATE UNIQUE INDEX IF NOT EXISTS idx_tax_assessments_reference_id ON public.tax_assessments(reference_id);
+
 -- Tax Payments Table
 CREATE TABLE IF NOT EXISTS public.tax_payments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -157,13 +173,13 @@ CREATE TABLE IF NOT EXISTS public.tax_payments (
 -- 4. CREATE INDEXES
 -- =====================================================
 
-CREATE INDEX idx_tax_assessments_property ON public.tax_assessments(property_id);
-CREATE INDEX idx_tax_assessments_year ON public.tax_assessments(tax_year);
-CREATE INDEX idx_tax_assessments_status ON public.tax_assessments(status);
-CREATE INDEX idx_tax_assessments_due_date ON public.tax_assessments(due_date);
-CREATE INDEX idx_tax_payments_assessment ON public.tax_payments(assessment_id);
-CREATE INDEX idx_tax_payments_date ON public.tax_payments(payment_date);
-CREATE INDEX idx_tax_payments_receipt ON public.tax_payments(receipt_number);
+CREATE INDEX IF NOT EXISTS idx_tax_assessments_property ON public.tax_assessments(property_id);
+CREATE INDEX IF NOT EXISTS idx_tax_assessments_year ON public.tax_assessments(tax_year);
+CREATE INDEX IF NOT EXISTS idx_tax_assessments_status ON public.tax_assessments(status);
+CREATE INDEX IF NOT EXISTS idx_tax_assessments_due_date ON public.tax_assessments(due_date);
+CREATE INDEX IF NOT EXISTS idx_tax_payments_assessment ON public.tax_payments(assessment_id);
+CREATE INDEX IF NOT EXISTS idx_tax_payments_date ON public.tax_payments(payment_date);
+CREATE INDEX IF NOT EXISTS idx_tax_payments_receipt ON public.tax_payments(receipt_number);
 
 -- =====================================================
 -- 5. CREATE FUNCTIONS
