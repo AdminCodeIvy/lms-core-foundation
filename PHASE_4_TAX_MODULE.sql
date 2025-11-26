@@ -9,37 +9,53 @@
 -- =====================================================
 
 -- Tax status enum
-CREATE TYPE tax_status AS ENUM (
-  'NOT_ASSESSED',
-  'ASSESSED',
-  'PAID',
-  'PARTIAL',
-  'OVERDUE'
-);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'tax_status') THEN
+    CREATE TYPE tax_status AS ENUM (
+      'NOT_ASSESSED',
+      'ASSESSED',
+      'PAID',
+      'PARTIAL',
+      'OVERDUE'
+    );
+  END IF;
+END $$;
 
 -- Occupancy type enum
-CREATE TYPE occupancy_type AS ENUM (
-  'OWNER_OCCUPIED',
-  'RENTED',
-  'VACANT',
-  'MIXED_USE'
-);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'occupancy_type') THEN
+    CREATE TYPE occupancy_type AS ENUM (
+      'OWNER_OCCUPIED',
+      'RENTED',
+      'VACANT',
+      'MIXED_USE'
+    );
+  END IF;
+END $$;
 
 -- Construction status enum
-CREATE TYPE construction_status AS ENUM (
-  'COMPLETED',
-  'UNDER_CONSTRUCTION',
-  'PLANNED'
-);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'construction_status') THEN
+    CREATE TYPE construction_status AS ENUM (
+      'COMPLETED',
+      'UNDER_CONSTRUCTION',
+      'PLANNED'
+    );
+  END IF;
+END $$;
 
 -- Payment method enum
-CREATE TYPE payment_method AS ENUM (
-  'CASH',
-  'BANK_TRANSFER',
-  'CHECK',
-  'MOBILE_MONEY',
-  'CREDIT_CARD'
-);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_method') THEN
+    CREATE TYPE payment_method AS ENUM (
+      'CASH',
+      'BANK_TRANSFER',
+      'CHECK',
+      'MOBILE_MONEY',
+      'CREDIT_CARD'
+    );
+  END IF;
+END $$;
 
 -- =====================================================
 -- 2. CREATE SEQUENCES
