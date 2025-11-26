@@ -29,19 +29,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    const url = new URL(req.url);
-    const customerId = url.searchParams.get('customer_id');
-    const page = parseInt(url.searchParams.get('page') || '1');
-    const limit = parseInt(url.searchParams.get('limit') || '20');
+    const { customer_id, page = 1, limit = 20 } = await req.json();
 
-    if (!customerId) {
+    if (!customer_id) {
       return new Response(
         JSON.stringify({ error: 'customer_id is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Fetching activity logs for customer:', customerId);
+    console.log('Fetching activity logs for customer:', customer_id);
 
     // Get activity logs with user information
     const { data: logs, error: logsError, count } = await supabase
@@ -51,7 +48,7 @@ Deno.serve(async (req) => {
         performed_by_user:users!activity_logs_performed_by_fkey(full_name)
       `, { count: 'exact' })
       .eq('entity_type', 'CUSTOMER')
-      .eq('entity_id', customerId)
+      .eq('entity_id', customer_id)
       .order('created_at', { ascending: false })
       .range((page - 1) * limit, page * limit - 1);
 

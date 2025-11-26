@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { FileText, Clock, CheckCircle, XCircle, Users, Building, Settings } from 'lucide-react';
 
 const Dashboard = () => {
   const { profile } = useAuth();
@@ -71,11 +74,11 @@ const Dashboard = () => {
     switch (profile?.role) {
       case 'INPUTTER':
         return [
-          { label: 'New Customer', icon: Users, disabled: true },
+          { label: 'New Customer', icon: Users, action: () => navigate('/customers/new') },
           { label: 'New Property', icon: Building, disabled: true },
         ];
       case 'APPROVER':
-        return [{ label: 'Review Queue', icon: CheckCircle, disabled: true }];
+        return [{ label: 'Review Queue', icon: CheckCircle, action: () => navigate('/review-queue') }];
       case 'ADMINISTRATOR':
         return [
           { label: 'Manage Users', icon: Users, action: () => navigate('/admin/users') },
@@ -98,8 +101,12 @@ const Dashboard = () => {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.title}>
+        {statsCards.map((stat) => (
+          <Card 
+            key={stat.title} 
+            className="cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={stat.onClick}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
               <div className={`rounded-full p-2 ${stat.bgColor}`}>

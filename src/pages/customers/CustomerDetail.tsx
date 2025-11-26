@@ -37,6 +37,7 @@ import type { CustomerWithDetails, CustomerStatus } from '@/types/customer';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SubmitConfirmationDialog } from '@/components/workflow/SubmitConfirmationDialog';
 import { RejectionBanner } from '@/components/workflow/RejectionBanner';
+import { ActivityLogTab } from '@/components/activity/ActivityLogTab';
 
 const CustomerDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -309,16 +310,9 @@ const CustomerDetail = () => {
                 <p>Coming in Phase 3</p>
               </TooltipContent>
             </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <TabsTrigger value="activity" disabled>
-                  Activity
-                </TabsTrigger>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Coming in Phase 2D</p>
-              </TooltipContent>
-            </Tooltip>
+            <TabsTrigger value="activity">
+              Activity
+            </TabsTrigger>
           </TooltipProvider>
         </TabsList>
 
@@ -535,6 +529,10 @@ const CustomerDetail = () => {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="activity" className="mt-6">
+          <ActivityLogTab customerId={customer.id} />
         </TabsContent>
       </Tabs>
 
