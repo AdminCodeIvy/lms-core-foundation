@@ -28,8 +28,8 @@ export default function PropertyList() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [districts, setDistricts] = useState<any[]>([]);
   const [search, setSearch] = useState(searchParams.get('search') || '');
-  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || '');
-  const [districtFilter, setDistrictFilter] = useState(searchParams.get('district') || '');
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'all');
+  const [districtFilter, setDistrictFilter] = useState(searchParams.get('district') || 'all');
   const [showArchived, setShowArchived] = useState(false);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -60,8 +60,8 @@ export default function PropertyList() {
         page: pagination.page.toString(),
         limit: pagination.limit.toString(),
         ...(search && { search }),
-        ...(statusFilter && { status: statusFilter }),
-        ...(districtFilter && { district_id: districtFilter }),
+        ...(statusFilter && statusFilter !== 'all' && { status: statusFilter }),
+        ...(districtFilter && districtFilter !== 'all' && { district_id: districtFilter }),
         ...(showArchived && { show_archived: 'true' })
       });
 
@@ -131,7 +131,7 @@ export default function PropertyList() {
                 <SelectValue placeholder="All Districts" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Districts</SelectItem>
+                <SelectItem value="all">All Districts</SelectItem>
                 {districts.map(district => (
                   <SelectItem key={district.id} value={district.id}>
                     {district.name}
@@ -145,7 +145,7 @@ export default function PropertyList() {
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
+                <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="DRAFT">Draft</SelectItem>
                 <SelectItem value="SUBMITTED">Submitted</SelectItem>
                 <SelectItem value="APPROVED">Approved</SelectItem>
