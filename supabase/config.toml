@@ -99,3 +99,18 @@ verify_jwt = true
 
 [functions.archive-property]
 verify_jwt = true
+
+[functions.get-tax-assessments]
+verify_jwt = true
+
+[functions.get-tax-detail]
+verify_jwt = true
+
+[functions.create-tax-assessment]
+verify_jwt = true
+
+[functions.create-tax-payment]
+verify_jwt = true
+
+[functions.get-tax-stats]
+verify_jwt = true

@@ -20,6 +20,10 @@ import PropertyList from "./pages/properties/PropertyList";
 import PropertyDetail from "./pages/properties/PropertyDetail";
 import PropertyNew from "./pages/properties/PropertyNew";
 import PropertyEdit from "./pages/properties/PropertyEdit";
+import TaxList from "./pages/tax/TaxList";
+import TaxDetail from "./pages/tax/TaxDetail";
+import TaxNew from "./pages/tax/TaxNew";
+import TaxPaymentNew from "./pages/tax/TaxPaymentNew";
 import { ReviewQueue } from "./pages/workflow/ReviewQueue";
 import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
@@ -111,6 +115,40 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={['INPUTTER', 'APPROVER', 'ADMINISTRATOR']}>
                     <PropertyEdit />
+                  </ProtectedRoute>
+                }
+              />
+              
+              {/* Tax Routes */}
+              <Route
+                path="tax"
+                element={
+                  <ProtectedRoute allowedRoles={['INPUTTER', 'APPROVER', 'VIEWER', 'ADMINISTRATOR']}>
+                    <TaxList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="tax/new"
+                element={
+                  <ProtectedRoute allowedRoles={['INPUTTER', 'APPROVER', 'ADMINISTRATOR']}>
+                    <TaxNew />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="tax/:id"
+                element={
+                  <ProtectedRoute allowedRoles={['INPUTTER', 'APPROVER', 'VIEWER', 'ADMINISTRATOR']}>
+                    <TaxDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="tax/:assessmentId/payment/new"
+                element={
+                  <ProtectedRoute allowedRoles={['INPUTTER', 'APPROVER', 'ADMINISTRATOR']}>
+                    <TaxPaymentNew />
                   </ProtectedRoute>
                 }
               />
