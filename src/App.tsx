@@ -25,6 +25,9 @@ import TaxDetail from "./pages/tax/TaxDetail";
 import TaxNew from "./pages/tax/TaxNew";
 import TaxPaymentNew from "./pages/tax/TaxPaymentNew";
 import { ReviewQueue } from "./pages/workflow/ReviewQueue";
+import BulkUpload from "./pages/BulkUpload";
+import MapView from "./pages/MapView";
+import AgoSettings from "./pages/admin/AgoSettings";
 import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
 
@@ -173,39 +176,16 @@ const App = () => (
                 }
               />
               
+              {/* Bulk Upload & Map Routes */}
+              <Route path="bulk-upload" element={<ProtectedRoute allowedRoles={['INPUTTER', 'ADMINISTRATOR']}><BulkUpload /></ProtectedRoute>} />
+              <Route path="map" element={<ProtectedRoute><MapView /></ProtectedRoute>} />
+              
               {/* Admin Routes */}
-              <Route
-                path="admin/users"
-                element={
-                  <ProtectedRoute allowedRoles={['ADMINISTRATOR']}>
-                    <UserManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="admin/users/new"
-                element={
-                  <ProtectedRoute allowedRoles={['ADMINISTRATOR']}>
-                    <UserForm />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="admin/users/edit"
-                element={
-                  <ProtectedRoute allowedRoles={['ADMINISTRATOR']}>
-                    <UserForm />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="admin/lookups"
-                element={
-                  <ProtectedRoute allowedRoles={['ADMINISTRATOR']}>
-                    <LookupManagement />
-                  </ProtectedRoute>
-                }
-              />
+              <Route path="admin/users" element={<ProtectedRoute allowedRoles={['ADMINISTRATOR']}><UserManagement /></ProtectedRoute>} />
+              <Route path="admin/users/new" element={<ProtectedRoute allowedRoles={['ADMINISTRATOR']}><UserForm /></ProtectedRoute>} />
+              <Route path="admin/users/edit" element={<ProtectedRoute allowedRoles={['ADMINISTRATOR']}><UserForm /></ProtectedRoute>} />
+              <Route path="admin/lookups" element={<ProtectedRoute allowedRoles={['ADMINISTRATOR']}><LookupManagement /></ProtectedRoute>} />
+              <Route path="admin/ago-settings" element={<ProtectedRoute allowedRoles={['ADMINISTRATOR']}><AgoSettings /></ProtectedRoute>} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
