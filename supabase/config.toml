@@ -81,3 +81,21 @@ verify_jwt = true
 
 [functions.get-dashboard-stats]
 verify_jwt = true
+
+[functions.get-properties]
+verify_jwt = true
+
+[functions.get-property-detail]
+verify_jwt = true
+
+[functions.submit-property]
+verify_jwt = true
+
+[functions.approve-property]
+verify_jwt = true
+
+[functions.reject-property]
+verify_jwt = true
+
+[functions.archive-property]
+verify_jwt = true

@@ -16,6 +16,8 @@ import CustomerList from "./pages/customers/CustomerList";
 import CustomerDetail from "./pages/customers/CustomerDetail";
 import CustomerNew from "./pages/customers/CustomerNew";
 import CustomerEdit from "./pages/customers/CustomerEdit";
+import PropertyList from "./pages/properties/PropertyList";
+import PropertyDetail from "./pages/properties/PropertyDetail";
 import { ReviewQueue } from "./pages/workflow/ReviewQueue";
 import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
@@ -73,6 +75,24 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={['INPUTTER', 'APPROVER', 'ADMINISTRATOR']}>
                     <CustomerEdit />
+                  </ProtectedRoute>
+                }
+              />
+              
+              {/* Property Routes */}
+              <Route
+                path="properties"
+                element={
+                  <ProtectedRoute allowedRoles={['INPUTTER', 'APPROVER', 'VIEWER', 'ADMINISTRATOR']}>
+                    <PropertyList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="properties/:id"
+                element={
+                  <ProtectedRoute allowedRoles={['INPUTTER', 'APPROVER', 'VIEWER', 'ADMINISTRATOR']}>
+                    <PropertyDetail />
                   </ProtectedRoute>
                 }
               />
