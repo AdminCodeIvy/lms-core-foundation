@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
     // Validate user is creator or administrator
     const { data: userProfile } = await supabase
       .from('users')
-      .select('role')
+      .select('role, full_name')
       .eq('id', user.id)
       .single();
 
@@ -105,12 +105,41 @@ Deno.serve(async (req) => {
         performed_by: user.id,
         metadata: {
           reference_id: customer.reference_id,
-          customer_type: customer.customer_type
+          customer_type: customer.customer_type,
+          submitted_at: new Date().toISOString()
         }
       });
 
     if (logError) {
       console.error('Error creating activity log:', logError);
+    }
+
+    // Get all approvers to notify
+    const { data: approvers } = await supabase
+      .from('users')
+      .select('id')
+      .in('role', ['APPROVER', 'ADMINISTRATOR'])
+      .eq('is_active', true);
+
+    // Create notifications for all approvers
+    if (approvers && approvers.length > 0) {
+      const notifications = approvers.map(approver => ({
+        user_id: approver.id,
+        title: 'New Customer Submitted',
+        message: `Customer ${customer.reference_id} submitted by ${userProfile?.full_name || 'Unknown User'}`,
+        entity_type: 'CUSTOMER',
+        entity_id: customer_id
+      }));
+
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert(notifications);
+
+      if (notificationError) {
+        console.error('Error creating notifications:', notificationError);
+      } else {
+        console.log('Notifications created for', approvers.length, 'approvers');
+      }
     }
 
     console.log('Customer submitted successfully:', customer_id);

@@ -17,6 +17,7 @@ import CustomerDetail from "./pages/customers/CustomerDetail";
 import CustomerNew from "./pages/customers/CustomerNew";
 import CustomerEdit from "./pages/customers/CustomerEdit";
 import { ReviewQueue } from "./pages/workflow/ReviewQueue";
+import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -82,6 +83,16 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={['APPROVER', 'ADMINISTRATOR']}>
                     <ReviewQueue />
+                  </ProtectedRoute>
+                }
+              />
+              
+              {/* Notifications Route */}
+              <Route
+                path="notifications"
+                element={
+                  <ProtectedRoute>
+                    <Notifications />
                   </ProtectedRoute>
                 }
               />

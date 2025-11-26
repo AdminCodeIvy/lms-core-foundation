@@ -69,3 +69,15 @@ verify_jwt = true
 
 [functions.get-review-queue]
 verify_jwt = true
+
+[functions.get-activity-logs]
+verify_jwt = true
+
+[functions.get-notifications]
+verify_jwt = true
+
+[functions.mark-notification-read]
+verify_jwt = true
+
+[functions.get-dashboard-stats]
+verify_jwt = true

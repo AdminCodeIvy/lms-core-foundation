@@ -120,12 +120,36 @@ Deno.serve(async (req) => {
           reference_id: customer.reference_id,
           customer_type: customer.customer_type,
           approver_name: userProfile.full_name,
-          rejection_feedback: feedback.trim()
+          rejection_feedback: feedback.trim(),
+          rejected_at: new Date().toISOString()
         }
       });
 
     if (logError) {
       console.error('Error creating activity log:', logError);
+    }
+
+    // Create notification for customer creator
+    if (customer.created_by) {
+      const feedbackPreview = feedback.trim().length > 50 
+        ? feedback.trim().substring(0, 50) + '...' 
+        : feedback.trim();
+
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: customer.created_by,
+          title: 'Customer Rejected',
+          message: `Your customer ${customer.reference_id} was rejected by ${userProfile.full_name}. Reason: ${feedbackPreview}`,
+          entity_type: 'CUSTOMER',
+          entity_id: entity_id
+        });
+
+      if (notificationError) {
+        console.error('Error creating notification:', notificationError);
+      } else {
+        console.log('Notification created for customer creator');
+      }
     }
 
     console.log('Customer rejected successfully:', entity_id);
