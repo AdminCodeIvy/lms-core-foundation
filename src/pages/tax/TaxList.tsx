@@ -123,7 +123,7 @@ export default function TaxList() {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto py-6 space-y-6 max-w-full overflow-x-hidden">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -218,22 +218,23 @@ export default function TaxList() {
       </Card>
 
       {/* Table */}
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Property Reference</TableHead>
-              <TableHead>Parcel Number</TableHead>
-              <TableHead>Tax Year</TableHead>
-              <TableHead>Owner</TableHead>
-              <TableHead>District</TableHead>
-              <TableHead className="text-right">Assessed</TableHead>
-              <TableHead className="text-right">Paid</TableHead>
-              <TableHead className="text-right">Outstanding</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
+      <Card className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Property Reference</TableHead>
+                <TableHead>Parcel Number</TableHead>
+                <TableHead>Tax Year</TableHead>
+                <TableHead>Owner</TableHead>
+                <TableHead>District</TableHead>
+                <TableHead className="text-right">Assessed</TableHead>
+                <TableHead className="text-right">Paid</TableHead>
+                <TableHead className="text-right">Outstanding</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
@@ -295,6 +296,7 @@ export default function TaxList() {
             )}
           </TableBody>
         </Table>
+        </div>
 
         {/* Pagination */}
         {pagination.totalPages > 1 && (
