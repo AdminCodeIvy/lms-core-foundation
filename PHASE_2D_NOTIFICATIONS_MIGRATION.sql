@@ -117,9 +117,9 @@ $$;
 -- Update activity_logs table to ensure proper indexes
 -- ============================================================================
 
--- Add index for entity lookups if not exists
+-- Add index for entity lookups if not exists (note: activity_logs uses 'timestamp' column)
 CREATE INDEX IF NOT EXISTS idx_activity_logs_entity ON public.activity_logs(entity_type, entity_id);
-CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON public.activity_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_activity_logs_timestamp ON public.activity_logs(timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_activity_logs_performed_by ON public.activity_logs(performed_by);
 
 -- ============================================================================
