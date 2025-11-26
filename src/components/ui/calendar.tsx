@@ -11,23 +11,25 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      className={cn("p-4 bg-popover", className)}
+      className={cn("p-4 bg-popover pointer-events-auto", className)}
       captionLayout="dropdown-buttons"
       fromYear={1900}
       toYear={new Date().getFullYear() + 20}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
-        caption: "flex justify-between pt-1 relative items-center w-full",
+        caption: "flex items-center justify-between gap-2 pt-1",
         caption_label: "hidden",
-        caption_dropdowns: "flex gap-2 absolute left-1/2 -translate-x-1/2",
-        dropdown_month: "relative inline-flex h-9 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-        dropdown_year: "relative inline-flex h-9 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+        caption_dropdowns: "flex items-center gap-2 mx-auto",
+        dropdown_month:
+          "relative inline-flex h-9 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+        dropdown_year:
+          "relative inline-flex h-9 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
         dropdown_icon: "ml-2 h-4 w-4 opacity-50",
-        nav: "flex items-center gap-1",
+        nav: "flex items-center gap-1 shrink-0",
         nav_button: cn(
           buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-background p-0 opacity-70 hover:opacity-100 hover:bg-accent z-10",
+          "h-7 w-7 bg-background p-0 opacity-70 hover:opacity-100 hover:bg-accent",
         ),
         nav_button_previous: "",
         nav_button_next: "",
