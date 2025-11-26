@@ -20,6 +20,10 @@ import {
   ClipboardCheck,
   Settings,
   Building,
+  Upload,
+  Map,
+  Cloud,
+  Bell,
 } from 'lucide-react';
 
 const menuItems = [
@@ -53,18 +57,41 @@ const menuItems = [
     icon: ClipboardCheck,
     roles: ['APPROVER', 'ADMINISTRATOR'],
   },
+  {
+    title: 'Bulk Upload',
+    url: '/bulk-upload',
+    icon: Upload,
+    roles: ['INPUTTER', 'ADMINISTRATOR'],
+  },
+  {
+    title: 'Map View',
+    url: '/map',
+    icon: Map,
+    roles: ['INPUTTER', 'APPROVER', 'VIEWER', 'ADMINISTRATOR'],
+  },
+  {
+    title: 'Notifications',
+    url: '/notifications',
+    icon: Bell,
+    roles: ['INPUTTER', 'APPROVER', 'VIEWER', 'ADMINISTRATOR'],
+  },
 ];
 
 const adminItems = [
   {
     title: 'User Management',
     url: '/admin/users',
-    icon: Users,
+    icon: Settings,
   },
   {
     title: 'Lookup Management',
     url: '/admin/lookups',
     icon: Settings,
+  },
+  {
+    title: 'AGO Settings',
+    url: '/admin/ago-settings',
+    icon: Cloud,
   },
 ];
 

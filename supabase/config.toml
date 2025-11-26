@@ -114,3 +114,16 @@ verify_jwt = true
 
 [functions.get-tax-stats]
 verify_jwt = true
+
+[functions.generate-template]
+verify_jwt = true
+
+[functions.validate-bulk-upload]
+verify_jwt = true
+
+[functions.commit-bulk-upload]
+verify_jwt = true
+
+[functions.mock-ago-sync]
+verify_jwt = true
+
