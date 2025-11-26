@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('Submitting customer:', customer_id);
+    console.log('Submitting customer for approval:', customer_id);
 
     // Get customer to validate
     const { data: customer, error: fetchError } = await supabase
