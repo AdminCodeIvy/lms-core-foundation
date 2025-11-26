@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Clock, CheckCircle, XCircle, Users, Building, Settings } from 'lucide-react';
+import { FileText, Clock, CheckCircle, XCircle, Users, Building, Settings, Receipt, DollarSign } from 'lucide-react';
 
 const Dashboard = () => {
   const { profile } = useAuth();
@@ -15,10 +15,17 @@ const Dashboard = () => {
     approved: 0,
     rejections: 0
   });
+  const [taxStats, setTaxStats] = useState({
+    total_assessed: 0,
+    total_collected: 0,
+    collection_rate: 0,
+    total_outstanding: 0
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchStats();
+    fetchTaxStats();
   }, []);
 
   const fetchStats = async () => {
@@ -31,6 +38,28 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchTaxStats = async () => {
+    try {
+      const currentYear = new Date().getFullYear();
+      const { data, error } = await supabase.functions.invoke('get-tax-stats', {
+        body: { tax_year: currentYear.toString() }
+      });
+      if (error) throw error;
+      setTaxStats(data);
+    } catch (error) {
+      console.error('Error fetching tax stats:', error);
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
   };
 
   const statsCards = [
@@ -75,10 +104,14 @@ const Dashboard = () => {
       case 'INPUTTER':
         return [
           { label: 'New Customer', icon: Users, action: () => navigate('/customers/new') },
-          { label: 'New Property', icon: Building, disabled: true },
+          { label: 'New Property', icon: Building, action: () => navigate('/properties/new') },
+          { label: 'New Tax Assessment', icon: Receipt, action: () => navigate('/tax/new') },
         ];
       case 'APPROVER':
-        return [{ label: 'Review Queue', icon: CheckCircle, action: () => navigate('/review-queue') }];
+        return [
+          { label: 'Review Queue', icon: CheckCircle, action: () => navigate('/review-queue') },
+          { label: 'Tax Assessments', icon: Receipt, action: () => navigate('/tax') },
+        ];
       case 'ADMINISTRATOR':
         return [
           { label: 'Manage Users', icon: Users, action: () => navigate('/admin/users') },
@@ -120,6 +153,43 @@ const Dashboard = () => {
         ))}
       </div>
 
+      {/* Tax Collection Stats */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <DollarSign className="h-5 w-5" />
+            Tax Collection This Year
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Total Assessed</p>
+              <p className="text-2xl font-bold">{formatCurrency(taxStats.total_assessed)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Total Collected</p>
+              <p className="text-2xl font-bold text-green-600">{formatCurrency(taxStats.total_collected)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Collection Rate</p>
+              <p className="text-2xl font-bold">{taxStats.collection_rate.toFixed(1)}%</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Outstanding</p>
+              <p className="text-2xl font-bold text-destructive">{formatCurrency(taxStats.total_outstanding)}</p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            className="mt-4"
+            onClick={() => navigate('/tax')}
+          >
+            View All Tax Assessments
+          </Button>
+        </CardContent>
+      </Card>
+
       {quickActions.length > 0 && (
         <Card>
           <CardHeader>
@@ -131,12 +201,10 @@ const Dashboard = () => {
                 key={action.label}
                 variant="outline"
                 className="gap-2"
-                disabled={action.disabled}
                 onClick={action.action}
               >
                 <action.icon className="h-4 w-4" />
                 {action.label}
-                {action.disabled && ' (Coming Soon)'}
               </Button>
             ))}
           </CardContent>

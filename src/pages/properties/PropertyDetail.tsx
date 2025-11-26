@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
@@ -7,9 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, FileText, MapPin, Image as ImageIcon, Users, Activity } from 'lucide-react';
+import { ArrowLeft, FileText, MapPin, Image as ImageIcon, Users, Activity, Receipt } from 'lucide-react';
 import { toast } from 'sonner';
 import { ActivityLogTab } from '@/components/activity/ActivityLogTab';
+import { format } from 'date-fns';
 
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
@@ -20,10 +21,12 @@ export default function PropertyDetail() {
   const [boundaries, setBoundaries] = useState<any>(null);
   const [photos, setPhotos] = useState<any[]>([]);
   const [ownership, setOwnership] = useState<any[]>([]);
+  const [taxAssessments, setTaxAssessments] = useState<any[]>([]);
 
   useEffect(() => {
     if (id) {
       fetchPropertyDetail();
+      fetchTaxAssessments();
     }
   }, [id]);
 
@@ -46,6 +49,41 @@ export default function PropertyDetail() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchTaxAssessments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tax_assessments')
+        .select('*')
+        .eq('property_id', id)
+        .order('tax_year', { ascending: false });
+
+      if (error) throw error;
+      setTaxAssessments(data || []);
+    } catch (error) {
+      console.error('Error fetching tax assessments:', error);
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2
+    }).format(amount);
+  };
+
+  const getStatusBadge = (status: string) => {
+    const variants: Record<string, { variant: any; label: string }> = {
+      NOT_ASSESSED: { variant: 'secondary', label: 'Not Assessed' },
+      ASSESSED: { variant: 'default', label: 'Assessed' },
+      PAID: { variant: 'success', label: 'Paid' },
+      PARTIAL: { variant: 'warning', label: 'Partial' },
+      OVERDUE: { variant: 'destructive', label: 'Overdue' }
+    };
+    const config = variants[status] || { variant: 'secondary', label: status };
+    return <Badge variant={config.variant as any}>{config.label}</Badge>;
   };
 
   const getStatusColor = (status: string) => {
@@ -146,6 +184,10 @@ export default function PropertyDetail() {
           <TabsTrigger value="ownership">
             <Users className="h-4 w-4 mr-2" />
             Ownership ({ownership.length})
+          </TabsTrigger>
+          <TabsTrigger value="tax">
+            <Receipt className="h-4 w-4 mr-2" />
+            Tax Summary ({taxAssessments.length})
           </TabsTrigger>
           <TabsTrigger value="activity">
             <Activity className="h-4 w-4 mr-2" />
@@ -306,6 +348,132 @@ export default function PropertyDetail() {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="tax">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Tax Summary</span>
+                {profile?.role && ['INPUTTER', 'APPROVER', 'ADMINISTRATOR'].includes(profile.role) && (
+                  <Button onClick={() => navigate('/tax/new')} size="sm">
+                    Create Assessment
+                  </Button>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {taxAssessments.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">No tax assessments for this property yet.</p>
+                  {profile?.role && ['INPUTTER', 'APPROVER', 'ADMINISTRATOR'].includes(profile.role) && (
+                    <Button onClick={() => navigate('/tax/new')}>
+                      Create Assessment
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Latest Assessment Card */}
+                  {taxAssessments[0] && (
+                    <div className="p-4 border rounded-lg bg-accent/50">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-semibold text-lg">Latest Assessment ({taxAssessments[0].tax_year})</h3>
+                        {getStatusBadge(taxAssessments[0].status)}
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Assessed Amount</p>
+                          <p className="font-semibold">{formatCurrency(taxAssessments[0].assessed_amount)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Paid Amount</p>
+                          <p className="font-semibold text-green-600">{formatCurrency(taxAssessments[0].paid_amount)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Outstanding</p>
+                          <p className={`font-semibold ${taxAssessments[0].outstanding_amount > 0 ? 'text-destructive' : 'text-green-600'}`}>
+                            {formatCurrency(taxAssessments[0].outstanding_amount)}
+                          </p>
+                        </div>
+                        <div className="flex items-center">
+                          <Button
+                            size="sm"
+                            onClick={() => navigate(`/tax/${taxAssessments[0].id}`)}
+                          >
+                            View Details
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Assessment History Table */}
+                  <div>
+                    <h3 className="font-semibold mb-3">Assessment History</h3>
+                    <div className="border rounded-lg">
+                      <table className="w-full">
+                        <thead className="bg-muted/50">
+                          <tr>
+                            <th className="text-left p-3 text-sm font-medium">Year</th>
+                            <th className="text-left p-3 text-sm font-medium">Status</th>
+                            <th className="text-right p-3 text-sm font-medium">Assessed</th>
+                            <th className="text-right p-3 text-sm font-medium">Paid</th>
+                            <th className="text-right p-3 text-sm font-medium">Outstanding</th>
+                            <th className="text-right p-3 text-sm font-medium">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {taxAssessments.map((assessment) => (
+                            <tr key={assessment.id} className="border-t hover:bg-muted/50">
+                              <td className="p-3">{assessment.tax_year}</td>
+                              <td className="p-3">{getStatusBadge(assessment.status)}</td>
+                              <td className="p-3 text-right">{formatCurrency(assessment.assessed_amount)}</td>
+                              <td className="p-3 text-right text-green-600">{formatCurrency(assessment.paid_amount)}</td>
+                              <td className={`p-3 text-right ${assessment.outstanding_amount > 0 ? 'text-destructive font-medium' : ''}`}>
+                                {formatCurrency(assessment.outstanding_amount)}
+                              </td>
+                              <td className="p-3 text-right">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => navigate(`/tax/${assessment.id}`)}
+                                >
+                                  View
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Summary Statistics */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
+                    <div className="text-center p-4 bg-muted/50 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Total Assessed (All Years)</p>
+                      <p className="text-xl font-bold">
+                        {formatCurrency(taxAssessments.reduce((sum, a) => sum + a.assessed_amount, 0))}
+                      </p>
+                    </div>
+                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Total Paid (All Years)</p>
+                      <p className="text-xl font-bold text-green-600">
+                        {formatCurrency(taxAssessments.reduce((sum, a) => sum + a.paid_amount, 0))}
+                      </p>
+                    </div>
+                    <div className="text-center p-4 bg-destructive/10 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Total Outstanding (All Years)</p>
+                      <p className="text-xl font-bold text-destructive">
+                        {formatCurrency(taxAssessments.reduce((sum, a) => sum + a.outstanding_amount, 0))}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
             </CardContent>
