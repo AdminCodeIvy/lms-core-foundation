@@ -1,41 +1,69 @@
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { FileText, Clock, CheckCircle, XCircle, Users, Building, Settings } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 
 const Dashboard = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const [stats, setStats] = useState({
+    drafts_pending: 0,
+    waiting_approval: 0,
+    approved: 0,
+    rejections: 0
+  });
+  const [loading, setLoading] = useState(true);
 
-  const stats = [
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('get-dashboard-stats');
+      if (error) throw error;
+      setStats(data);
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const statsCards = [
     {
       title: 'Drafts Pending Submission',
-      value: '0',
+      value: stats.drafts_pending.toString(),
       icon: FileText,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
+      onClick: () => navigate('/customers?status=DRAFT')
     },
     {
       title: 'Waiting Approval',
-      value: '0',
+      value: stats.waiting_approval.toString(),
       icon: Clock,
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-50',
+      onClick: () => profile?.role === 'APPROVER' || profile?.role === 'ADMINISTRATOR' 
+        ? navigate('/review-queue') 
+        : navigate('/customers?status=SUBMITTED')
     },
     {
       title: 'Approved & Published',
-      value: '0',
+      value: stats.approved.toString(),
       icon: CheckCircle,
       color: 'text-success',
       bgColor: 'bg-success/10',
+      onClick: () => navigate('/customers?status=APPROVED')
     },
     {
       title: 'Rejections Needing Fixes',
-      value: '0',
+      value: stats.rejections.toString(),
       icon: XCircle,
       color: 'text-destructive',
       bgColor: 'bg-destructive/10',
+      onClick: () => navigate('/customers?status=REJECTED')
     },
   ];
 

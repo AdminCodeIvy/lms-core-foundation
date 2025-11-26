@@ -9,9 +9,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Bell, User, LogOut } from 'lucide-react';
+import { User, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 export const AppHeader = () => {
   const { profile, signOut } = useAuth();
@@ -28,10 +29,7 @@ export const AppHeader = () => {
       
       <div className="flex-1" />
 
-      <Button variant="ghost" size="icon" className="relative">
-        <Bell className="h-5 w-5" />
-        <span className="sr-only">Notifications</span>
-      </Button>
+      <NotificationBell />
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

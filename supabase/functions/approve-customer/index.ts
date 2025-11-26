@@ -113,12 +113,32 @@ Deno.serve(async (req) => {
         metadata: {
           reference_id: customer.reference_id,
           customer_type: customer.customer_type,
-          approver_name: userProfile.full_name
+          approver_name: userProfile.full_name,
+          approved_at: new Date().toISOString()
         }
       });
 
     if (logError) {
       console.error('Error creating activity log:', logError);
+    }
+
+    // Create notification for customer creator
+    if (customer.created_by) {
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: customer.created_by,
+          title: 'Customer Approved',
+          message: `Your customer ${customer.reference_id} was approved by ${userProfile.full_name}`,
+          entity_type: 'CUSTOMER',
+          entity_id: entity_id
+        });
+
+      if (notificationError) {
+        console.error('Error creating notification:', notificationError);
+      } else {
+        console.log('Notification created for customer creator');
+      }
     }
 
     console.log('Customer approved successfully:', entity_id);
