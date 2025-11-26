@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, Search, Download, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import type { CustomerListItem, CustomerType, CustomerStatus } from '@/types/customer';
+import { exportToExcel } from '@/lib/export-utils';
 
 const CustomerList = () => {
   const navigate = useNavigate();
@@ -181,6 +182,47 @@ const CustomerList = () => {
     return type.replace('_', '/');
   };
 
+  const handleExport = () => {
+    const exportData = customers.map(customer => ({
+      'Reference ID': customer.reference_id,
+      'Name': customer.name,
+      'Type': formatCustomerType(customer.customer_type),
+      'Status': customer.status,
+      'Updated Date': format(new Date(customer.updated_at), 'MMM dd, yyyy'),
+    }));
+
+    const filters = [];
+    if (typeFilter !== 'ALL') filters.push(`Type: ${formatCustomerType(typeFilter as CustomerType)}`);
+    if (statusFilter !== 'ALL') filters.push(`Status: ${statusFilter}`);
+    if (searchQuery) filters.push(`Search: ${searchQuery}`);
+
+    const success = exportToExcel({
+      data: exportData,
+      filename: 'customers',
+      sheetName: 'Customers',
+      includeMetadata: true,
+      metadata: {
+        exportDate: new Date().toLocaleString(),
+        exportedBy: profile?.full_name || 'Unknown',
+        filters: filters.length > 0 ? filters.join(', ') : 'None',
+        totalRecords: customers.length,
+      },
+    });
+
+    if (success) {
+      toast({
+        title: 'Export Successful',
+        description: `Exported ${customers.length} customers to Excel`,
+      });
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Export Failed',
+        description: 'Failed to export customers to Excel',
+      });
+    }
+  };
+
   if (error) {
     return (
       <div className="space-y-6">
@@ -213,7 +255,7 @@ const CustomerList = () => {
         </div>
         <div className="flex gap-2">
           {canExport && (
-            <Button variant="outline" disabled>
+            <Button variant="outline" onClick={handleExport} disabled={loading || customers.length === 0}>
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
