@@ -148,7 +148,7 @@ export const PersonForm = ({
                         onSelect={field.onChange}
                         disabled={(date) => date > new Date() || date < new Date('1900-01-01')}
                         initialFocus
-                        className="pointer-events-auto"
+                        defaultMonth={field.value || new Date(2000, 0)}
                       />
                     </PopoverContent>
                   </Popover>
@@ -447,7 +447,7 @@ export const PersonForm = ({
                           onSelect={field.onChange}
                           disabled={(date) => date > new Date()}
                           initialFocus
-                          className="pointer-events-auto"
+                          defaultMonth={field.value || new Date()}
                         />
                       </PopoverContent>
                     </Popover>
@@ -484,7 +484,7 @@ export const PersonForm = ({
                           onSelect={field.onChange}
                           disabled={(date) => date < new Date()}
                           initialFocus
-                          className="pointer-events-auto"
+                          defaultMonth={field.value || new Date()}
                         />
                       </PopoverContent>
                     </Popover>
