@@ -335,6 +335,15 @@ ALTER TABLE public.tax_payments ENABLE ROW LEVEL SECURITY;
 
 -- Tax Assessments Policies
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can view tax assessments" ON public.tax_assessments;
+DROP POLICY IF EXISTS "Inputters can create tax assessments" ON public.tax_assessments;
+DROP POLICY IF EXISTS "Inputters and Approvers can update tax assessments" ON public.tax_assessments;
+DROP POLICY IF EXISTS "Only Administrators can delete tax assessments" ON public.tax_assessments;
+DROP POLICY IF EXISTS "Users can view tax payments" ON public.tax_payments;
+DROP POLICY IF EXISTS "Inputters can record tax payments" ON public.tax_payments;
+DROP POLICY IF EXISTS "Only Administrators can delete tax payments" ON public.tax_payments;
+
 -- Everyone can view tax assessments (authenticated users)
 CREATE POLICY "Users can view tax assessments"
 ON public.tax_assessments FOR SELECT
