@@ -247,6 +247,18 @@ export default function PropertyDetail() {
             {property.status}
           </Badge>
           
+          {/* Edit button for own properties or admin */}
+          {((property.created_by === user?.id || profile?.role === 'ADMINISTRATOR') && 
+            property.status !== 'SUBMITTED') && (
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/properties/${property.id}/edit`)}
+            >
+              Edit
+            </Button>
+          )}
+          
           {/* Submit button for DRAFT/REJECTED */}
           {((property.status === 'DRAFT' || property.status === 'REJECTED') && 
             (property.created_by === user?.id || profile?.role === 'ADMINISTRATOR')) && (
