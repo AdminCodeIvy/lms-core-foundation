@@ -80,7 +80,7 @@ export default function TaxDetail() {
         `)
         .eq('entity_type', 'TAX_ASSESSMENT')
         .eq('entity_id', id)
-        .order('created_at', { ascending: false })
+        .order('timestamp', { ascending: false })
         .limit(20);
 
       if (logsError) throw logsError;
