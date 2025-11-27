@@ -158,12 +158,19 @@ export default function PropertyNew() {
               .from('property-photos')
               .getPublicUrl(fileName);
 
-            await supabase.from('property_photos').insert({
+            const { error: photoError } = await supabase.from('property_photos').insert({
               property_id: property.id,
               file_name: image.name,
               file_url: publicUrl,
-              uploaded_by: profile?.id
+              file_size: image.size,
+              uploaded_by: profile?.id,
             });
+
+            if (photoError) {
+              console.error('Error saving photo metadata:', photoError);
+            }
+          } else if (uploadError) {
+            console.error('Error uploading photo:', uploadError);
           }
         }
       }
