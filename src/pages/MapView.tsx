@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
+import { supabase } from '@/lib/supabase';
 import L from 'leaflet';
 import { Map as MapIcon, Layers, Filter, X } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -20,36 +20,6 @@ interface PropertyParcel {
   owner_name?: string;
   coordinates?: [number, number];
 }
-
-// Mock parcel data with random coordinates in Addis Ababa area
-const generateMockParcels = (): PropertyParcel[] => {
-  const parcels: PropertyParcel[] = [];
-  const taxStatuses: PropertyParcel['tax_status'][] = ['PAID', 'PARTIAL', 'OVERDUE', 'NOT_ASSESSED', 'ASSESSED'];
-  
-  // Addis Ababa approximate bounds
-  const centerLat = 9.03;
-  const centerLng = 38.74;
-  const spread = 0.1;
-  
-  for (let i = 0; i < 50; i++) {
-    parcels.push({
-      id: `property-${i}`,
-      reference_id: `PROP-2024-${String(i + 1).padStart(4, '0')}`,
-      parcel_number: `PN-${String(i + 1).padStart(6, '0')}`,
-      tax_status: taxStatuses[Math.floor(Math.random() * taxStatuses.length)],
-      status: Math.random() > 0.3 ? 'APPROVED' : 'DRAFT',
-      district: ['Khartoum', 'Omdurman', 'Bahri'][Math.floor(Math.random() * 3)],
-      property_type: ['Residential', 'Commercial', 'Industrial', 'Agricultural'][Math.floor(Math.random() * 4)],
-      owner_name: Math.random() > 0.5 ? `Owner ${i + 1}` : undefined,
-      coordinates: [
-        centerLat + (Math.random() - 0.5) * spread,
-        centerLng + (Math.random() - 0.5) * spread
-      ]
-    });
-  }
-  
-  return parcels;
-};
 
 export default function MapView() {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -154,11 +124,71 @@ export default function MapView() {
 
   const loadParcels = async () => {
     try {
+      setLoading(true);
+      
+      // Fetch real properties from database with coordinates
+      const { data: properties, error } = await supabase
+        .from('properties')
+        .select(`
+          id,
+          reference_id,
+          parcel_number,
+          status,
+          coordinates,
+          district_id,
+          property_type_id,
+          districts(name),
+          property_types(name)
+        `)
+        .eq('status', 'APPROVED')
+        .not('coordinates', 'is', null);
+
+      if (error) throw error;
+
+      // Fetch tax assessments for these properties
+      const propertyIds = (properties || []).map(p => p.id);
+      const { data: assessments } = propertyIds.length > 0 ? await supabase
+        .from('tax_assessments')
+        .select('property_id, status, tax_year')
+        .in('property_id', propertyIds)
+        .order('tax_year', { ascending: false }) : { data: [] };
+
+      // Map to PropertyParcel format
+      const mappedParcels: PropertyParcel[] = (properties || []).map((prop: any) => {
+        // Get latest assessment for this property
+        const latestAssessment = assessments?.find(a => a.property_id === prop.id);
+        
+        // Extract lat/lng from PostGIS geography point
+        let coordinates: [number, number] | undefined;
+        if (prop.coordinates) {
+          try {
+            // PostGIS geography returns as GeoJSON format
+            const coords = prop.coordinates.coordinates;
+            if (coords && coords.length === 2) {
+              coordinates = [coords[1], coords[0]]; // [lat, lng]
+            }
+          } catch (e) {
+            console.error('Error parsing coordinates:', e);
+          }
+        }
+
+        return {
+          id: prop.id,
+          reference_id: prop.reference_id,
+          parcel_number: prop.parcel_number,
+          tax_status: (latestAssessment?.status || 'NOT_ASSESSED') as PropertyParcel['tax_status'],
+          status: prop.status,
+          district: prop.districts?.name || 'Unknown',
+          property_type: prop.property_types?.name || 'Unknown',
+          coordinates
+        };
+      }).filter(p => p.coordinates); // Only include properties with valid coordinates
+
+      setParcels(mappedParcels);
       setLoading(false);
-      const mockParcels = generateMockParcels();
-      setParcels(mockParcels);
     } catch (error: any) {
       console.error('Error loading parcels:', error);
+      setLoading(false);
     }
   };
 
@@ -299,7 +329,7 @@ export default function MapView() {
                   {/* District Filter */}
                   <div className="space-y-3">
                     <Label className="text-base font-semibold">District</Label>
-                    {['Khartoum', 'Omdurman', 'Bahri'].map(district => (
+                    {['Addis Ababa', 'Dire Dawa', 'Hargeisa', 'Jigjiga'].map(district => (
                       <div key={district} className="flex items-center space-x-2">
                         <Checkbox
                           id={`district-${district}`}
