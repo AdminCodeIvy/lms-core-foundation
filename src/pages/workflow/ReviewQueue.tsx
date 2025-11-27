@@ -415,11 +415,14 @@ export const ReviewQueue = () => {
     try {
       setActionLoading(true);
 
-      const { error } = await supabase.functions.invoke('approve-property', {
+      const { data, error } = await supabase.functions.invoke('approve-property', {
         body: { property_id: selectedProperty.id }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
 
       toast({
         title: 'Success',
@@ -447,14 +450,17 @@ export const ReviewQueue = () => {
     try {
       setActionLoading(true);
 
-      const { error } = await supabase.functions.invoke('reject-property', {
+      const { data, error } = await supabase.functions.invoke('reject-property', {
         body: { 
           property_id: selectedProperty.id,
-          rejection_feedback: feedback
+          feedback: feedback
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
 
       toast({
         title: 'Success',
