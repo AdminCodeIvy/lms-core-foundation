@@ -46,20 +46,53 @@ export default function TaxDetail() {
   const fetchTaxDetail = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('get-tax-detail', {
-        body: { assessment_id: id }
-      });
+      // Fetch tax assessment with property and creator details
+      const { data: assessmentData, error: assessmentError } = await supabase
+        .from('tax_assessments')
+        .select(`
+          *,
+          property:properties(id, reference_id, parcel_number, district, sub_district, street_address),
+          creator:users!created_by(id, full_name)
+        `)
+        .eq('id', id)
+        .single();
 
-      if (error) throw error;
+      if (assessmentError) throw assessmentError;
 
-      setAssessment(data.assessment);
-      setPayments(data.payments || []);
-      setActivityLogs(data.activity_logs || []);
+      // Fetch payments for this assessment
+      const { data: paymentsData, error: paymentsError } = await supabase
+        .from('tax_payments')
+        .select(`
+          *,
+          collector:users!collected_by(id, full_name)
+        `)
+        .eq('assessment_id', id)
+        .order('payment_date', { ascending: false });
+
+      if (paymentsError) throw paymentsError;
+
+      // Fetch activity logs
+      const { data: logsData, error: logsError } = await supabase
+        .from('activity_logs')
+        .select(`
+          *,
+          performer:users!performed_by(id, full_name)
+        `)
+        .eq('entity_type', 'TAX_ASSESSMENT')
+        .eq('entity_id', id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (logsError) throw logsError;
+
+      setAssessment(assessmentData);
+      setPayments(paymentsData || []);
+      setActivityLogs(logsData || []);
     } catch (error: any) {
       console.error('Error fetching tax detail:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load tax assessment details',
+        description: error.message || 'Failed to load tax assessment details',
         variant: 'destructive'
       });
     } finally {
