@@ -318,18 +318,18 @@ export default function PropertyDetail() {
             ['APPROVER', 'ADMINISTRATOR'].includes(profile?.role || '') && (
             <>
               <Button
-                size="sm"
                 variant="outline"
                 onClick={() => setRejectDialogOpen(true)}
+                className="gap-2"
               >
-                <X className="h-4 w-4 mr-2" />
+                <X className="h-4 w-4" />
                 Reject
               </Button>
               <Button
-                size="sm"
                 onClick={() => setApproveDialogOpen(true)}
+                className="gap-2"
               >
-                <Check className="h-4 w-4 mr-2" />
+                <Check className="h-4 w-4" />
                 Approve
               </Button>
             </>
