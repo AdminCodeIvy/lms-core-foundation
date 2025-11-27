@@ -145,9 +145,54 @@ BEGIN
   END IF;
 END $$;
 
--- Ensure has_rental_agreement column exists for existing tables
+-- Ensure renter/rental detail columns exist for existing tables
 DO $$
 BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'renter_name'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN renter_name TEXT;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'renter_contact'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN renter_contact TEXT;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'renter_national_id'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN renter_national_id TEXT;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'monthly_rent_amount'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN monthly_rent_amount DECIMAL(15,2);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'rental_start_date'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN rental_start_date DATE;
+  END IF;
+
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public'
