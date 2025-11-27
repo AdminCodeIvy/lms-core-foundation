@@ -125,8 +125,7 @@ export default function PropertyDetail() {
       const { error: updateError } = await supabase
         .from('properties')
         .update({
-          status: 'SUBMITTED',
-          submitted_at: new Date().toISOString()
+          status: 'SUBMITTED'
         })
         .eq('id', property.id);
 
