@@ -36,8 +36,10 @@ export const MapPicker = ({
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
+  const boundaryLayerRef = useRef<L.Rectangle | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<{lat: number; lng: number} | null>(null);
   const [districts, setDistricts] = useState<any[]>([]);
+  const [subDistricts, setSubDistricts] = useState<any[]>([]);
 
   // Fetch districts on mount
   useEffect(() => {
@@ -47,6 +49,23 @@ export const MapPicker = ({
     };
     fetchDistricts();
   }, []);
+
+  // Fetch sub-districts when district changes
+  useEffect(() => {
+    const fetchSubDistricts = async () => {
+      if (!districtId) {
+        setSubDistricts([]);
+        return;
+      }
+      const { data } = await supabase
+        .from('sub_districts')
+        .select('*')
+        .eq('district_id', districtId)
+        .eq('is_active', true);
+      if (data) setSubDistricts(data);
+    };
+    fetchSubDistricts();
+  }, [districtId]);
 
   // Parse coordinates on mount
   useEffect(() => {
@@ -63,9 +82,21 @@ export const MapPicker = ({
     }
   }, []);
 
-  // Pan to district when selected
+  // Show district/sub-district boundaries and pan to location
   useEffect(() => {
-    if (!mapInstanceRef.current || !districtId) return;
+    if (!mapInstanceRef.current) return;
+
+    // Remove existing boundary
+    if (boundaryLayerRef.current) {
+      mapInstanceRef.current.removeLayer(boundaryLayerRef.current);
+      boundaryLayerRef.current = null;
+    }
+
+    // If no district selected, reset view
+    if (!districtId) {
+      mapInstanceRef.current.setView(defaultCenter, defaultZoom);
+      return;
+    }
 
     // Find the district
     const district = districts.find(d => d.id === districtId);
@@ -78,11 +109,57 @@ export const MapPicker = ({
     const location = DISTRICT_CENTERS[districtKey] || DISTRICT_CENTERS[districtCode];
     
     if (location) {
-      mapInstanceRef.current.flyTo(location.center, location.zoom, {
-        duration: 1.5
+      let bounds: L.LatLngBoundsExpression;
+      let zoom = location.zoom;
+
+      // If sub-district is selected, create a smaller boundary
+      if (subDistrictId) {
+        const subDistrict = subDistricts.find(sd => sd.id === subDistrictId);
+        if (subDistrict) {
+          // Create a smaller boundary for sub-district (approximately 2km x 2km)
+          const offset = 0.015; // ~1.5km in degrees
+          bounds = [
+            [location.center[0] - offset, location.center[1] - offset],
+            [location.center[0] + offset, location.center[1] + offset]
+          ];
+          zoom = 14;
+        } else {
+          // District boundary (approximately 10km x 10km)
+          const offset = 0.05;
+          bounds = [
+            [location.center[0] - offset, location.center[1] - offset],
+            [location.center[0] + offset, location.center[1] + offset]
+          ];
+        }
+      } else {
+        // District boundary (approximately 10km x 10km)
+        const offset = 0.05;
+        bounds = [
+          [location.center[0] - offset, location.center[1] - offset],
+          [location.center[0] + offset, location.center[1] + offset]
+        ];
+      }
+
+      // Create and add boundary rectangle
+      const boundary = L.rectangle(bounds, {
+        color: 'hsl(var(--primary))',
+        weight: 2,
+        fillColor: 'hsl(var(--primary))',
+        fillOpacity: 0.1,
+        dashArray: '5, 10'
+      });
+
+      boundary.addTo(mapInstanceRef.current);
+      boundaryLayerRef.current = boundary;
+
+      // Fit map to boundary with animation
+      mapInstanceRef.current.flyToBounds(bounds, {
+        padding: [50, 50],
+        duration: 1.5,
+        maxZoom: zoom
       });
     }
-  }, [districtId, districts]);
+  }, [districtId, subDistrictId, districts, subDistricts, defaultCenter, defaultZoom]);
 
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
