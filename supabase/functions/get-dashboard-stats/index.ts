@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
 
     const userRole = userProfile?.role;
 
-    console.log('Fetching dashboard stats for user:', user.id, 'Role:', userRole);
+    console.log('Get dashboard stats v2 - Fetching for user:', user.id, 'Role:', userRole);
 
     // Initialize stats
     let draftsPending = 0;

@@ -29,13 +29,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    const url = new URL(req.url);
-    const page = parseInt(url.searchParams.get('page') || '1');
-    const limit = parseInt(url.searchParams.get('limit') || '50');
-    const filter = url.searchParams.get('filter') || 'all'; // 'all', 'unread', 'read'
-    const recent = url.searchParams.get('recent') === 'true'; // For dropdown (last 5)
+    // Parse request body
+    const body = await req.json().catch(() => ({}));
+    const page = parseInt(body.page || '1');
+    const limit = parseInt(body.limit || '50');
+    const filter = body.filter || 'all'; // 'all', 'unread', 'read'
+    const recent = body.recent === 'true' || body.recent === true; // For dropdown (last 5)
 
-    console.log('Fetching notifications for user:', user.id, 'Filter:', filter);
+    console.log('Get notifications v2 - Fetching for user:', user.id, 'Filter:', filter, 'Recent:', recent);
 
     // Build query
     let query = supabase
