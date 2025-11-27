@@ -73,13 +73,41 @@ export const ReviewQueue = () => {
     try {
       setLoading(true);
 
-      const { data, error } = await supabase.functions.invoke('get-review-queue', {
-        body: { entity_type: 'CUSTOMER', page: 1, limit: 50 }
-      });
+      const { data, error } = await supabase
+        .from('customers')
+        .select(`
+          id,
+          reference_id,
+          name,
+          entity_type,
+          submitted_at,
+          created_by,
+          created_by_user:users!customers_created_by_fkey(full_name)
+        `)
+        .eq('status', 'SUBMITTED')
+        .order('submitted_at', { ascending: true })
+        .limit(50);
 
       if (error) throw error;
 
-      setItems(data?.data || []);
+      const items: ReviewQueueItem[] = (data || []).map((item: any) => {
+        const submittedAt = item.submitted_at ? new Date(item.submitted_at) : new Date();
+        const daysPending = Math.floor((Date.now() - submittedAt.getTime()) / (1000 * 60 * 60 * 24));
+        
+        return {
+          id: item.id,
+          entity_type: 'CUSTOMER',
+          reference_id: item.reference_id,
+          name: item.name,
+          customer_type: item.entity_type,
+          submitted_by: item.created_by,
+          submitted_by_name: item.created_by_user?.full_name || 'Unknown',
+          submitted_at: item.submitted_at,
+          days_pending: daysPending
+        };
+      });
+
+      setItems(items);
     } catch (err: any) {
       console.error('Error fetching review queue:', err);
       toast({
