@@ -126,6 +126,12 @@ export default function MapView() {
     try {
       setLoading(true);
       
+      // Fetch all approved properties
+      const { data: allApproved, error: countError } = await supabase
+        .from('properties')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'APPROVED');
+      
       // Fetch real properties from database with coordinates
       const { data: properties, error } = await supabase
         .from('properties')
@@ -265,9 +271,14 @@ export default function MapView() {
               <MapIcon className="h-6 w-6" />
               Property Map
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Showing {filteredParcels.length} of {parcels.length} parcels
-            </p>
+            <div className="text-sm text-muted-foreground mt-1 space-y-1">
+              <p>Showing {filteredParcels.length} of {parcels.length} parcels with coordinates</p>
+              {parcels.length === 0 && !loading && (
+                <p className="text-warning font-medium">
+                  ⚠️ No approved properties have coordinates set. Add coordinates to properties to see them on the map.
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="flex gap-2">
