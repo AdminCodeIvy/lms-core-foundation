@@ -4,6 +4,7 @@ import { MapPin, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { supabase } from '@/lib/supabase';
 import 'leaflet/dist/leaflet.css';
 
 interface MapPickerProps {
@@ -11,18 +12,41 @@ interface MapPickerProps {
   onCoordinatesChange: (coordinates: string | null) => void;
   defaultCenter?: [number, number];
   defaultZoom?: number;
+  districtId?: string;
+  subDistrictId?: string;
 }
+
+// District center coordinates
+const DISTRICT_CENTERS: Record<string, { center: [number, number]; zoom: number }> = {
+  // Ethiopian cities
+  'addis-ababa': { center: [9.03, 38.74], zoom: 12 },
+  'dire-dawa': { center: [9.593, 41.856], zoom: 12 },
+  'hargeisa': { center: [9.56, 44.065], zoom: 12 },
+  'jigjiga': { center: [9.35, 42.797], zoom: 12 },
+};
 
 export const MapPicker = ({ 
   coordinates, 
   onCoordinatesChange,
   defaultCenter = [9.03, 38.74], // Addis Ababa
-  defaultZoom = 13 
+  defaultZoom = 13,
+  districtId,
+  subDistrictId
 }: MapPickerProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<{lat: number; lng: number} | null>(null);
+  const [districts, setDistricts] = useState<any[]>([]);
+
+  // Fetch districts on mount
+  useEffect(() => {
+    const fetchDistricts = async () => {
+      const { data } = await supabase.from('districts').select('*').eq('is_active', true);
+      if (data) setDistricts(data);
+    };
+    fetchDistricts();
+  }, []);
 
   // Parse coordinates on mount
   useEffect(() => {
@@ -38,6 +62,27 @@ export const MapPicker = ({
       }
     }
   }, []);
+
+  // Pan to district when selected
+  useEffect(() => {
+    if (!mapInstanceRef.current || !districtId) return;
+
+    // Find the district
+    const district = districts.find(d => d.id === districtId);
+    if (!district) return;
+
+    // Get district center from code
+    const districtCode = district.code.toLowerCase();
+    const districtKey = district.name.toLowerCase().replace(/\s+/g, '-');
+    
+    const location = DISTRICT_CENTERS[districtKey] || DISTRICT_CENTERS[districtCode];
+    
+    if (location) {
+      mapInstanceRef.current.flyTo(location.center, location.zoom, {
+        duration: 1.5
+      });
+    }
+  }, [districtId, districts]);
 
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
