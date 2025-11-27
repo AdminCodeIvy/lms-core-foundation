@@ -7,21 +7,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, FileText, MapPin, Camera, Users, Activity, Receipt } from 'lucide-react';
+import { ArrowLeft, FileText, MapPin, Camera, Users, Activity, Receipt, Edit, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { ActivityLogTab } from '@/components/activity/ActivityLogTab';
+import { SubmitConfirmationDialog } from '@/components/workflow/SubmitConfirmationDialog';
 import { format } from 'date-fns';
 
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [property, setProperty] = useState<any>(null);
   const [boundaries, setBoundaries] = useState<any>(null);
   const [photos, setPhotos] = useState<any[]>([]);
   const [ownership, setOwnership] = useState<any[]>([]);
   const [taxAssessments, setTaxAssessments] = useState<any[]>([]);
+  const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -112,6 +115,63 @@ export default function PropertyDetail() {
     }
   };
 
+  const handleSubmit = async () => {
+    if (!property) return;
+
+    try {
+      setSubmitting(true);
+
+      // Update property status to SUBMITTED
+      const { error: updateError } = await supabase
+        .from('properties')
+        .update({
+          status: 'SUBMITTED',
+          submitted_at: new Date().toISOString(),
+          rejection_feedback: null
+        })
+        .eq('id', property.id);
+
+      if (updateError) throw updateError;
+
+      // Create activity log
+      await supabase.from('activity_logs').insert({
+        entity_type: 'PROPERTY',
+        entity_id: property.id,
+        action: 'SUBMITTED',
+        performed_by: user?.id
+      });
+
+      // Create notifications for approvers and administrators
+      const { data: approvers } = await supabase
+        .from('users')
+        .select('id')
+        .in('role', ['APPROVER', 'ADMINISTRATOR'])
+        .eq('is_active', true);
+
+      if (approvers && approvers.length > 0) {
+        const notifications = approvers.map(approver => ({
+          user_id: approver.id,
+          title: 'Property Submitted for Approval',
+          message: `Property ${property.reference_id} has been submitted for approval`,
+          entity_type: 'PROPERTY',
+          entity_id: property.id,
+          action_url: `/properties/${property.id}`
+        }));
+
+        await supabase.from('notifications').insert(notifications);
+      }
+
+      toast.success('Property submitted for approval');
+      setSubmitDialogOpen(false);
+      fetchPropertyDetail();
+    } catch (error: any) {
+      console.error('Error submitting property:', error);
+      toast.error(error.message || 'Failed to submit property');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -184,9 +244,28 @@ export default function PropertyDetail() {
             </p>
           </div>
         </div>
-        <Badge className={`${getStatusColor(property.status)} text-lg px-4 py-2`}>
-          {property.status}
-        </Badge>
+        <div className="flex items-center gap-3">
+          <Badge className={`${getStatusColor(property.status)} text-lg px-4 py-2`}>
+            {property.status}
+          </Badge>
+          <div className="flex gap-2">
+            {((profile?.role === 'INPUTTER' && property.status === 'DRAFT' && property.created_by === user?.id) ||
+              (profile?.role === 'APPROVER' && ['SUBMITTED', 'APPROVED', 'REJECTED'].includes(property.status)) ||
+              profile?.role === 'ADMINISTRATOR') && (
+              <Button variant="outline" onClick={() => navigate(`/properties/${property.id}/edit`)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+            )}
+            {((property.status === 'DRAFT' || property.status === 'REJECTED') && 
+              (property.created_by === user?.id || profile?.role === 'ADMINISTRATOR')) && (
+              <Button onClick={() => setSubmitDialogOpen(true)}>
+                <Send className="h-4 w-4 mr-2" />
+                {property.status === 'REJECTED' ? 'Resubmit' : 'Submit'}
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Rejection Banner */}
@@ -530,6 +609,14 @@ export default function PropertyDetail() {
           <ActivityLogTab customerId={property.id} />
         </TabsContent>
       </Tabs>
+
+      {/* Submit Confirmation Dialog */}
+      <SubmitConfirmationDialog
+        open={submitDialogOpen}
+        onOpenChange={setSubmitDialogOpen}
+        onConfirm={handleSubmit}
+        loading={submitting}
+      />
     </div>
   );
 }
