@@ -130,22 +130,42 @@ export default function TaxList() {
     try {
       setExporting(true);
 
-      // Fetch ALL assessments using the edge function (no pagination limit)
-      const { data, error } = await supabase.functions.invoke('get-tax-assessments', {
-        body: {
-          page: 1,
-          limit: 10000, // Large limit to get all records
-          search,
-          taxYear: taxYear !== 'all' ? parseInt(taxYear) : undefined,
-          status: status !== 'all' ? status : undefined,
-          districtId: districtId !== 'all' ? districtId : undefined,
-          arrearsOnly,
-        },
-      });
+      // Fetch ALL assessments with proper joins
+      let query = supabase
+        .from('tax_assessments')
+        .select(`
+          *,
+          property:properties(
+            reference_id,
+            parcel_number,
+            customer:customers(name),
+            district:districts(name)
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      // Apply same filters as list view
+      if (search) {
+        query = query.or(`property.reference_id.ilike.%${search}%,property.parcel_number.ilike.%${search}%`);
+      }
+      if (taxYear && taxYear !== 'all') {
+        query = query.eq('tax_year', parseInt(taxYear));
+      }
+      if (status && status !== 'all') {
+        query = query.eq('status', status);
+      }
+      if (districtId && districtId !== 'all') {
+        query = query.eq('property.district_id', districtId);
+      }
+      if (arrearsOnly) {
+        query = query.gt('outstanding_amount', 0);
+      }
+
+      const { data, error } = await query;
       
       if (error) throw error;
 
-      const assessments = data?.assessments || [];
+      const assessments = data || [];
 
       // Format data for export
       const exportData = assessments.map((assessment: any) => ({
