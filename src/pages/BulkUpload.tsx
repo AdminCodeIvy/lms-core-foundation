@@ -52,7 +52,7 @@ const uploadTypes = [
 ];
 
 export default function BulkUpload() {
-  const { user } = useAuth();
+  const { profile } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [selectedType, setSelectedType] = useState<UploadType | null>(null);
@@ -65,7 +65,7 @@ export default function BulkUpload() {
   const [filterStatus, setFilterStatus] = useState<'all' | 'valid' | 'error' | 'warning'>('all');
   const [sessionId, setSessionId] = useState<string | null>(null);
 
-  const canUpload = user?.role === 'INPUTTER' || user?.role === 'ADMINISTRATOR';
+  const canUpload = profile?.role === 'INPUTTER' || profile?.role === 'ADMINISTRATOR';
 
   if (!canUpload) {
     return (
