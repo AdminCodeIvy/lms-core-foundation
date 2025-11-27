@@ -29,15 +29,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    const url = new URL(req.url);
-    const page = parseInt(url.searchParams.get('page') || '1');
-    const limit = parseInt(url.searchParams.get('limit') || '50');
-    const search = url.searchParams.get('search') || '';
-    const status = url.searchParams.get('status') || '';
-    const districtId = url.searchParams.get('district_id') || '';
-    const showArchived = url.searchParams.get('show_archived') === 'true';
+    // Parse request body
+    const body = await req.json().catch(() => ({}));
+    const page = parseInt(body.page || '1');
+    const limit = parseInt(body.limit || '50');
+    const search = body.search || '';
+    const status = body.status || '';
+    const districtId = body.district_id || '';
+    const showArchived = body.show_archived === 'true' || body.show_archived === true;
 
-    console.log('Fetching properties with filters:', { page, limit, search, status, districtId, showArchived });
+    console.log('Get properties function v2 - Fetching with filters:', { page, limit, search, status, districtId, showArchived });
 
     // Build query
     let query = supabase

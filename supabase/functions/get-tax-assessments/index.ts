@@ -29,16 +29,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    const url = new URL(req.url);
-    const page = parseInt(url.searchParams.get('page') || '1');
-    const limit = parseInt(url.searchParams.get('limit') || '50');
-    const search = url.searchParams.get('search') || '';
-    const taxYear = url.searchParams.get('tax_year') || '';
-    const status = url.searchParams.get('status') || '';
-    const districtId = url.searchParams.get('district_id') || '';
-    const arrearsOnly = url.searchParams.get('arrears_only') === 'true';
+    // Parse request body
+    const body = await req.json().catch(() => ({}));
+    const page = parseInt(body.page || '1');
+    const limit = parseInt(body.limit || '50');
+    const search = body.search || '';
+    const taxYear = body.tax_year || '';
+    const status = body.status || '';
+    const districtId = body.district_id || '';
+    const arrearsOnly = body.arrears_only === 'true' || body.arrears_only === true;
 
-    console.log('Fetching tax assessments with filters:', { 
+    console.log('Get tax assessments v2 - Fetching with filters:', { 
       page, limit, search, taxYear, status, districtId, arrearsOnly 
     });
 

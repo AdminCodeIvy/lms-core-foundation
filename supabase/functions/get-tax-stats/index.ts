@@ -29,12 +29,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    const url = new URL(req.url);
-    const taxYear = url.searchParams.get('tax_year');
+    // Parse request body
+    const body = await req.json().catch(() => ({}));
+    const taxYear = body.tax_year;
     const currentYear = new Date().getFullYear();
     const year = taxYear ? parseInt(taxYear) : currentYear;
 
-    console.log('Fetching tax statistics for year:', year);
+    console.log('Get tax stats v2 - Fetching for year:', year);
 
     // Get assessments for the year
     const { data: assessments, error: assessmentsError } = await supabase
