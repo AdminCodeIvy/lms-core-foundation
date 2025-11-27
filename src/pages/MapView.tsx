@@ -374,7 +374,7 @@ export default function MapView() {
                   <div>
                     <Label className="text-base font-semibold mb-3 block">How to Use</Label>
                     <ul className="text-sm space-y-2 list-disc list-inside text-muted-foreground">
-                      <li>Click markers to view property details</li>
+                      <li>Hover over markers to view property details</li>
                       <li>Use filters to show specific parcels</li>
                       <li>Zoom and pan to explore the map</li>
                     </ul>
