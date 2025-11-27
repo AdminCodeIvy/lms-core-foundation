@@ -160,9 +160,7 @@ export default function PropertyNew() {
 
             const { error: photoError } = await supabase.from('property_photos').insert({
               property_id: property.id,
-              file_name: image.name,
-              file_url: publicUrl,
-              file_size: image.size,
+              photo_url: publicUrl,
               uploaded_by: profile?.id,
             });
 
