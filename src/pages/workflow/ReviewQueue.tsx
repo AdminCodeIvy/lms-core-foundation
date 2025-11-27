@@ -226,8 +226,7 @@ export const ReviewQueue = () => {
         .from('customers')
         .update({
           status: 'APPROVED',
-          approved_by: profile?.id,
-          approved_at: new Date().toISOString()
+          approved_by: profile?.id
         })
         .eq('id', selectedCustomer.id);
 
