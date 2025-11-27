@@ -7,10 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, FileText, MapPin, Camera, Users, Activity, Receipt, Send } from 'lucide-react';
+import { ArrowLeft, FileText, MapPin, Camera, Users, Activity, Receipt, Send, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { ActivityLogTab } from '@/components/activity/ActivityLogTab';
 import { SubmitConfirmationDialog } from '@/components/workflow/SubmitConfirmationDialog';
+import { ApproveConfirmationDialog } from '@/components/workflow/ApproveConfirmationDialog';
+import { RejectFeedbackDialog } from '@/components/workflow/RejectFeedbackDialog';
 import { format } from 'date-fns';
 
 export default function PropertyDetail() {
@@ -25,6 +27,9 @@ export default function PropertyDetail() {
   const [taxAssessments, setTaxAssessments] = useState<any[]>([]);
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -170,6 +175,55 @@ export default function PropertyDetail() {
     }
   };
 
+  const handleApprove = async () => {
+    if (!property) return;
+
+    try {
+      setActionLoading(true);
+
+      const { data, error } = await supabase.functions.invoke('approve-property', {
+        body: { property_id: property.id }
+      });
+
+      if (error) throw error;
+
+      toast.success('Property approved successfully');
+      setApproveDialogOpen(false);
+      navigate('/review-queue');
+    } catch (error: any) {
+      console.error('Error approving property:', error);
+      toast.error(error.message || 'Failed to approve property');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleReject = async (feedback: string) => {
+    if (!property) return;
+
+    try {
+      setActionLoading(true);
+
+      const { data, error } = await supabase.functions.invoke('reject-property', {
+        body: { 
+          property_id: property.id,
+          rejection_feedback: feedback
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success('Property rejected');
+      setRejectDialogOpen(false);
+      navigate('/review-queue');
+    } catch (error: any) {
+      console.error('Error rejecting property:', error);
+      toast.error(error.message || 'Failed to reject property');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -246,6 +300,8 @@ export default function PropertyDetail() {
           <Badge className={`${getStatusColor(property.status)} text-base px-4 py-1.5`}>
             {property.status}
           </Badge>
+          
+          {/* Submit button for DRAFT/REJECTED */}
           {((property.status === 'DRAFT' || property.status === 'REJECTED') && 
             (property.created_by === user?.id || profile?.role === 'ADMINISTRATOR')) && (
             <Button 
@@ -255,6 +311,28 @@ export default function PropertyDetail() {
               <Send className="h-4 w-4 mr-2" />
               {property.status === 'REJECTED' ? 'Resubmit' : 'Submit'}
             </Button>
+          )}
+
+          {/* Approve/Reject buttons for SUBMITTED */}
+          {property.status === 'SUBMITTED' && 
+            ['APPROVER', 'ADMINISTRATOR'].includes(profile?.role || '') && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setRejectDialogOpen(true)}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Reject
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => setApproveDialogOpen(true)}
+              >
+                <Check className="h-4 w-4 mr-2" />
+                Approve
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -607,6 +685,24 @@ export default function PropertyDetail() {
         onOpenChange={setSubmitDialogOpen}
         onConfirm={handleSubmit}
         loading={submitting}
+      />
+
+      {/* Approve Confirmation Dialog */}
+      <ApproveConfirmationDialog
+        open={approveDialogOpen}
+        onOpenChange={setApproveDialogOpen}
+        onConfirm={handleApprove}
+        loading={actionLoading}
+        referenceId={property.reference_id}
+      />
+
+      {/* Reject Feedback Dialog */}
+      <RejectFeedbackDialog
+        open={rejectDialogOpen}
+        onOpenChange={setRejectDialogOpen}
+        onConfirm={handleReject}
+        loading={actionLoading}
+        referenceId={property.reference_id}
       />
     </div>
   );
