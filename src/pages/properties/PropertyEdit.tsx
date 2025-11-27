@@ -549,6 +549,8 @@ export default function PropertyEdit() {
         <MapPicker
           coordinates={formData.coordinates}
           onCoordinatesChange={(coords) => setFormData({ ...formData, coordinates: coords || '' })}
+          districtId={formData.district_id}
+          subDistrictId={formData.sub_district_id}
         />
 
         {/* Form Actions */}
