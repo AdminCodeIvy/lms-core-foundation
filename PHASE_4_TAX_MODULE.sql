@@ -145,6 +145,19 @@ BEGIN
   END IF;
 END $$;
 
+-- Ensure has_rental_agreement column exists for existing tables
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'has_rental_agreement'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN has_rental_agreement BOOLEAN DEFAULT false;
+  END IF;
+END $$;
+
 -- Create unique index for reference_id if not exists
 CREATE UNIQUE INDEX IF NOT EXISTS idx_tax_assessments_reference_id ON public.tax_assessments(reference_id);
 
