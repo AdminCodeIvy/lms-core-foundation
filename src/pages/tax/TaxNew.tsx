@@ -230,6 +230,14 @@ export default function TaxNew() {
                     placeholder="Search by Reference ID or Parcel Number"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (searchTerm.length >= 2) {
+                          searchProperties();
+                        }
+                      }
+                    }}
                     className="pl-9"
                   />
                 </div>
