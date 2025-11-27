@@ -121,11 +121,53 @@ const CustomerDetail = () => {
     try {
       setSubmitting(true);
 
-      const { error } = await supabase.functions.invoke('submit-customer', {
-        body: { customer_id: customer.id }
-      });
+      // Update customer status to SUBMITTED
+      const { error: updateError } = await supabase
+        .from('customers')
+        .update({
+          status: 'SUBMITTED',
+          submitted_at: new Date().toISOString(),
+          rejection_feedback: null
+        })
+        .eq('id', customer.id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // Create activity log
+      const { error: logError } = await supabase
+        .from('activity_logs')
+        .insert({
+          entity_type: 'CUSTOMER',
+          entity_id: customer.id,
+          action: 'SUBMITTED',
+          performed_by: user!.id,
+          metadata: {
+            reference_id: customer.reference_id,
+            customer_type: customer.customer_type,
+            submitted_at: new Date().toISOString()
+          }
+        });
+
+      if (logError) console.error('Activity log error:', logError);
+
+      // Get approvers and create notifications
+      const { data: approvers } = await supabase
+        .from('users')
+        .select('id')
+        .in('role', ['APPROVER', 'ADMINISTRATOR'])
+        .eq('is_active', true);
+
+      if (approvers && approvers.length > 0) {
+        const notifications = approvers.map(approver => ({
+          user_id: approver.id,
+          title: 'New Customer Submitted',
+          message: `Customer ${customer.reference_id} submitted by ${profile?.full_name || 'Unknown User'}`,
+          entity_type: 'CUSTOMER',
+          entity_id: customer.id
+        }));
+
+        await supabase.from('notifications').insert(notifications);
+      }
 
       toast({
         title: 'Success',
