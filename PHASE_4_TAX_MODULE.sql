@@ -145,9 +145,19 @@ BEGIN
   END IF;
 END $$;
 
--- Ensure renter/rental detail columns exist for existing tables
+-- Ensure Phase 4 tax columns exist for existing tables
 DO $$
 BEGIN
+  -- Occupancy & renter details
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'occupancy_type'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN occupancy_type occupancy_type NOT NULL DEFAULT 'OWNER_OCCUPIED';
+  END IF;
+
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public'
@@ -200,6 +210,200 @@ BEGIN
       AND column_name = 'has_rental_agreement'
   ) THEN
     ALTER TABLE public.tax_assessments ADD COLUMN has_rental_agreement BOOLEAN DEFAULT false;
+  END IF;
+
+  -- Property details
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'property_type'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN property_type TEXT;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'land_size'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN land_size DECIMAL(15,2);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'built_up_area'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN built_up_area DECIMAL(15,2);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'number_of_units'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN number_of_units INTEGER;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'number_of_floors'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN number_of_floors INTEGER;
+  END IF;
+
+  -- Utilities & services
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'has_water'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN has_water BOOLEAN DEFAULT false;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'has_electricity'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN has_electricity BOOLEAN DEFAULT false;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'has_sewer'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN has_sewer BOOLEAN DEFAULT false;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'has_waste_collection'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN has_waste_collection BOOLEAN DEFAULT false;
+  END IF;
+
+  -- Construction & legal
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'construction_status'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN construction_status construction_status DEFAULT 'COMPLETED';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'property_registered'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN property_registered BOOLEAN DEFAULT false;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'title_deed_number'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN title_deed_number TEXT;
+  END IF;
+
+  -- Tax calculation fields
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'base_assessment'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN base_assessment DECIMAL(15,2);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'exemption_amount'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN exemption_amount DECIMAL(15,2) DEFAULT 0;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'assessed_amount'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN assessed_amount DECIMAL(15,2);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'paid_amount'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN paid_amount DECIMAL(15,2) DEFAULT 0;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'outstanding_amount'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN outstanding_amount DECIMAL(15,2) DEFAULT 0;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'penalty_amount'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN penalty_amount DECIMAL(15,2) DEFAULT 0;
+  END IF;
+
+  -- Dates & status
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'assessment_date'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN assessment_date DATE;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'due_date'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN due_date DATE;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'status'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN status tax_status DEFAULT 'NOT_ASSESSED';
   END IF;
 END $$;
 
