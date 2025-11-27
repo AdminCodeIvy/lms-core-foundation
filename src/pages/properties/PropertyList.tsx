@@ -8,20 +8,31 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Search, Filter } from 'lucide-react';
+import { Plus, Search, Filter, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface Property {
   id: string;
   reference_id: string;
   parcel_number: string;
   status: string;
+  created_by: string;
   district: { code: string; name: string };
   updated_at: string;
 }
 
 export default function PropertyList() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
@@ -31,6 +42,9 @@ export default function PropertyList() {
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'all');
   const [districtFilter, setDistrictFilter] = useState(searchParams.get('district') || 'all');
   const [showArchived, setShowArchived] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [propertyToDelete, setPropertyToDelete] = useState<Property | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 50,
@@ -66,6 +80,7 @@ export default function PropertyList() {
           reference_id,
           parcel_number,
           status,
+          created_by,
           updated_at,
           district:districts!properties_district_id_fkey(id, code, name)
         `,
@@ -113,6 +128,64 @@ export default function PropertyList() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDeleteClick = (property: Property, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPropertyToDelete(property);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!propertyToDelete) return;
+
+    try {
+      setDeleting(true);
+
+      // Fetch all photos for this property
+      const { data: photos } = await supabase
+        .from('property_photos')
+        .select('photo_url')
+        .eq('property_id', propertyToDelete.id);
+
+      // Delete images from storage
+      if (photos && photos.length > 0) {
+        for (const photo of photos) {
+          // Extract file path from URL
+          const url = new URL(photo.photo_url);
+          const pathParts = url.pathname.split('/property-photos/');
+          if (pathParts.length > 1) {
+            const filePath = pathParts[1];
+            await supabase.storage
+              .from('property-photos')
+              .remove([filePath]);
+          }
+        }
+      }
+
+      // Delete property (cascade will handle related records)
+      const { error } = await supabase
+        .from('properties')
+        .delete()
+        .eq('id', propertyToDelete.id);
+
+      if (error) throw error;
+
+      toast.success('Property deleted successfully');
+      setDeleteDialogOpen(false);
+      setPropertyToDelete(null);
+      fetchProperties();
+    } catch (error: any) {
+      console.error('Error deleting property:', error);
+      toast.error(error.message || 'Failed to delete property');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const canDelete = (property: Property) => {
+    return profile?.role === 'ADMINISTRATOR' || 
+           (property.status === 'DRAFT' && property.created_by === user?.id && profile?.role === 'INPUTTER');
   };
 
   const getStatusColor = (status: string) => {
@@ -258,16 +331,27 @@ export default function PropertyList() {
                         {new Date(property.updated_at).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/properties/${property.id}`);
-                          }}
-                        >
-                          View
-                        </Button>
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/properties/${property.id}`);
+                            }}
+                          >
+                            View
+                          </Button>
+                          {canDelete(property) && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={(e) => handleDeleteClick(property, e)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -304,6 +388,29 @@ export default function PropertyList() {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Property</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete property <strong>{propertyToDelete?.reference_id}</strong>?
+              This action cannot be undone. All associated data including images will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
