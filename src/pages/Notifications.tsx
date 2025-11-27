@@ -42,13 +42,31 @@ export default function Notifications() {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.functions.invoke('get-notifications', {
-        body: { filter, page: 1, limit: 50 },
-      });
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Build query
+      let query = supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      // Apply filter
+      if (filter === 'unread') {
+        query = query.eq('is_read', false);
+      } else if (filter === 'read') {
+        query = query.eq('is_read', true);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
-      setNotifications(data.data || []);
+      setNotifications(data || []);
     } catch (error) {
       console.error('Error fetching notifications:', error);
       toast({
@@ -63,9 +81,10 @@ export default function Notifications() {
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {
-      const { error } = await supabase.functions.invoke('mark-notification-read', {
-        body: { notification_id: notificationId },
-      });
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', notificationId);
 
       if (error) throw error;
 
@@ -87,9 +106,15 @@ export default function Notifications() {
 
   const handleMarkAllAsRead = async () => {
     try {
-      const { error } = await supabase.functions.invoke('mark-notification-read', {
-        body: { mark_all: true },
-      });
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('user_id', user.id)
+        .eq('is_read', false);
 
       if (error) throw error;
 
