@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, FileText, MapPin, Camera, Users, Activity, Receipt, Edit, Send } from 'lucide-react';
+import { ArrowLeft, FileText, MapPin, Camera, Users, Activity, Receipt, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { ActivityLogTab } from '@/components/activity/ActivityLogTab';
 import { SubmitConfirmationDialog } from '@/components/workflow/SubmitConfirmationDialog';
@@ -246,18 +246,6 @@ export default function PropertyDetail() {
           <Badge className={`${getStatusColor(property.status)} text-base px-4 py-1.5`}>
             {property.status}
           </Badge>
-          {((profile?.role === 'INPUTTER' && property.status === 'DRAFT' && property.created_by === user?.id) ||
-            (profile?.role === 'APPROVER' && ['SUBMITTED', 'APPROVED', 'REJECTED'].includes(property.status)) ||
-            profile?.role === 'ADMINISTRATOR') && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => toast.info('Property edit feature coming soon')}
-            >
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
-          )}
           {((property.status === 'DRAFT' || property.status === 'REJECTED') && 
             (property.created_by === user?.id || profile?.role === 'ADMINISTRATOR')) && (
             <Button 
