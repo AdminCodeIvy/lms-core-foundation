@@ -139,9 +139,7 @@ export default function TaxList() {
             id,
             reference_id,
             parcel_number,
-            district:districts!properties_district_id_fkey(id, name),
-            customer_id,
-            customer:customers!properties_customer_id_fkey(id, name, entity_type)
+            district:districts!properties_district_id_fkey(id, name)
           )
         `)
         .order('created_at', { ascending: false })
@@ -272,7 +270,7 @@ export default function TaxList() {
       console.error('Export error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to export tax assessments',
+        description: error?.message || 'Failed to export tax assessments',
         variant: 'destructive',
       });
     } finally {
