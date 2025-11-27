@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { MapPicker } from '@/components/property/MapPicker';
 
 export default function PropertyNew() {
   const navigate = useNavigate();
@@ -565,6 +566,12 @@ export default function PropertyNew() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Map Location Picker */}
+        <MapPicker
+          coordinates={formData.coordinates}
+          onCoordinatesChange={(coords) => setFormData({ ...formData, coordinates: coords || '' })}
+        />
 
         {/* Property Images */}
         <Card>
