@@ -566,15 +566,15 @@ export default function PropertyNew() {
           </CardContent>
         </Card>
 
-        {/* Property Photos */}
+        {/* Property Images */}
         <Card>
           <CardHeader>
-            <CardTitle>Property Photos (Optional)</CardTitle>
+            <CardTitle>Property Images (Optional)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="photos">Upload Photos</Label>
+                <Label htmlFor="photos">Upload Images</Label>
                 <Input
                   id="photos"
                   type="file"
@@ -588,7 +588,7 @@ export default function PropertyNew() {
                   className="mt-1"
                 />
                 <p className="text-sm text-muted-foreground mt-1">
-                  You can select multiple images
+                  You can select multiple images at once
                 </p>
               </div>
               {selectedImages.length > 0 && (
