@@ -411,17 +411,81 @@ export const ReviewQueue = () => {
 
   const handleApproveProperty = async () => {
     if (!selectedProperty) return;
+    if (!profile) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'User information is missing. Please sign in again.',
+      });
+      return;
+    }
 
     try {
       setActionLoading(true);
 
-      const { data, error } = await supabase.functions.invoke('approve-property', {
-        body: { property_id: selectedProperty.id }
-      });
+      // Fetch latest property state
+      const { data: property, error: fetchError } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('id', selectedProperty.id)
+        .single();
 
-      if (error) {
-        console.error('Edge function error:', error);
-        throw error;
+      if (fetchError || !property) {
+        console.error('Error fetching property before approval:', fetchError);
+        throw new Error('Property not found');
+      }
+
+      if (property.status !== 'SUBMITTED') {
+        throw new Error('Only SUBMITTED properties can be approved');
+      }
+
+      if (!['APPROVER', 'ADMINISTRATOR'].includes(profile.role)) {
+        throw new Error('Only approvers can approve properties');
+      }
+
+      const approvedAt = new Date().toISOString();
+
+      // Update property status
+      const { error: updateError } = await supabase
+        .from('properties')
+        .update({
+          status: 'APPROVED',
+          approved_by: profile.id,
+          approved_at: approvedAt,
+          rejection_feedback: null,
+        })
+        .eq('id', selectedProperty.id);
+
+      if (updateError) {
+        console.error('Error updating property status:', updateError);
+        throw new Error('Failed to approve property');
+      }
+
+      // Activity log (best-effort)
+      const { error: logError } = await supabase.from('activity_logs').insert({
+        entity_type: 'PROPERTY',
+        entity_id: selectedProperty.id,
+        action: 'APPROVED',
+        performed_by: profile.id,
+        metadata: {
+          reference_id: property.reference_id,
+          approved_at: approvedAt,
+        },
+      });
+      if (logError) {
+        console.error('Error creating activity log for approval:', logError);
+      }
+
+      // Notification for property creator (best-effort)
+      const { error: notificationError } = await supabase.from('notifications').insert({
+        user_id: property.created_by,
+        title: 'Property Approved',
+        message: `Your property ${property.reference_id} was approved by ${profile.full_name || 'Unknown User'}`,
+        entity_type: 'PROPERTY',
+        entity_id: selectedProperty.id,
+      });
+      if (notificationError) {
+        console.error('Error creating approval notification:', notificationError);
       }
 
       toast({
@@ -446,20 +510,78 @@ export const ReviewQueue = () => {
 
   const handleRejectProperty = async (feedback: string) => {
     if (!selectedProperty) return;
+    if (!profile) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'User information is missing. Please sign in again.',
+      });
+      return;
+    }
 
     try {
       setActionLoading(true);
 
-      const { data, error } = await supabase.functions.invoke('reject-property', {
-        body: { 
-          property_id: selectedProperty.id,
-          feedback: feedback
-        }
-      });
+      // Fetch latest property state
+      const { data: property, error: fetchError } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('id', selectedProperty.id)
+        .single();
 
-      if (error) {
-        console.error('Edge function error:', error);
-        throw error;
+      if (fetchError || !property) {
+        console.error('Error fetching property before rejection:', fetchError);
+        throw new Error('Property not found');
+      }
+
+      if (property.status !== 'SUBMITTED') {
+        throw new Error('Only SUBMITTED properties can be rejected');
+      }
+
+      if (!['APPROVER', 'ADMINISTRATOR'].includes(profile.role)) {
+        throw new Error('Only approvers can reject properties');
+      }
+
+      // Update property status
+      const { error: updateError } = await supabase
+        .from('properties')
+        .update({
+          status: 'REJECTED',
+          rejection_feedback: feedback,
+        })
+        .eq('id', selectedProperty.id);
+
+      if (updateError) {
+        console.error('Error updating property status for rejection:', updateError);
+        throw new Error('Failed to reject property');
+      }
+
+      // Activity log (best-effort)
+      const { error: logError } = await supabase.from('activity_logs').insert({
+        entity_type: 'PROPERTY',
+        entity_id: selectedProperty.id,
+        action: 'REJECTED',
+        performed_by: profile.id,
+        metadata: {
+          reference_id: property.reference_id,
+          feedback,
+        },
+      });
+      if (logError) {
+        console.error('Error creating activity log for rejection:', logError);
+      }
+
+      // Notification for property creator (best-effort)
+      const feedbackPreview = feedback.length > 50 ? `${feedback.substring(0, 50)}...` : feedback;
+      const { error: notificationError } = await supabase.from('notifications').insert({
+        user_id: property.created_by,
+        title: 'Property Rejected',
+        message: `Your property ${property.reference_id} was rejected by ${profile.full_name || 'Unknown User'}. Reason: ${feedbackPreview}`,
+        entity_type: 'PROPERTY',
+        entity_id: selectedProperty.id,
+      });
+      if (notificationError) {
+        console.error('Error creating rejection notification:', notificationError);
       }
 
       toast({
