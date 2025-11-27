@@ -80,11 +80,11 @@ export default function TaxNew() {
         .from('properties')
         .select(`
           *,
-          district:districts(name),
-          customer:customers(name)
+          district:districts!properties_district_id_fkey(id, name),
+          customer:customers!properties_customer_id_fkey(id, name)
         `)
         .or(`reference_id.ilike.%${searchTerm}%,parcel_number.ilike.%${searchTerm}%`)
-        .eq('status', 'APPROVED')
+        .in('status', ['APPROVED', 'SUBMITTED'])
         .limit(10);
 
       if (error) throw error;
