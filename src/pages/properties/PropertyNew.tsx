@@ -41,13 +41,13 @@ export default function PropertyNew() {
     coordinates: '',
     // Boundaries
     north_length: '',
-    north_adjacent_type: 'BUILDING',
+    north_type: 'BUILDING',
     south_length: '',
-    south_adjacent_type: 'BUILDING',
+    south_type: 'BUILDING',
     east_length: '',
-    east_adjacent_type: 'BUILDING',
+    east_type: 'BUILDING',
     west_length: '',
-    west_adjacent_type: 'BUILDING',
+    west_type: 'BUILDING',
   });
 
   useEffect(() => {
@@ -131,13 +131,13 @@ export default function PropertyNew() {
         .insert({
           property_id: property.id,
           north_length: parseFloat(formData.north_length),
-          north_adjacent_type: formData.north_adjacent_type,
+          north_type: formData.north_type,
           south_length: parseFloat(formData.south_length),
-          south_adjacent_type: formData.south_adjacent_type,
+          south_type: formData.south_type,
           east_length: parseFloat(formData.east_length),
-          east_adjacent_type: formData.east_adjacent_type,
+          east_type: formData.east_type,
           west_length: parseFloat(formData.west_length),
-          west_adjacent_type: formData.west_adjacent_type
+          west_type: formData.west_type
         });
 
       if (boundariesError) throw boundariesError;
@@ -429,7 +429,7 @@ export default function PropertyNew() {
                 </div>
                 <div>
                   <Label>Adjacent Type *</Label>
-                  <Select value={formData.north_adjacent_type} onValueChange={(value) => setFormData({ ...formData, north_adjacent_type: value })}>
+                  <Select value={formData.north_type} onValueChange={(value) => setFormData({ ...formData, north_type: value })}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -459,7 +459,7 @@ export default function PropertyNew() {
                 </div>
                 <div>
                   <Label>Adjacent Type *</Label>
-                  <Select value={formData.south_adjacent_type} onValueChange={(value) => setFormData({ ...formData, south_adjacent_type: value })}>
+                  <Select value={formData.south_type} onValueChange={(value) => setFormData({ ...formData, south_type: value })}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -489,7 +489,7 @@ export default function PropertyNew() {
                 </div>
                 <div>
                   <Label>Adjacent Type *</Label>
-                  <Select value={formData.east_adjacent_type} onValueChange={(value) => setFormData({ ...formData, east_adjacent_type: value })}>
+                  <Select value={formData.east_type} onValueChange={(value) => setFormData({ ...formData, east_type: value })}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -519,7 +519,7 @@ export default function PropertyNew() {
                 </div>
                 <div>
                   <Label>Adjacent Type *</Label>
-                  <Select value={formData.west_adjacent_type} onValueChange={(value) => setFormData({ ...formData, west_adjacent_type: value })}>
+                  <Select value={formData.west_type} onValueChange={(value) => setFormData({ ...formData, west_type: value })}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
