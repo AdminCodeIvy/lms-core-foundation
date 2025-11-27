@@ -141,6 +141,8 @@ export default function Notifications() {
 
     if (notification.entity_type === 'CUSTOMER') {
       navigate(`/customers/${notification.entity_id}`);
+    } else if (notification.entity_type === 'PROPERTY') {
+      navigate(`/properties/${notification.entity_id}`);
     }
   };
 
@@ -270,8 +272,139 @@ export default function Notifications() {
               </div>
             )}
           </TabsContent>
-          <TabsContent value="unread" className="mt-6" />
-          <TabsContent value="read" className="mt-6" />
+
+          <TabsContent value="unread" className="mt-6">
+            {loading ? (
+              <div className="space-y-4">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Card key={i} className="p-4">
+                    <div className="flex gap-4">
+                      <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-full" />
+                        <Skeleton className="h-3 w-1/2" />
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : notifications.length === 0 ? (
+              <Card className="p-12 text-center">
+                <Bell className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                <p className="text-muted-foreground">No unread notifications</p>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {notifications.map((notification) => (
+                  <Card
+                    key={notification.id}
+                    className="p-4 cursor-pointer hover:shadow-md transition-shadow bg-blue-50 dark:bg-blue-950/20 border-blue-200"
+                    onClick={() => handleNotificationClick(notification)}
+                  >
+                    <div className="flex gap-4">
+                      <div className="flex-shrink-0">
+                        {getNotificationIcon(notification.title)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-semibold">{notification.title}</p>
+                          <div className="w-2 h-2 rounded-full bg-blue-600 flex-shrink-0 mt-1" />
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {notification.message}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {format(new Date(notification.created_at), 'MMM dd, yyyy hh:mm a')}
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleNotificationClick(notification);
+                          }}
+                        >
+                          View
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMarkAsRead(notification.id);
+                          }}
+                        >
+                          Mark as read
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="read" className="mt-6">
+            {loading ? (
+              <div className="space-y-4">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Card key={i} className="p-4">
+                    <div className="flex gap-4">
+                      <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-full" />
+                        <Skeleton className="h-3 w-1/2" />
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : notifications.length === 0 ? (
+              <Card className="p-12 text-center">
+                <Bell className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                <p className="text-muted-foreground">No read notifications</p>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {notifications.map((notification) => (
+                  <Card
+                    key={notification.id}
+                    className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => handleNotificationClick(notification)}
+                  >
+                    <div className="flex gap-4">
+                      <div className="flex-shrink-0">
+                        {getNotificationIcon(notification.title)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold">{notification.title}</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {notification.message}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {format(new Date(notification.created_at), 'MMM dd, yyyy hh:mm a')}
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleNotificationClick(notification);
+                        }}
+                      >
+                        View
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
         </Tabs>
       </div>
   );
