@@ -443,15 +443,12 @@ export const ReviewQueue = () => {
         throw new Error('Only approvers can approve properties');
       }
 
-      const approvedAt = new Date().toISOString();
-
       // Update property status
       const { error: updateError } = await supabase
         .from('properties')
         .update({
           status: 'APPROVED',
           approved_by: profile.id,
-          approved_at: approvedAt,
           rejection_feedback: null,
         })
         .eq('id', selectedProperty.id);
@@ -469,7 +466,6 @@ export const ReviewQueue = () => {
         performed_by: profile.id,
         metadata: {
           reference_id: property.reference_id,
-          approved_at: approvedAt,
         },
       });
       if (logError) {
