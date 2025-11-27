@@ -130,101 +130,46 @@ export default function TaxList() {
     try {
       setExporting(true);
 
-      // Build base query with joins (no pagination limit, max 10k rows)
+      // Build base query - keep it simple like the list view
       let query = supabase
         .from('tax_assessments')
-        .select(`
-          *,
-          property:properties!tax_assessments_property_id_fkey(
-            id,
-            reference_id,
-            parcel_number,
-            district:districts!properties_district_id_fkey(id, name)
-          )
-        `)
-        .order('created_at', { ascending: false })
-        .limit(10000);
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      // Apply search filter via properties table (reference_id / parcel_number)
+      // Apply filters - same as list view
       if (search) {
-        const { data: properties, error: propertiesError } = await supabase
-          .from('properties')
-          .select('id')
-          .or(`reference_id.ilike.%${search}%,parcel_number.ilike.%${search}%`);
-
-        if (propertiesError) throw propertiesError;
-
-        if (!properties || properties.length === 0) {
-          toast({
-            title: 'No data',
-            description: 'No tax assessments match the current filters',
-          });
-          setExporting(false);
-          return;
-        }
-
-        const propertyIds = properties.map((p) => p.id);
-        query = query.in('property_id', propertyIds);
+        query = query.ilike('reference_id', `%${search}%`);
       }
 
-      // Tax year filter
       if (taxYear && taxYear !== 'all') {
         query = query.eq('tax_year', parseInt(taxYear));
       }
 
-      // Status filter
       if (status && status !== 'all') {
         query = query.eq('status', status);
       }
 
-      // Arrears-only filter
       if (arrearsOnly) {
         query = query.gt('outstanding_amount', 0);
       }
 
-      // District filter (also via properties table)
-      if (districtId && districtId !== 'all') {
-        const { data: districtProperties, error: districtError } = await supabase
-          .from('properties')
-          .select('id')
-          .eq('district_id', districtId);
-
-        if (districtError) throw districtError;
-
-        if (!districtProperties || districtProperties.length === 0) {
-          toast({
-            title: 'No data',
-            description: 'No tax assessments match the current filters',
-          });
-          setExporting(false);
-          return;
-        }
-
-        const districtPropertyIds = districtProperties.map((p) => p.id);
-        query = query.in('property_id', districtPropertyIds);
-      }
-
-      const { data, error } = await query;
+      const { data: assessments, error } = await query;
 
       if (error) throw error;
 
-      const assessments = data || [];
-
-      if (assessments.length === 0) {
+      if (!assessments || assessments.length === 0) {
         toast({
           title: 'No data',
-          description: 'No tax assessments match the current filters',
+          description: 'No tax assessments found',
         });
         setExporting(false);
         return;
       }
 
-      // Format data for export
+      // Format data for export (simplified - no property details)
       const exportData = assessments.map((assessment: any) => ({
-        'Property Reference': assessment.property?.reference_id || 'N/A',
-        'Parcel Number': assessment.property?.parcel_number || 'N/A',
+        'Reference ID': assessment.reference_id || 'N/A',
         'Tax Year': assessment.tax_year,
-        'District': assessment.property?.district?.name || 'N/A',
         'Owner Type': assessment.occupancy_type,
         'Property Type': assessment.property_type,
         'Land Size (m²)': assessment.land_size,
