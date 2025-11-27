@@ -71,25 +71,89 @@ export default function TaxList() {
   const fetchAssessments = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: pagination.page.toString(),
-        limit: pagination.limit.toString(),
-      });
-      
-      if (search) params.append('search', search);
-      if (taxYear && taxYear !== 'all') params.append('tax_year', taxYear);
-      if (status && status !== 'all') params.append('status', status);
-      if (districtId && districtId !== 'all') params.append('district_id', districtId);
-      if (arrearsOnly) params.append('arrears_only', 'true');
+      // Build base query
+      let query = supabase
+        .from('tax_assessments')
+        .select(`
+          *,
+          property:properties!tax_assessments_property_id_fkey(
+            id,
+            reference_id,
+            parcel_number,
+            district:districts!properties_district_id_fkey(id, name),
+            customer_id,
+            customer:customers!properties_customer_id_fkey(id, name, entity_type)
+          ),
+          creator:users!tax_assessments_created_by_fkey(id, full_name)
+        `, { count: 'exact' })
+        .order('created_at', { ascending: false });
 
-      const { data, error } = await supabase.functions.invoke('get-tax-assessments', {
-        body: params
-      });
+      // Apply search filter
+      if (search) {
+        const { data: properties } = await supabase
+          .from('properties')
+          .select('id')
+          .or(`reference_id.ilike.%${search}%,parcel_number.ilike.%${search}%`);
+        
+        if (properties && properties.length > 0) {
+          const propertyIds = properties.map(p => p.id);
+          query = query.in('property_id', propertyIds);
+        } else {
+          // No matching properties, return empty result
+          setAssessments([]);
+          setPagination({
+            page: pagination.page,
+            limit: pagination.limit,
+            total: 0,
+            totalPages: 0
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Apply filters
+      if (taxYear && taxYear !== 'all') {
+        query = query.eq('tax_year', parseInt(taxYear));
+      }
+
+      if (status && status !== 'all') {
+        query = query.eq('status', status);
+      }
+
+      if (arrearsOnly) {
+        query = query.gt('outstanding_amount', 0);
+      }
+
+      if (districtId && districtId !== 'all') {
+        const { data: properties } = await supabase
+          .from('properties')
+          .select('id')
+          .eq('district_id', districtId);
+        
+        if (properties && properties.length > 0) {
+          const propertyIds = properties.map(p => p.id);
+          query = query.in('property_id', propertyIds);
+        }
+      }
+
+      // Apply pagination
+      const from = (pagination.page - 1) * pagination.limit;
+      const to = from + pagination.limit - 1;
+      query = query.range(from, to);
+
+      const { data, error, count } = await query;
 
       if (error) throw error;
 
-      setAssessments(data.data || []);
-      setPagination(data.pagination);
+      setAssessments((data as unknown as TaxAssessment[]) || []);
+      const total = count ?? 0;
+      setPagination({
+        page: pagination.page,
+        limit: pagination.limit,
+        total,
+        totalPages: total > 0 ? Math.ceil(total / pagination.limit) : 0
+      });
     } catch (error: any) {
       console.error('Error fetching tax assessments:', error);
       toast({
