@@ -130,42 +130,96 @@ export default function TaxList() {
     try {
       setExporting(true);
 
-      // Fetch ALL assessments with proper joins
+      // Build base query with joins (no pagination limit, max 10k rows)
       let query = supabase
         .from('tax_assessments')
         .select(`
           *,
-          property:properties(
+          property:properties!tax_assessments_property_id_fkey(
+            id,
             reference_id,
             parcel_number,
-            customer:customers(name),
-            district:districts(name)
+            district:districts!properties_district_id_fkey(id, name),
+            customer_id,
+            customer:customers!properties_customer_id_fkey(id, name, entity_type)
           )
         `)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(10000);
 
-      // Apply same filters as list view
+      // Apply search filter via properties table (reference_id / parcel_number)
       if (search) {
-        query = query.or(`property.reference_id.ilike.%${search}%,property.parcel_number.ilike.%${search}%`);
+        const { data: properties, error: propertiesError } = await supabase
+          .from('properties')
+          .select('id')
+          .or(`reference_id.ilike.%${search}%,parcel_number.ilike.%${search}%`);
+
+        if (propertiesError) throw propertiesError;
+
+        if (!properties || properties.length === 0) {
+          toast({
+            title: 'No data',
+            description: 'No tax assessments match the current filters',
+          });
+          setExporting(false);
+          return;
+        }
+
+        const propertyIds = properties.map((p) => p.id);
+        query = query.in('property_id', propertyIds);
       }
+
+      // Tax year filter
       if (taxYear && taxYear !== 'all') {
         query = query.eq('tax_year', parseInt(taxYear));
       }
+
+      // Status filter
       if (status && status !== 'all') {
         query = query.eq('status', status);
       }
-      if (districtId && districtId !== 'all') {
-        query = query.eq('property.district_id', districtId);
-      }
+
+      // Arrears-only filter
       if (arrearsOnly) {
         query = query.gt('outstanding_amount', 0);
       }
 
+      // District filter (also via properties table)
+      if (districtId && districtId !== 'all') {
+        const { data: districtProperties, error: districtError } = await supabase
+          .from('properties')
+          .select('id')
+          .eq('district_id', districtId);
+
+        if (districtError) throw districtError;
+
+        if (!districtProperties || districtProperties.length === 0) {
+          toast({
+            title: 'No data',
+            description: 'No tax assessments match the current filters',
+          });
+          setExporting(false);
+          return;
+        }
+
+        const districtPropertyIds = districtProperties.map((p) => p.id);
+        query = query.in('property_id', districtPropertyIds);
+      }
+
       const { data, error } = await query;
-      
+
       if (error) throw error;
 
       const assessments = data || [];
+
+      if (assessments.length === 0) {
+        toast({
+          title: 'No data',
+          description: 'No tax assessments match the current filters',
+        });
+        setExporting(false);
+        return;
+      }
 
       // Format data for export
       const exportData = assessments.map((assessment: any) => ({
