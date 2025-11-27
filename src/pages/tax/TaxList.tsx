@@ -34,6 +34,7 @@ export default function TaxList() {
   const [assessments, setAssessments] = useState<TaxAssessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [downloadingTemplate, setDownloadingTemplate] = useState(false);
   const [search, setSearch] = useState('');
   const [taxYear, setTaxYear] = useState('all');
   const [status, setStatus] = useState('all');
@@ -123,6 +124,58 @@ export default function TaxList() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownloadTemplate = async () => {
+    try {
+      setDownloadingTemplate(true);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-template`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ uploadType: 'TAX_ASSESSMENT' }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate template');
+      }
+
+      const { file, filename } = await response.json();
+      const blob = new Blob([new Uint8Array(file)], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: 'Success',
+        description: 'Template downloaded successfully',
+      });
+    } catch (error: any) {
+      console.error('Download template error:', error);
+      toast({
+        title: 'Error',
+        description: error?.message || 'Failed to download template',
+        variant: 'destructive',
+      });
+    } finally {
+      setDownloadingTemplate(false);
     }
   };
 
@@ -252,6 +305,14 @@ export default function TaxList() {
           <p className="text-muted-foreground">Manage property tax assessments and payments</p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={handleDownloadTemplate} 
+            disabled={downloadingTemplate}
+          >
+            <FileDown className="mr-2 h-4 w-4" />
+            {downloadingTemplate ? 'Downloading...' : 'Download Template'}
+          </Button>
           {canExport && (
             <Button variant="outline" onClick={handleExport} disabled={exporting}>
               <FileDown className="mr-2 h-4 w-4" />
