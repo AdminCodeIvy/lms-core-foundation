@@ -175,18 +175,34 @@ export default function TaxNew() {
         due_date: format(formData.due_date, 'yyyy-MM-dd'),
       };
 
-      const { data, error } = await supabase.functions.invoke('create-tax-assessment', {
-        body: payload
-      });
+      // Insert directly into database - RLS policies allow INPUTTER+ roles
+      const { data, error } = await supabase
+        .from('tax_assessments')
+        .insert(payload)
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Create activity log
+      await supabase.from('activity_logs').insert({
+        entity_type: 'TAX_ASSESSMENT',
+        entity_id: data.id,
+        action: 'CREATED',
+        performed_by: profile?.id,
+        metadata: {
+          property_id: payload.property_id,
+          tax_year: payload.tax_year,
+          assessed_amount: payload.base_assessment - (payload.exemption_amount || 0)
+        }
+      });
 
       toast({
         title: 'Success',
         description: 'Tax assessment created successfully'
       });
 
-      navigate(`/tax/${data.assessment.id}`);
+      navigate(`/tax/${data.id}`);
     } catch (error: any) {
       console.error('Error creating tax assessment:', error);
       toast({
