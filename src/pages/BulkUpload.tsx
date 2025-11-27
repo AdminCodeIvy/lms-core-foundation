@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import * as XLSX from 'xlsx';
 
 type UploadType = 'CUSTOMER' | 'PROPERTY' | 'TAX_ASSESSMENT' | 'TAX_PAYMENT';
 
@@ -87,28 +88,84 @@ export default function BulkUpload() {
 
   const handleDownloadTemplate = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('generate-template', {
-        body: { uploadType: selectedType },
-      });
+      let templateData: any[] = [];
+      let filename = '';
 
-      if (error) throw error;
+      // Generate template based on upload type
+      if (selectedType === 'CUSTOMER') {
+        templateData = [
+          {
+            'Customer Type': 'PERSON | BUSINESS | GOVERNMENT | MOSQUE_HOSPITAL | NON_PROFIT | CONTRACTOR',
+            'First Name': 'John (for PERSON)',
+            'Father Name': 'Smith (for PERSON)',
+            'Business Name': 'ABC Corp (for BUSINESS)',
+            'Email': 'email@example.com',
+            'Mobile 1': '+252611234567',
+            'Notes': 'Fill only relevant columns for your customer type'
+          }
+        ];
+        filename = 'customer-template.xlsx';
+      } else if (selectedType === 'PROPERTY') {
+        templateData = [
+          {
+            'Customer Reference ID': 'CUS-2025-00001',
+            'Parcel Number': 'PARCEL-001',
+            'District Code': 'ADD | DRD | HRG | JJG',
+            'Sub District': 'Sub-district name',
+            'Property Type': 'Residential | Commercial | etc',
+            'Latitude': '9.0192',
+            'Longitude': '38.7525',
+            'Notes': 'All fields required'
+          }
+        ];
+        filename = 'property-template.xlsx';
+      } else if (selectedType === 'TAX_ASSESSMENT') {
+        templateData = [
+          {
+            'Property Reference ID': 'PROP-2025-00001',
+            'Tax Year': '2025',
+            'Land Size': '500',
+            'Assessed Amount': '10000',
+            'Due Date': '2025-12-31',
+            'Notes': 'Enter property reference ID from properties table'
+          }
+        ];
+        filename = 'tax-assessment-template.xlsx';
+      } else if (selectedType === 'TAX_PAYMENT') {
+        templateData = [
+          {
+            'Assessment Reference ID': 'TAX-2025-00001',
+            'Payment Date': '2025-01-15',
+            'Amount Paid': '5000',
+            'Payment Method': 'CASH | BANK_TRANSFER | CHECK | MOBILE_MONEY',
+            'Receipt Number': 'REC-001',
+            'Notes': 'Enter assessment reference ID from tax assessments'
+          }
+        ];
+        filename = 'tax-payment-template.xlsx';
+      }
 
-      // Create blob and download
-      const blob = new Blob([data.file], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = data.filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(templateData);
+
+      // Set column widths
+      const colWidths = templateData.length > 0
+        ? Object.keys(templateData[0]).map(() => ({ wch: 25 }))
+        : [];
+      ws['!cols'] = colWidths;
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Template');
+
+      // Generate and download
+      XLSX.writeFile(wb, filename);
 
       toast.success('Template downloaded successfully');
       setStep(3);
     } catch (error: any) {
       console.error('Download error:', error);
-      toast.error(error.message || 'Failed to download template');
+      toast.error('Failed to download template');
     }
   };
 
