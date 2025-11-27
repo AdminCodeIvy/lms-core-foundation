@@ -73,44 +73,93 @@ export const ReviewQueue = () => {
     try {
       setLoading(true);
 
-      const { data, error } = await supabase
+      // Fetch customers with SUBMITTED status
+      const { data: customers, error: customersError } = await supabase
         .from('customers')
-        .select(
-          'id, reference_id, name, entity_type, submitted_at, created_by'
-        )
+        .select('id, reference_id, customer_type, submitted_at, created_by, status')
         .eq('status', 'SUBMITTED')
         .order('submitted_at', { ascending: true })
         .limit(50);
 
-      if (error) throw error;
+      if (customersError) throw customersError;
 
-      const items: ReviewQueueItem[] = (data || []).map((item: any) => {
-        const submittedAt = item.submitted_at ? new Date(item.submitted_at) : new Date();
+      // For each customer, fetch the name from the appropriate table
+      const itemsPromises = (customers || []).map(async (customer: any) => {
+        let name = 'Unknown';
+        
+        // Fetch name based on customer type
+        if (customer.customer_type === 'PERSON') {
+          const { data } = await supabase
+            .from('customer_person')
+            .select('first_name, father_name, grandfather_name')
+            .eq('customer_id', customer.id)
+            .single();
+          if (data) {
+            name = `${data.first_name} ${data.father_name} ${data.grandfather_name}`;
+          }
+        } else if (customer.customer_type === 'BUSINESS') {
+          const { data } = await supabase
+            .from('customer_business')
+            .select('business_name')
+            .eq('customer_id', customer.id)
+            .single();
+          if (data) name = data.business_name;
+        } else if (customer.customer_type === 'GOVERNMENT') {
+          const { data } = await supabase
+            .from('customer_government')
+            .select('full_department_name')
+            .eq('customer_id', customer.id)
+            .single();
+          if (data) name = data.full_department_name;
+        } else if (customer.customer_type === 'MOSQUE_HOSPITAL') {
+          const { data } = await supabase
+            .from('customer_mosque_hospital')
+            .select('full_name')
+            .eq('customer_id', customer.id)
+            .single();
+          if (data) name = data.full_name;
+        } else if (customer.customer_type === 'NON_PROFIT') {
+          const { data } = await supabase
+            .from('customer_non_profit')
+            .select('full_non_profit_name')
+            .eq('customer_id', customer.id)
+            .single();
+          if (data) name = data.full_non_profit_name;
+        } else if (customer.customer_type === 'CONTRACTOR') {
+          const { data } = await supabase
+            .from('customer_contractor')
+            .select('full_contractor_name')
+            .eq('customer_id', customer.id)
+            .single();
+          if (data) name = data.full_contractor_name;
+        }
+
+        const submittedAt = customer.submitted_at ? new Date(customer.submitted_at) : new Date();
         const daysPending = Math.floor(
           (Date.now() - submittedAt.getTime()) / (1000 * 60 * 60 * 24)
         );
 
         return {
-          id: item.id,
-          entity_type: 'CUSTOMER',
-          reference_id: item.reference_id,
-          name: item.name,
-          customer_type: item.entity_type,
-          submitted_by: item.created_by,
+          id: customer.id,
+          entity_type: 'CUSTOMER' as const,
+          reference_id: customer.reference_id,
+          name,
+          customer_type: customer.customer_type,
+          submitted_by: customer.created_by,
           submitted_by_name: 'Unknown',
-          submitted_at: item.submitted_at,
+          submitted_at: customer.submitted_at,
           days_pending: daysPending,
         };
       });
 
+      const items = await Promise.all(itemsPromises);
       setItems(items);
     } catch (err: any) {
       console.error('Error fetching review queue:', err);
       toast({
         variant: 'destructive',
         title: 'Error',
-        description:
-          err?.message || 'Failed to load review queue',
+        description: err?.message || 'Failed to load review queue',
       });
     } finally {
       setLoading(false);
