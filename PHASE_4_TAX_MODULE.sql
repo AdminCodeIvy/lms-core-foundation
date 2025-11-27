@@ -451,6 +451,19 @@ CREATE TABLE IF NOT EXISTS public.tax_payments (
   CONSTRAINT valid_payment_date CHECK (payment_date <= CURRENT_DATE)
 );
 
+-- Ensure notes column exists for existing tables
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_payments'
+      AND column_name = 'notes'
+  ) THEN
+    ALTER TABLE public.tax_payments ADD COLUMN notes TEXT;
+  END IF;
+END $$;
+
 -- =====================================================
 -- 4. CREATE INDEXES
 -- =====================================================
