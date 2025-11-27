@@ -188,14 +188,14 @@ export default function TaxNew() {
 
       // Create activity log
       await supabase.from('activity_logs').insert({
-        entity_type: 'TAX_ASSESSMENT',
+        entity_type: 'TAX',
         entity_id: data.id,
         action: 'CREATED',
         performed_by: profile?.id,
         metadata: {
           property_id: payload.property_id,
           tax_year: payload.tax_year,
-          assessed_amount: payload.base_assessment - (payload.exemption_amount || 0)
+          assessed_amount: payload.assessed_amount
         }
       });
 
