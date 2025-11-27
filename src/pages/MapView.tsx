@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import L from 'leaflet';
 import { Map as MapIcon, Layers, Filter, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,8 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import 'leaflet/dist/leaflet.css';
 
 interface PropertyParcel {
   id: string;
@@ -18,12 +18,18 @@ interface PropertyParcel {
   district: string;
   property_type: string;
   owner_name?: string;
+  coordinates?: [number, number];
 }
 
-// Mock parcel data for demonstration
+// Mock parcel data with random coordinates in Addis Ababa area
 const generateMockParcels = (): PropertyParcel[] => {
   const parcels: PropertyParcel[] = [];
   const taxStatuses: PropertyParcel['tax_status'][] = ['PAID', 'PARTIAL', 'OVERDUE', 'NOT_ASSESSED', 'ASSESSED'];
+  
+  // Addis Ababa approximate bounds
+  const centerLat = 9.03;
+  const centerLng = 38.74;
+  const spread = 0.1;
   
   for (let i = 0; i < 50; i++) {
     parcels.push({
@@ -35,6 +41,10 @@ const generateMockParcels = (): PropertyParcel[] => {
       district: ['Khartoum', 'Omdurman', 'Bahri'][Math.floor(Math.random() * 3)],
       property_type: ['Residential', 'Commercial', 'Industrial', 'Agricultural'][Math.floor(Math.random() * 4)],
       owner_name: Math.random() > 0.5 ? `Owner ${i + 1}` : undefined,
+      coordinates: [
+        centerLat + (Math.random() - 0.5) * spread,
+        centerLng + (Math.random() - 0.5) * spread
+      ]
     });
   }
   
@@ -42,6 +52,10 @@ const generateMockParcels = (): PropertyParcel[] => {
 };
 
 export default function MapView() {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const markersLayerRef = useRef<L.LayerGroup | null>(null);
+  
   const [parcels, setParcels] = useState<PropertyParcel[]>([]);
   const [filteredParcels, setFilteredParcels] = useState<PropertyParcel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,11 +74,71 @@ export default function MapView() {
     applyFilters();
   }, [parcels, filters]);
 
+  useEffect(() => {
+    if (!mapRef.current || mapInstanceRef.current) return;
+
+    // Initialize map
+    const map = L.map(mapRef.current).setView([9.03, 38.74], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    mapInstanceRef.current = map;
+    markersLayerRef.current = L.layerGroup().addTo(map);
+
+    return () => {
+      map.remove();
+      mapInstanceRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!markersLayerRef.current) return;
+
+    // Clear existing markers
+    markersLayerRef.current.clearLayers();
+
+    // Add markers for filtered parcels
+    filteredParcels.forEach((parcel) => {
+      if (!parcel.coordinates) return;
+
+      const color = getParcelColor(parcel.tax_status);
+      const circle = L.circleMarker(parcel.coordinates, {
+        fillColor: color,
+        fillOpacity: 0.7,
+        color: color,
+        weight: 2,
+        radius: 10
+      });
+
+      const popupContent = `
+        <div class="space-y-1 min-w-[200px]">
+          <div class="font-semibold text-base border-b pb-1 mb-2">
+            ${parcel.parcel_number}
+          </div>
+          <div class="text-sm space-y-1">
+            <div><strong>Reference:</strong> ${parcel.reference_id}</div>
+            <div><strong>District:</strong> ${parcel.district}</div>
+            <div><strong>Type:</strong> ${parcel.property_type}</div>
+            ${parcel.owner_name ? `<div><strong>Owner:</strong> ${parcel.owner_name}</div>` : ''}
+            <div class="pt-2">
+              <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset" style="background-color: ${color}20; color: ${color}">
+                ${parcel.tax_status.replace('_', ' ')}
+              </span>
+            </div>
+          </div>
+        </div>
+      `;
+
+      circle.bindPopup(popupContent);
+      circle.addTo(markersLayerRef.current!);
+    });
+  }, [filteredParcels]);
+
   const loadParcels = async () => {
     try {
       setLoading(false);
-      // In production, this would fetch from the database
-      // For now, using mock data
       const mockParcels = generateMockParcels();
       setParcels(mockParcels);
     } catch (error: any) {
@@ -115,11 +189,11 @@ export default function MapView() {
 
   const getParcelColor = (taxStatus: string) => {
     switch (taxStatus) {
-      case 'PAID': return '#22c55e'; // green
-      case 'PARTIAL': return '#f97316'; // orange
-      case 'OVERDUE': return '#ef4444'; // red
-      case 'ASSESSED': return '#eab308'; // yellow
-      case 'NOT_ASSESSED': return '#94a3b8'; // gray
+      case 'PAID': return '#22c55e';
+      case 'PARTIAL': return '#f97316';
+      case 'OVERDUE': return '#ef4444';
+      case 'ASSESSED': return '#eab308';
+      case 'NOT_ASSESSED': return '#94a3b8';
       default: return '#64748b';
     }
   };
@@ -284,9 +358,9 @@ export default function MapView() {
                   <div>
                     <Label className="text-base font-semibold mb-3 block">How to Use</Label>
                     <ul className="text-sm space-y-2 list-disc list-inside text-muted-foreground">
-                      <li>Full interactive map coming soon</li>
+                      <li>Click markers to view property details</li>
                       <li>Use filters to show specific parcels</li>
-                      <li>View parcels in list format below</li>
+                      <li>Zoom and pan to explore the map</li>
                     </ul>
                   </div>
                 </div>
@@ -296,54 +370,8 @@ export default function MapView() {
         </div>
       </div>
 
-      {/* Map Placeholder with Parcel List */}
-      <div className="flex-1 relative p-6 overflow-auto bg-muted/20">
-        <div className="container mx-auto">
-          <Alert className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Map View:</strong> Interactive map with Leaflet will be available after configuring the map tiles.
-              For now, view parcels in list format below.
-            </AlertDescription>
-          </Alert>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredParcels.map((parcel) => (
-              <Card key={parcel.id} className="p-4 hover:shadow-lg transition-shadow">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">{parcel.parcel_number}</h3>
-                    <div
-                      className="w-4 h-4 rounded-full border-2"
-                      style={{ borderColor: getParcelColor(parcel.tax_status), backgroundColor: getParcelColor(parcel.tax_status) + '40' }}
-                    />
-                  </div>
-                  <div className="text-sm space-y-1">
-                    <div><strong>Ref:</strong> {parcel.reference_id}</div>
-                    <div><strong>District:</strong> {parcel.district}</div>
-                    <div><strong>Type:</strong> {parcel.property_type}</div>
-                    {parcel.owner_name && (
-                      <div><strong>Owner:</strong> {parcel.owner_name}</div>
-                    )}
-                  </div>
-                  <div className="pt-2">
-                    {getTaxStatusBadge(parcel.tax_status)}
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-
-          {filteredParcels.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">No parcels match your filters</p>
-              <Button onClick={clearFilters} variant="outline" className="mt-4">
-                Clear Filters
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Map Container */}
+      <div ref={mapRef} className="flex-1 relative" />
     </div>
   );
 }
