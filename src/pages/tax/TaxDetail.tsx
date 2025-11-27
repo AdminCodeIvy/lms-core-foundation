@@ -51,7 +51,7 @@ export default function TaxDetail() {
         .from('tax_assessments')
         .select(`
           *,
-          property:properties(id, reference_id, parcel_number, district, sub_district, street_address),
+          property:properties(id, reference_id, parcel_number, property_location, sub_location, door_number, road_name),
           creator:users!created_by(id, full_name)
         `)
         .eq('id', id)
