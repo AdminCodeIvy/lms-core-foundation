@@ -18,6 +18,7 @@ export default function PropertyNew() {
   const [districts, setDistricts] = useState<any[]>([]);
   const [subDistricts, setSubDistricts] = useState<any[]>([]);
   const [propertyTypes, setPropertyTypes] = useState<any[]>([]);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
   
   const [formData, setFormData] = useState({
     property_location: '',
@@ -141,6 +142,31 @@ export default function PropertyNew() {
         });
 
       if (boundariesError) throw boundariesError;
+
+      // Upload images if any
+      if (selectedImages.length > 0) {
+        for (const image of selectedImages) {
+          const fileExt = image.name.split('.').pop();
+          const fileName = `${property.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+          
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('property-photos')
+            .upload(fileName, image);
+
+          if (!uploadError && uploadData) {
+            const { data: { publicUrl } } = supabase.storage
+              .from('property-photos')
+              .getPublicUrl(fileName);
+
+            await supabase.from('property_photos').insert({
+              property_id: property.id,
+              file_name: image.name,
+              file_url: publicUrl,
+              uploaded_by: profile?.id
+            });
+          }
+        }
+      }
 
       // Create activity log
       await supabase.from('activity_logs').insert({
@@ -531,6 +557,60 @@ export default function PropertyNew() {
                   </Select>
                 </div>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Property Photos */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Property Photos (Optional)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="photos">Upload Photos</Label>
+                <Input
+                  id="photos"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      setSelectedImages(Array.from(e.target.files));
+                    }
+                  }}
+                  className="mt-1"
+                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  You can select multiple images
+                </p>
+              </div>
+              {selectedImages.length > 0 && (
+                <div className="grid gap-2 md:grid-cols-3">
+                  {selectedImages.map((file, index) => (
+                    <div key={index} className="relative rounded-lg border p-2">
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={file.name}
+                        className="w-full h-32 object-cover rounded"
+                      />
+                      <p className="text-xs mt-1 truncate">{file.name}</p>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-1 right-1 h-6 w-6 p-0"
+                        onClick={() => {
+                          setSelectedImages(selectedImages.filter((_, i) => i !== index));
+                        }}
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
