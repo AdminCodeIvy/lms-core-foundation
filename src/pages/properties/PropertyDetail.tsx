@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, FileText, MapPin, Image as ImageIcon, Users, Activity, Receipt } from 'lucide-react';
+import { ArrowLeft, FileText, MapPin, Camera, Users, Activity, Receipt } from 'lucide-react';
 import { toast } from 'sonner';
 import { ActivityLogTab } from '@/components/activity/ActivityLogTab';
 import { format } from 'date-fns';
@@ -224,7 +224,7 @@ export default function PropertyDetail() {
             Boundaries
           </TabsTrigger>
           <TabsTrigger value="photos">
-            <ImageIcon className="h-4 w-4 mr-2" />
+            <Camera className="h-4 w-4 mr-2" />
             Photos ({photos.length})
           </TabsTrigger>
           <TabsTrigger value="ownership">
