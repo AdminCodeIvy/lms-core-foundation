@@ -171,8 +171,10 @@ export default function TaxNew() {
         title_deed_number: formData.property_registered ? formData.title_deed_number : null,
         base_assessment: parseFloat(formData.base_assessment),
         exemption_amount: formData.exemption_amount ? parseFloat(formData.exemption_amount) : 0,
+        assessed_amount: parseFloat(formData.base_assessment) - (formData.exemption_amount ? parseFloat(formData.exemption_amount) : 0),
         assessment_date: format(formData.assessment_date, 'yyyy-MM-dd'),
         due_date: format(formData.due_date, 'yyyy-MM-dd'),
+        created_by: profile?.id,
       };
 
       // Insert directly into database - RLS policies allow INPUTTER+ roles

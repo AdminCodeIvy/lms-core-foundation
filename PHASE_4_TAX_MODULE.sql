@@ -405,6 +405,26 @@ BEGIN
   ) THEN
     ALTER TABLE public.tax_assessments ADD COLUMN status tax_status DEFAULT 'NOT_ASSESSED';
   END IF;
+
+  -- Metadata
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'created_by'
+  ) THEN
+    ALTER TABLE public.tax_assessments ADD COLUMN created_by UUID REFERENCES public.users(id);
+  END IF;
+
+  -- Handle legacy owner_id column - drop it if it exists with NOT NULL constraint
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'tax_assessments'
+      AND column_name = 'owner_id'
+  ) THEN
+    ALTER TABLE public.tax_assessments DROP COLUMN IF EXISTS owner_id;
+  END IF;
 END $$;
 
 -- Create unique index for reference_id if not exists
