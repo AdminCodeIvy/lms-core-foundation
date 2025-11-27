@@ -298,8 +298,14 @@ $$;
 -- 6. CREATE TRIGGERS
 -- =====================================================
 
+-- Drop existing triggers if they exist
+DROP TRIGGER IF EXISTS tax_reference_id_trigger ON public.tax_assessments;
+DROP TRIGGER IF EXISTS tax_status_trigger ON public.tax_assessments;
+DROP TRIGGER IF EXISTS payment_update_assessment_trigger ON public.tax_payments;
+DROP TRIGGER IF EXISTS tax_assessments_updated_at ON public.tax_assessments;
+
 -- Trigger to auto-generate reference ID
-CREATE OR REPLACE TRIGGER tax_reference_id_trigger
+CREATE TRIGGER tax_reference_id_trigger
 BEFORE INSERT ON public.tax_assessments
 FOR EACH ROW
 EXECUTE FUNCTION generate_tax_reference_id();
