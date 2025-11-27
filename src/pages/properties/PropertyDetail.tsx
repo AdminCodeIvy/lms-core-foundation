@@ -33,16 +33,62 @@ export default function PropertyDetail() {
   const fetchPropertyDetail = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.functions.invoke('get-property-detail', {
-        body: { property_id: id }
-      });
 
-      if (error) throw error;
+      // Fetch property with related data
+      const { data: propertyData, error: propertyError } = await supabase
+        .from('properties')
+        .select(`
+          *,
+          district:districts(id, name, code),
+          sub_district:sub_districts(id, name),
+          creator:users!properties_created_by_fkey(id, full_name),
+          approver:users!properties_approved_by_fkey(id, full_name)
+        `)
+        .eq('id', id)
+        .maybeSingle();
 
-      setProperty(data.property);
-      setBoundaries(data.boundaries);
-      setPhotos(data.photos || []);
-      setOwnership(data.ownership || []);
+      if (propertyError) throw propertyError;
+      if (!propertyData) {
+        setProperty(null);
+        return;
+      }
+
+      // Fetch boundaries
+      const { data: boundariesData } = await supabase
+        .from('property_boundaries')
+        .select('*')
+        .eq('property_id', id)
+        .maybeSingle();
+
+      // Fetch photos
+      const { data: photosData } = await supabase
+        .from('property_photos')
+        .select(`
+          *,
+          uploader:users(id, full_name)
+        `)
+        .eq('property_id', id);
+
+      // Fetch ownership
+      const { data: ownershipData } = await supabase
+        .from('property_ownership')
+        .select(`
+          *,
+          customer:customers(
+            id,
+            reference_id,
+            customer_type,
+            person:customer_person(first_name, last_name),
+            business:customer_business(business_name)
+          )
+        `)
+        .eq('property_id', id)
+        .eq('is_current', true);
+
+      setProperty(propertyData);
+      setBoundaries(boundariesData);
+      setPhotos(photosData || []);
+      setOwnership(ownershipData || []);
     } catch (error) {
       console.error('Error fetching property:', error);
       toast.error('Failed to load property details');
@@ -255,28 +301,28 @@ export default function PropertyDetail() {
                     <h3 className="font-semibold mb-2">North Boundary</h3>
                     <p>Length: {boundaries.north_length} m</p>
                     <Badge className="mt-2" variant="outline">
-                      {boundaries.north_adjacent_type.replace('_', ' ')}
+                      {boundaries.north_type.replace('_', ' ')}
                     </Badge>
                   </div>
                   <div className="rounded-lg border p-4">
                     <h3 className="font-semibold mb-2">South Boundary</h3>
                     <p>Length: {boundaries.south_length} m</p>
                     <Badge className="mt-2" variant="outline">
-                      {boundaries.south_adjacent_type.replace('_', ' ')}
+                      {boundaries.south_type.replace('_', ' ')}
                     </Badge>
                   </div>
                   <div className="rounded-lg border p-4">
                     <h3 className="font-semibold mb-2">East Boundary</h3>
                     <p>Length: {boundaries.east_length} m</p>
                     <Badge className="mt-2" variant="outline">
-                      {boundaries.east_adjacent_type.replace('_', ' ')}
+                      {boundaries.east_type.replace('_', ' ')}
                     </Badge>
                   </div>
                   <div className="rounded-lg border p-4">
                     <h3 className="font-semibold mb-2">West Boundary</h3>
                     <p>Length: {boundaries.west_length} m</p>
                     <Badge className="mt-2" variant="outline">
-                      {boundaries.west_adjacent_type.replace('_', ' ')}
+                      {boundaries.west_type.replace('_', ' ')}
                     </Badge>
                   </div>
                 </div>
@@ -332,7 +378,7 @@ export default function PropertyDetail() {
                     <div key={owner.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div>
                         <p className="font-medium">
-                          {owner.customer.first_name} {owner.customer.last_name || owner.customer.business_name}
+                          {owner.customer.person?.first_name} {owner.customer.person?.last_name || owner.customer.business?.business_name}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {owner.customer.reference_id}
