@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Bell, ArrowUp, Check, X } from 'lucide-react';
+import { Bell, ArrowUp, Check, X, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -134,6 +134,60 @@ export default function Notifications() {
     }
   };
 
+  const handleDeleteNotification = async (notificationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', notificationId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Notification deleted',
+      });
+
+      fetchNotifications();
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to delete notification',
+      });
+    }
+  };
+
+  const handleDeleteAllRead = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('is_read', true);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'All read notifications deleted',
+      });
+
+      fetchNotifications();
+    } catch (error) {
+      console.error('Error deleting read notifications:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to delete notifications',
+      });
+    }
+  };
+
   const handleNotificationClick = (notification: Notification) => {
     if (!notification.is_read) {
       handleMarkAsRead(notification.id);
@@ -175,9 +229,16 @@ export default function Notifications() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Notifications</h1>
-          {notifications.some((n) => !n.is_read) && (
-            <Button onClick={handleMarkAllAsRead}>Mark all as read</Button>
-          )}
+          <div className="flex gap-2">
+            {notifications.some((n) => !n.is_read) && (
+              <Button onClick={handleMarkAllAsRead}>Mark all as read</Button>
+            )}
+            {notifications.some((n) => n.is_read) && (
+              <Button variant="destructive" onClick={handleDeleteAllRead}>
+                Delete all read
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Filters */}
@@ -265,6 +326,16 @@ export default function Notifications() {
                             Mark as read
                           </Button>
                         )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteNotification(notification.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   </Card>
@@ -319,6 +390,7 @@ export default function Notifications() {
                         </p>
                       </div>
                       <div className="flex flex-col gap-2">
+                      <div className="flex gap-2">
                         <Button
                           variant="outline"
                           size="sm"
@@ -334,10 +406,31 @@ export default function Notifications() {
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
+                            handleDeleteNotification(notification.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
                             handleMarkAsRead(notification.id);
                           }}
                         >
                           Mark as read
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteNotification(notification.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
