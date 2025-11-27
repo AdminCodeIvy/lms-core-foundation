@@ -126,8 +126,7 @@ export default function PropertyDetail() {
         .from('properties')
         .update({
           status: 'SUBMITTED',
-          submitted_at: new Date().toISOString(),
-          rejection_feedback: null
+          submitted_at: new Date().toISOString()
         })
         .eq('id', property.id);
 
@@ -244,27 +243,32 @@ export default function PropertyDetail() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Badge className={`${getStatusColor(property.status)} text-lg px-4 py-2`}>
+        <div className="flex items-center gap-2">
+          <Badge className={`${getStatusColor(property.status)} text-base px-4 py-1.5`}>
             {property.status}
           </Badge>
-          <div className="flex gap-2">
-            {((profile?.role === 'INPUTTER' && property.status === 'DRAFT' && property.created_by === user?.id) ||
-              (profile?.role === 'APPROVER' && ['SUBMITTED', 'APPROVED', 'REJECTED'].includes(property.status)) ||
-              profile?.role === 'ADMINISTRATOR') && (
-              <Button variant="outline" onClick={() => navigate(`/properties/${property.id}/edit`)}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-            )}
-            {((property.status === 'DRAFT' || property.status === 'REJECTED') && 
-              (property.created_by === user?.id || profile?.role === 'ADMINISTRATOR')) && (
-              <Button onClick={() => setSubmitDialogOpen(true)}>
-                <Send className="h-4 w-4 mr-2" />
-                {property.status === 'REJECTED' ? 'Resubmit' : 'Submit'}
-              </Button>
-            )}
-          </div>
+          {((profile?.role === 'INPUTTER' && property.status === 'DRAFT' && property.created_by === user?.id) ||
+            (profile?.role === 'APPROVER' && ['SUBMITTED', 'APPROVED', 'REJECTED'].includes(property.status)) ||
+            profile?.role === 'ADMINISTRATOR') && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => toast.info('Property edit feature coming soon')}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+          )}
+          {((property.status === 'DRAFT' || property.status === 'REJECTED') && 
+            (property.created_by === user?.id || profile?.role === 'ADMINISTRATOR')) && (
+            <Button 
+              size="sm"
+              onClick={() => setSubmitDialogOpen(true)}
+            >
+              <Send className="h-4 w-4 mr-2" />
+              {property.status === 'REJECTED' ? 'Resubmit' : 'Submit'}
+            </Button>
+          )}
         </div>
       </div>
 
