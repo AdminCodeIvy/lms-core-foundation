@@ -449,7 +449,6 @@ export const ReviewQueue = () => {
         .update({
           status: 'APPROVED',
           approved_by: profile.id,
-          rejection_feedback: null,
         })
         .eq('id', selectedProperty.id);
 
