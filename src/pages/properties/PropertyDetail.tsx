@@ -343,15 +343,15 @@ export default function PropertyDetail() {
                 <p className="text-muted-foreground">No photos uploaded yet</p>
               ) : (
                 <div className="grid gap-4 md:grid-cols-3">
-                  {photos.map((photo) => (
+                  {photos.map((photo, index) => (
                     <div key={photo.id} className="rounded-lg border overflow-hidden">
                       <img
-                        src={photo.file_url}
-                        alt={photo.file_name}
+                        src={photo.photo_url}
+                        alt={`Property photo ${index + 1}`}
                         className="w-full h-48 object-cover"
                       />
                       <div className="p-2 text-sm">
-                        <p className="truncate">{photo.file_name}</p>
+                        <p className="truncate">Photo {index + 1}</p>
                         <p className="text-muted-foreground text-xs">
                           {photo.uploader?.full_name}
                         </p>
