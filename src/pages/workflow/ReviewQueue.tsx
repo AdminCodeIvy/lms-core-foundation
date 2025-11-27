@@ -31,10 +31,12 @@ import {
 
 interface ReviewQueueItem {
   id: string;
-  entity_type: 'CUSTOMER';
+  entity_type: 'CUSTOMER' | 'PROPERTY';
   reference_id: string;
   name: string;
-  customer_type: string;
+  customer_type?: string;
+  property_type?: string;
+  district?: string;
   submitted_by: string;
   submitted_by_name: string;
   submitted_at: string;
@@ -83,8 +85,27 @@ export const ReviewQueue = () => {
 
       if (customersError) throw customersError;
 
+      // Fetch properties with SUBMITTED status
+      const { data: properties, error: propertiesError } = await supabase
+        .from('properties')
+        .select(`
+          id, 
+          reference_id, 
+          parcel_number, 
+          submitted_at, 
+          created_by, 
+          status,
+          districts(name),
+          property_types(name)
+        `)
+        .eq('status', 'SUBMITTED')
+        .order('submitted_at', { ascending: true })
+        .limit(50);
+
+      if (propertiesError) throw propertiesError;
+
       // For each customer, fetch the name from the appropriate table
-      const itemsPromises = (customers || []).map(async (customer: any) => {
+      const customerItemsPromises = (customers || []).map(async (customer: any) => {
         let name = 'Unknown';
         
         // Fetch name based on customer type
@@ -152,8 +173,35 @@ export const ReviewQueue = () => {
         };
       });
 
-      const items = await Promise.all(itemsPromises);
-      setItems(items);
+      // Transform properties into review queue items
+      const propertyItems: ReviewQueueItem[] = (properties || []).map((property: any) => {
+        const submittedAt = property.submitted_at ? new Date(property.submitted_at) : new Date();
+        const daysPending = Math.floor(
+          (Date.now() - submittedAt.getTime()) / (1000 * 60 * 60 * 24)
+        );
+
+        return {
+          id: property.id,
+          entity_type: 'PROPERTY' as const,
+          reference_id: property.reference_id,
+          name: property.parcel_number,
+          property_type: property.property_types?.name || 'Unknown',
+          district: property.districts?.name || 'Unknown',
+          submitted_by: property.created_by,
+          submitted_by_name: 'Unknown',
+          submitted_at: property.submitted_at,
+          days_pending: daysPending,
+        };
+      });
+
+      const customerItems = await Promise.all(customerItemsPromises);
+      
+      // Combine and sort by submitted_at
+      const allItems = [...customerItems, ...propertyItems].sort((a, b) => 
+        new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime()
+      );
+      
+      setItems(allItems);
     } catch (err: any) {
       console.error('Error fetching review queue:', err);
       toast({
@@ -351,9 +399,8 @@ export const ReviewQueue = () => {
             )}
           </TabsTrigger>
           <TabsTrigger value="customers">Customers Only</TabsTrigger>
-          <TabsTrigger value="properties" disabled>
+          <TabsTrigger value="properties">
             Properties Only
-            <Badge variant="outline" className="ml-2 text-xs">Phase 3</Badge>
           </TabsTrigger>
           <TabsTrigger value="overdue">
             Overdue
@@ -396,12 +443,83 @@ export const ReviewQueue = () => {
                   {items.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>
-                        <Badge variant="secondary">Customer</Badge>
+                        <Badge variant={item.entity_type === 'CUSTOMER' ? 'secondary' : 'default'}>
+                          {item.entity_type === 'CUSTOMER' ? 'Customer' : 'Property'}
+                        </Badge>
                       </TableCell>
                       <TableCell className="font-mono">{item.reference_id}</TableCell>
                       <TableCell className="font-medium">{item.name}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{item.customer_type.replace('_', ' ')}</Badge>
+                        <Badge variant="outline">
+                          {item.entity_type === 'CUSTOMER' 
+                            ? item.customer_type?.replace('_', ' ') 
+                            : `${item.property_type} - ${item.district}`}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{item.submitted_by_name}</TableCell>
+                      <TableCell>{format(new Date(item.submitted_at), 'MMM dd, yyyy HH:mm')}</TableCell>
+                      <TableCell>
+                        <span
+                          className={`font-medium flex items-center gap-1 ${
+                            item.days_pending >= 4
+                              ? 'text-destructive'
+                              : item.days_pending >= 2
+                              ? 'text-warning'
+                              : ''
+                          }`}
+                        >
+                          {item.days_pending} days
+                          {item.days_pending >= 4 && <AlertTriangle className="h-3 w-3" />}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {item.entity_type === 'CUSTOMER' ? (
+                          <Button onClick={() => handleReview(item.id)}>Review</Button>
+                        ) : (
+                          <Button onClick={() => navigate(`/properties/${item.id}`)}>Review</Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="customers">
+          {loading ? (
+            <div className="space-y-2">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
+          ) : items.filter(i => i.entity_type === 'CUSTOMER').length === 0 ? (
+            <Alert>
+              <FileSearch className="h-4 w-4" />
+              <AlertDescription>No customers pending approval</AlertDescription>
+            </Alert>
+          ) : (
+            <div className="border rounded-lg">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Reference ID</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Submitted By</TableHead>
+                    <TableHead>Submitted Date</TableHead>
+                    <TableHead>Days Pending</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {items.filter(i => i.entity_type === 'CUSTOMER').map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-mono">{item.reference_id}</TableCell>
+                      <TableCell className="font-medium">{item.name}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{item.customer_type?.replace('_', ' ')}</Badge>
                       </TableCell>
                       <TableCell>{item.submitted_by_name}</TableCell>
                       <TableCell>{format(new Date(item.submitted_at), 'MMM dd, yyyy HH:mm')}</TableCell>
@@ -430,18 +548,17 @@ export const ReviewQueue = () => {
           )}
         </TabsContent>
 
-        <TabsContent value="customers">
-          {/* Same content as "all" for now since we only have customers */}
+        <TabsContent value="properties">
           {loading ? (
             <div className="space-y-2">
               {[...Array(5)].map((_, i) => (
                 <Skeleton key={i} className="h-16 w-full" />
               ))}
             </div>
-          ) : items.length === 0 ? (
+          ) : items.filter(i => i.entity_type === 'PROPERTY').length === 0 ? (
             <Alert>
               <FileSearch className="h-4 w-4" />
-              <AlertDescription>No customers pending approval</AlertDescription>
+              <AlertDescription>No properties pending approval</AlertDescription>
             </Alert>
           ) : (
             <div className="border rounded-lg">
@@ -449,8 +566,8 @@ export const ReviewQueue = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Reference ID</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Type</TableHead>
+                    <TableHead>Parcel Number</TableHead>
+                    <TableHead>Type & District</TableHead>
                     <TableHead>Submitted By</TableHead>
                     <TableHead>Submitted Date</TableHead>
                     <TableHead>Days Pending</TableHead>
@@ -458,12 +575,12 @@ export const ReviewQueue = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {items.map((item) => (
+                  {items.filter(i => i.entity_type === 'PROPERTY').map((item) => (
                     <TableRow key={item.id}>
                       <TableCell className="font-mono">{item.reference_id}</TableCell>
                       <TableCell className="font-medium">{item.name}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{item.customer_type.replace('_', ' ')}</Badge>
+                        <Badge variant="outline">{item.property_type} - {item.district}</Badge>
                       </TableCell>
                       <TableCell>{item.submitted_by_name}</TableCell>
                       <TableCell>{format(new Date(item.submitted_at), 'MMM dd, yyyy HH:mm')}</TableCell>
@@ -482,7 +599,7 @@ export const ReviewQueue = () => {
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button onClick={() => handleReview(item.id)}>Review</Button>
+                        <Button onClick={() => navigate(`/properties/${item.id}`)}>Review</Button>
                       </TableCell>
                     </TableRow>
                   ))}
