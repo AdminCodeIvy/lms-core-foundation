@@ -92,14 +92,14 @@ export const ReviewQueue = () => {
           id, 
           reference_id, 
           parcel_number, 
-          submitted_at, 
+          updated_at, 
           created_by, 
           status,
           districts(name),
           property_types(name)
         `)
         .eq('status', 'SUBMITTED')
-        .order('submitted_at', { ascending: true })
+        .order('updated_at', { ascending: true })
         .limit(50);
 
       if (propertiesError) throw propertiesError;
@@ -175,7 +175,7 @@ export const ReviewQueue = () => {
 
       // Transform properties into review queue items
       const propertyItems: ReviewQueueItem[] = (properties || []).map((property: any) => {
-        const submittedAt = property.submitted_at ? new Date(property.submitted_at) : new Date();
+        const submittedAt = property.updated_at ? new Date(property.updated_at) : new Date();
         const daysPending = Math.floor(
           (Date.now() - submittedAt.getTime()) / (1000 * 60 * 60 * 24)
         );
@@ -189,7 +189,7 @@ export const ReviewQueue = () => {
           district: property.districts?.name || 'Unknown',
           submitted_by: property.created_by,
           submitted_by_name: 'Unknown',
-          submitted_at: property.submitted_at,
+          submitted_at: property.updated_at,
           days_pending: daysPending,
         };
       });
