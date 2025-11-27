@@ -134,7 +134,20 @@ export default function MapView() {
         </div>
       `;
 
-      circle.bindPopup(popupContent);
+      const popup = L.popup({ closeButton: false, autoClose: false, closeOnClick: false })
+        .setContent(popupContent);
+
+      circle.bindPopup(popup);
+
+      // Show popup on hover, hide on mouseout
+      circle.on('mouseover', function() {
+        this.openPopup();
+      });
+
+      circle.on('mouseout', function() {
+        this.closePopup();
+      });
+
       circle.addTo(markersLayerRef.current!);
     });
   }, [filteredParcels]);
