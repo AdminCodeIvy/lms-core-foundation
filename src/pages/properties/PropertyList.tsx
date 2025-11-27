@@ -56,23 +56,57 @@ export default function PropertyList() {
   const fetchProperties = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams({
-        page: pagination.page.toString(),
-        limit: pagination.limit.toString(),
-        ...(search && { search }),
-        ...(statusFilter && statusFilter !== 'all' && { status: statusFilter }),
-        ...(districtFilter && districtFilter !== 'all' && { district_id: districtFilter }),
-        ...(showArchived && { show_archived: 'true' })
-      });
 
-      const { data, error } = await supabase.functions.invoke('get-properties', {
-        body: Object.fromEntries(params)
-      });
+      // Build base query
+      let query = supabase
+        .from('properties')
+        .select(
+          `
+          id,
+          reference_id,
+          parcel_number,
+          status,
+          updated_at,
+          district:districts!properties_district_id_fkey(id, code, name)
+        `,
+          { count: 'exact' }
+        )
+        .order('created_at', { ascending: false });
+
+      // Apply filters
+      if (search) {
+        query = query.or(
+          `reference_id.ilike.%${search}%,parcel_number.ilike.%${search}%`
+        );
+      }
+
+      if (statusFilter && statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      } else if (!showArchived) {
+        // By default, hide archived properties
+        query = query.neq('status', 'ARCHIVED');
+      }
+
+      if (districtFilter && districtFilter !== 'all') {
+        query = query.eq('district_id', districtFilter);
+      }
+
+      // Apply pagination
+      const from = (pagination.page - 1) * pagination.limit;
+      const to = from + pagination.limit - 1;
+      query = query.range(from, to);
+
+      const { data, error, count } = await query;
 
       if (error) throw error;
 
-      setProperties(data.data || []);
-      setPagination(data.pagination);
+      setProperties((data as unknown as Property[]) || []);
+      const total = count ?? 0;
+      setPagination((prev) => ({
+        ...prev,
+        total,
+        totalPages: total > 0 ? Math.ceil(total / prev.limit) : 0,
+      }));
     } catch (error) {
       console.error('Error fetching properties:', error);
       toast.error('Failed to fetch properties');
