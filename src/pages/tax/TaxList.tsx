@@ -27,6 +27,7 @@ import { TaxAssessment, TaxStatus } from '@/types/tax';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { exportToExcel, formatCurrency as formatCurrencyUtil, formatDate } from '@/lib/export-utils';
+import * as XLSX from 'xlsx';
 
 export default function TaxList() {
   const navigate = useNavigate();
@@ -127,41 +128,100 @@ export default function TaxList() {
     }
   };
 
-  const handleDownloadTemplate = async () => {
+  const handleDownloadTemplate = () => {
     try {
       setDownloadingTemplate(true);
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('Not authenticated');
-      }
+      // Create template data with headers and sample row
+      const headers = [
+        'Property Reference ID *',
+        'Tax Year * (2020-2030)',
+        'Occupancy Type * (Owner Occupied/Rented/Vacant/Mixed Use)',
+        'Property Type',
+        'Land Size * (sqm)',
+        'Built-Up Area (sqm)',
+        'Number of Units',
+        'Number of Floors',
+        'Has Water * (Yes/No)',
+        'Has Electricity * (Yes/No)',
+        'Has Sewer * (Yes/No)',
+        'Has Waste Collection * (Yes/No)',
+        'Construction Status * (Completed/Under Construction/Planned)',
+        'Property Registered * (Yes/No)',
+        'Title Deed Number',
+        'Base Assessment * (USD)',
+        'Exemption Amount (USD)',
+        'Assessment Date * (YYYY-MM-DD)',
+        'Due Date * (YYYY-MM-DD)',
+        'Renter Name',
+        'Renter Contact',
+        'Renter National ID',
+        'Monthly Rent (USD)',
+        'Rental Start Date (YYYY-MM-DD)',
+        'Has Rental Agreement (Yes/No)',
+      ];
 
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-template`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ uploadType: 'TAX_ASSESSMENT' }),
-      });
+      const sampleData = [{
+        'Property Reference ID *': 'PROP-2025-00001',
+        'Tax Year * (2020-2030)': '2025',
+        'Occupancy Type * (Owner Occupied/Rented/Vacant/Mixed Use)': 'Owner Occupied',
+        'Property Type': 'Residential',
+        'Land Size * (sqm)': '500',
+        'Built-Up Area (sqm)': '300',
+        'Number of Units': '1',
+        'Number of Floors': '2',
+        'Has Water * (Yes/No)': 'Yes',
+        'Has Electricity * (Yes/No)': 'Yes',
+        'Has Sewer * (Yes/No)': 'Yes',
+        'Has Waste Collection * (Yes/No)': 'Yes',
+        'Construction Status * (Completed/Under Construction/Planned)': 'Completed',
+        'Property Registered * (Yes/No)': 'Yes',
+        'Title Deed Number': 'TD123456',
+        'Base Assessment * (USD)': '5000',
+        'Exemption Amount (USD)': '500',
+        'Assessment Date * (YYYY-MM-DD)': '2025-01-01',
+        'Due Date * (YYYY-MM-DD)': '2025-12-31',
+        'Renter Name': '',
+        'Renter Contact': '',
+        'Renter National ID': '',
+        'Monthly Rent (USD)': '',
+        'Rental Start Date (YYYY-MM-DD)': '',
+        'Has Rental Agreement (Yes/No)': '',
+      }];
 
-      if (!response.ok) {
-        throw new Error('Failed to generate template');
-      }
+      // Create workbook
+      const wb = XLSX.utils.book_new();
 
-      const { file, filename } = await response.json();
-      const blob = new Blob([new Uint8Array(file)], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      });
+      // Add data sheet
+      const ws = XLSX.utils.json_to_sheet(sampleData);
+      XLSX.utils.book_append_sheet(wb, ws, 'Data');
 
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      // Add instructions sheet
+      const instructions = [
+        ['Bulk Upload Instructions'],
+        [''],
+        ['1. Fill in the data starting from row 2'],
+        ['2. Required fields are marked with *'],
+        ['3. Maximum 1,000 rows per upload'],
+        ['4. Date format must be YYYY-MM-DD'],
+        ['5. For Yes/No fields, use exactly "Yes" or "No"'],
+        ['6. Do not modify column headers'],
+        ['7. Save as .xlsx or .xls before uploading'],
+        [''],
+        ['Valid Values:'],
+        ['- Downtown: Yes, No'],
+        ['- Building Type: Building, Empty Land'],
+        ['- Boundary Types: Building, Empty Land, Road'],
+        ['- Construction Status: Completed, Under Construction, Planned'],
+        ['- Payment Methods: Cash, Bank Transfer, Check, Mobile Money, Credit Card'],
+        ['- Occupancy Types: Owner Occupied, Rented, Vacant, Mixed Use'],
+      ];
+      const wsInstructions = XLSX.utils.aoa_to_sheet(instructions);
+      XLSX.utils.book_append_sheet(wb, wsInstructions, 'Instructions');
+
+      // Generate Excel file
+      const filename = 'tax_assessment_template.xlsx';
+      XLSX.writeFile(wb, filename);
 
       toast({
         title: 'Success',
