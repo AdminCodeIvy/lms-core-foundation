@@ -225,7 +225,7 @@ export default function PropertyDetail() {
           </TabsTrigger>
           <TabsTrigger value="photos">
             <Camera className="h-4 w-4 mr-2" />
-            Photos ({photos.length})
+            Images ({photos.length})
           </TabsTrigger>
           <TabsTrigger value="ownership">
             <Users className="h-4 w-4 mr-2" />
@@ -336,11 +336,11 @@ export default function PropertyDetail() {
         <TabsContent value="photos">
           <Card>
             <CardHeader>
-              <CardTitle>Property Photos</CardTitle>
+              <CardTitle>Property Images</CardTitle>
             </CardHeader>
             <CardContent>
               {photos.length === 0 ? (
-                <p className="text-muted-foreground">No photos uploaded yet</p>
+                <p className="text-muted-foreground">No images uploaded yet</p>
               ) : (
                 <div className="grid gap-4 md:grid-cols-3">
                   {photos.map((photo, index) => (
