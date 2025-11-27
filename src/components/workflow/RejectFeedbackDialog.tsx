@@ -19,6 +19,7 @@ interface RejectFeedbackDialogProps {
   onConfirm: (feedback: string) => void;
   referenceId: string;
   loading?: boolean;
+  entityType?: 'customer' | 'property';
 }
 
 export const RejectFeedbackDialog = ({
@@ -26,8 +27,11 @@ export const RejectFeedbackDialog = ({
   onOpenChange,
   onConfirm,
   referenceId,
-  loading = false
+  loading = false,
+  entityType = 'customer'
 }: RejectFeedbackDialogProps) => {
+  const entityLabel = entityType === 'customer' ? 'Customer' : 'Property';
+  
   const [feedback, setFeedback] = useState('');
   const [error, setError] = useState('');
 
@@ -62,7 +66,7 @@ export const RejectFeedbackDialog = ({
         <AlertDialogHeader>
           <div className="flex items-center gap-2 mb-2">
             <XCircle className="h-5 w-5 text-destructive" />
-            <AlertDialogTitle>Reject Customer</AlertDialogTitle>
+            <AlertDialogTitle>Reject {entityLabel}</AlertDialogTitle>
           </div>
           <AlertDialogDescription className="space-y-4">
             <p>Please provide feedback for the rejection</p>
@@ -78,7 +82,7 @@ export const RejectFeedbackDialog = ({
           </Label>
           <Textarea
             id="feedback"
-            placeholder="Explain why this customer is being rejected and what needs to be corrected..."
+            placeholder={`Explain why this ${entityType} is being rejected and what needs to be corrected...`}
             value={feedback}
             onChange={(e) => handleFeedbackChange(e.target.value)}
             disabled={loading}

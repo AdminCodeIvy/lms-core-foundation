@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { AlertCircle, FileSearch, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { ReviewPanel } from '@/components/workflow/ReviewPanel';
+import { PropertyReviewPanel } from '@/components/workflow/PropertyReviewPanel';
 import type { CustomerWithDetails } from '@/types/customer';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -51,8 +52,11 @@ export const ReviewQueue = () => {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<ReviewQueueItem[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerWithDetails | null>(null);
+  const [selectedProperty, setSelectedProperty] = useState<any>(null);
   const [reviewPanelOpen, setReviewPanelOpen] = useState(false);
+  const [propertyPanelOpen, setPropertyPanelOpen] = useState(false);
   const [customerLoading, setCustomerLoading] = useState(false);
+  const [propertyLoading, setPropertyLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
   // Check if user has access
@@ -362,6 +366,116 @@ export const ReviewQueue = () => {
     }
   };
 
+  const handleReviewProperty = async (propertyId: string) => {
+    try {
+      setPropertyLoading(true);
+      setPropertyPanelOpen(true);
+
+      const { data: propertyData, error } = await supabase
+        .from('properties')
+        .select(`
+          *,
+          district:districts(id, name, code),
+          sub_district:sub_districts(id, name),
+          property_type:property_types(id, name),
+          creator:users!properties_created_by_fkey(id, full_name)
+        `)
+        .eq('id', propertyId)
+        .single();
+
+      if (error) throw error;
+
+      // Fetch boundaries
+      const { data: boundariesData } = await supabase
+        .from('property_boundaries')
+        .select('*')
+        .eq('property_id', propertyId)
+        .maybeSingle();
+
+      setSelectedProperty({
+        ...propertyData,
+        boundaries: boundariesData
+      });
+    } catch (err: any) {
+      console.error('Error fetching property:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to load property details',
+      });
+      setPropertyPanelOpen(false);
+    } finally {
+      setPropertyLoading(false);
+    }
+  };
+
+  const handleApproveProperty = async () => {
+    if (!selectedProperty) return;
+
+    try {
+      setActionLoading(true);
+
+      const { error } = await supabase.functions.invoke('approve-property', {
+        body: { property_id: selectedProperty.id }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Property approved successfully',
+      });
+
+      setPropertyPanelOpen(false);
+      setSelectedProperty(null);
+      fetchReviewQueue();
+    } catch (err: any) {
+      console.error('Error approving property:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: err.message || 'Failed to approve property',
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRejectProperty = async (feedback: string) => {
+    if (!selectedProperty) return;
+
+    try {
+      setActionLoading(true);
+
+      const { error } = await supabase.functions.invoke('reject-property', {
+        body: { 
+          property_id: selectedProperty.id,
+          rejection_feedback: feedback
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Property rejected',
+      });
+
+      setPropertyPanelOpen(false);
+      setSelectedProperty(null);
+      fetchReviewQueue();
+    } catch (err: any) {
+      console.error('Error rejecting property:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: err.message || 'Failed to reject property',
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const overdueItems = items.filter(item => item.days_pending > 2);
 
   return (
@@ -476,7 +590,7 @@ export const ReviewQueue = () => {
                         {item.entity_type === 'CUSTOMER' ? (
                           <Button onClick={() => handleReview(item.id)}>Review</Button>
                         ) : (
-                          <Button onClick={() => navigate(`/properties/${item.id}`)}>Review</Button>
+                          <Button onClick={() => handleReviewProperty(item.id)}>Review</Button>
                         )}
                       </TableCell>
                     </TableRow>
@@ -599,7 +713,7 @@ export const ReviewQueue = () => {
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button onClick={() => navigate(`/properties/${item.id}`)}>Review</Button>
+                        <Button onClick={() => handleReviewProperty(item.id)}>Review</Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -641,7 +755,11 @@ export const ReviewQueue = () => {
                       <TableCell className="font-mono">{item.reference_id}</TableCell>
                       <TableCell className="font-medium">{item.name}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{item.customer_type.replace('_', ' ')}</Badge>
+                        <Badge variant="outline">
+                          {item.entity_type === 'CUSTOMER' 
+                            ? item.customer_type?.replace('_', ' ') 
+                            : `${item.property_type} - ${item.district}`}
+                        </Badge>
                       </TableCell>
                       <TableCell>{item.submitted_by_name}</TableCell>
                       <TableCell>{format(new Date(item.submitted_at), 'MMM dd, yyyy HH:mm')}</TableCell>
@@ -652,7 +770,11 @@ export const ReviewQueue = () => {
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button onClick={() => handleReview(item.id)}>Review</Button>
+                        {item.entity_type === 'CUSTOMER' ? (
+                          <Button onClick={() => handleReview(item.id)}>Review</Button>
+                        ) : (
+                          <Button onClick={() => handleReviewProperty(item.id)}>Review</Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -670,6 +792,16 @@ export const ReviewQueue = () => {
         loading={customerLoading}
         onApprove={handleApprove}
         onReject={handleReject}
+        actionLoading={actionLoading}
+      />
+
+      <PropertyReviewPanel
+        open={propertyPanelOpen}
+        onOpenChange={setPropertyPanelOpen}
+        property={selectedProperty}
+        loading={propertyLoading}
+        onApprove={handleApproveProperty}
+        onReject={handleRejectProperty}
         actionLoading={actionLoading}
       />
     </div>
