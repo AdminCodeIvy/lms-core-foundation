@@ -143,95 +143,50 @@ export default function TaxNew() {
         }
       }
 
-      // Calculate assessed amount
-      const exemptionAmount = formData.exemption_amount ? parseFloat(formData.exemption_amount) : 0;
-      const assessedAmount = parseFloat(formData.base_assessment) - exemptionAmount;
+      const payload = {
+        property_id: formData.property_id,
+        tax_year: formData.tax_year,
+        occupancy_type: formData.occupancy_type,
+        renter_name: formData.occupancy_type === 'RENTED' ? formData.renter_name : null,
+        renter_contact: formData.occupancy_type === 'RENTED' ? formData.renter_contact : null,
+        renter_national_id: formData.occupancy_type === 'RENTED' ? formData.renter_national_id : null,
+        monthly_rent_amount: formData.occupancy_type === 'RENTED' && formData.monthly_rent_amount 
+          ? parseFloat(formData.monthly_rent_amount) 
+          : null,
+        rental_start_date: formData.occupancy_type === 'RENTED' && formData.rental_start_date
+          ? format(formData.rental_start_date, 'yyyy-MM-dd')
+          : null,
+        has_rental_agreement: formData.occupancy_type === 'RENTED' ? formData.has_rental_agreement : false,
+        property_type: formData.property_type,
+        land_size: parseFloat(formData.land_size),
+        built_up_area: formData.built_up_area ? parseFloat(formData.built_up_area) : null,
+        number_of_units: formData.number_of_units ? parseInt(formData.number_of_units) : null,
+        number_of_floors: formData.number_of_floors ? parseInt(formData.number_of_floors) : null,
+        has_water: formData.has_water,
+        has_electricity: formData.has_electricity,
+        has_sewer: formData.has_sewer,
+        has_waste_collection: formData.has_waste_collection,
+        construction_status: formData.construction_status,
+        property_registered: formData.property_registered,
+        title_deed_number: formData.property_registered ? formData.title_deed_number : null,
+        base_assessment: parseFloat(formData.base_assessment),
+        exemption_amount: formData.exemption_amount ? parseFloat(formData.exemption_amount) : 0,
+        assessment_date: format(formData.assessment_date, 'yyyy-MM-dd'),
+        due_date: format(formData.due_date, 'yyyy-MM-dd'),
+      };
 
-      // Check for duplicate (property + year)
-      const { data: existing } = await supabase
-        .from('tax_assessments')
-        .select('id')
-        .eq('property_id', formData.property_id)
-        .eq('tax_year', formData.tax_year)
-        .maybeSingle();
-
-      if (existing) {
-        toast({
-          title: 'Error',
-          description: 'Tax assessment for this property and year already exists',
-          variant: 'destructive'
-        });
-        setLoading(false);
-        return;
-      }
-
-      // Create tax assessment directly
-      const { data: assessment, error: createError } = await supabase
-        .from('tax_assessments')
-        .insert({
-          property_id: formData.property_id,
-          tax_year: formData.tax_year,
-          occupancy_type: formData.occupancy_type,
-          renter_name: formData.occupancy_type === 'RENTED' ? formData.renter_name : null,
-          renter_contact: formData.occupancy_type === 'RENTED' ? formData.renter_contact : null,
-          renter_national_id: formData.occupancy_type === 'RENTED' ? formData.renter_national_id : null,
-          monthly_rent_amount: formData.occupancy_type === 'RENTED' && formData.monthly_rent_amount 
-            ? parseFloat(formData.monthly_rent_amount) 
-            : null,
-          rental_start_date: formData.occupancy_type === 'RENTED' && formData.rental_start_date
-            ? format(formData.rental_start_date, 'yyyy-MM-dd')
-            : null,
-          has_rental_agreement: formData.occupancy_type === 'RENTED' ? formData.has_rental_agreement : false,
-          property_type: formData.property_type,
-          land_size: parseFloat(formData.land_size),
-          built_up_area: formData.built_up_area ? parseFloat(formData.built_up_area) : null,
-          number_of_units: formData.number_of_units ? parseInt(formData.number_of_units) : null,
-          number_of_floors: formData.number_of_floors ? parseInt(formData.number_of_floors) : null,
-          has_water: formData.has_water,
-          has_electricity: formData.has_electricity,
-          has_sewer: formData.has_sewer,
-          has_waste_collection: formData.has_waste_collection,
-          construction_status: formData.construction_status,
-          property_registered: formData.property_registered,
-          title_deed_number: formData.property_registered ? formData.title_deed_number : null,
-          base_assessment: parseFloat(formData.base_assessment),
-          exemption_amount: exemptionAmount,
-          assessed_amount: assessedAmount,
-          paid_amount: 0,
-          outstanding_amount: assessedAmount,
-          penalty_amount: 0,
-          assessment_date: format(formData.assessment_date, 'yyyy-MM-dd'),
-          due_date: format(formData.due_date, 'yyyy-MM-dd'),
-          status: 'ASSESSED',
-          created_by: profile?.id
-        })
-        .select()
-        .single();
-
-      if (createError) {
-        console.error('Error creating tax assessment:', createError);
-        throw createError;
-      }
-
-      // Create activity log
-      await supabase.from('activity_logs').insert({
-        entity_type: 'TAX_ASSESSMENT',
-        entity_id: assessment.id,
-        action: 'CREATED',
-        performed_by: profile?.id,
-        metadata: {
-          property_id: formData.property_id,
-          tax_year: formData.tax_year,
-          assessed_amount: assessedAmount
-        }
+      const { data, error } = await supabase.functions.invoke('create-tax-assessment', {
+        body: payload
       });
+
+      if (error) throw error;
 
       toast({
         title: 'Success',
         description: 'Tax assessment created successfully'
       });
 
-      navigate(`/tax/${assessment.id}`);
+      navigate(`/tax/${data.assessment.id}`);
     } catch (error: any) {
       console.error('Error creating tax assessment:', error);
       toast({
