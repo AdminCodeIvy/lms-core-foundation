@@ -49,12 +49,17 @@ export default function TaxPaymentNew() {
 
   const fetchAssessment = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('get-tax-detail', {
-        body: { assessment_id: assessmentId }
-      });
+      const { data, error } = await supabase
+        .from('tax_assessments')
+        .select(`
+          *,
+          property:properties(id, reference_id, parcel_number)
+        `)
+        .eq('id', assessmentId)
+        .single();
 
       if (error) throw error;
-      setAssessment(data.assessment);
+      setAssessment(data);
     } catch (error: any) {
       console.error('Error fetching assessment:', error);
       toast({
@@ -99,17 +104,43 @@ export default function TaxPaymentNew() {
         payment_date: format(formData.payment_date, 'yyyy-MM-dd'),
         amount_paid: parseFloat(formData.amount_paid),
         payment_method: formData.payment_method,
-        receipt_number: formData.receipt_number || undefined,
-        notes: formData.notes || undefined,
+        receipt_number: formData.receipt_number,
+        notes: formData.notes || null,
+        collected_by: profile?.id,
       };
 
-      const { data, error } = await supabase.functions.invoke('create-tax-payment', {
-        body: payload
-      });
+      // Insert payment directly into database
+      const { data, error } = await supabase
+        .from('tax_payments')
+        .insert(payload)
+        .select()
+        .single();
 
       if (error) throw error;
 
-      if (data.is_fully_paid) {
+      // Create activity log
+      await supabase.from('activity_logs').insert({
+        entity_type: 'TAX',
+        entity_id: assessmentId,
+        action: 'UPDATED',
+        performed_by: profile?.id,
+        metadata: {
+          payment_id: data.id,
+          amount_paid: payload.amount_paid,
+          payment_method: payload.payment_method
+        }
+      });
+
+      // Check if fully paid
+      const updatedAssessment = await supabase
+        .from('tax_assessments')
+        .select('outstanding_amount')
+        .eq('id', assessmentId)
+        .single();
+
+      const isFullyPaid = updatedAssessment.data?.outstanding_amount === 0;
+
+      if (isFullyPaid) {
         toast({
           title: '🎉 Tax Fully Paid!',
           description: 'The tax assessment is now fully paid',
