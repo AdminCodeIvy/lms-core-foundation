@@ -582,7 +582,8 @@ export default function PropertyNew() {
                   multiple
                   onChange={(e) => {
                     if (e.target.files) {
-                      setSelectedImages(Array.from(e.target.files));
+                      const newFiles = Array.from(e.target.files);
+                      setSelectedImages(prev => [...prev, ...newFiles]);
                     }
                   }}
                   className="mt-1"
