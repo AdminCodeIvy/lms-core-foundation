@@ -78,7 +78,7 @@ export default function TaxDetail() {
           *,
           performer:users!performed_by(id, full_name)
         `)
-        .eq('entity_type', 'TAX_ASSESSMENT')
+        .eq('entity_type', 'TAX')
         .eq('entity_id', id)
         .order('timestamp', { ascending: false })
         .limit(20);
