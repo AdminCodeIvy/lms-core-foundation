@@ -26,12 +26,14 @@ import { Plus, Search, FileDown, Filter } from 'lucide-react';
 import { TaxAssessment, TaxStatus } from '@/types/tax';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { exportToExcel, formatCurrency as formatCurrencyUtil, formatDate } from '@/lib/export-utils';
 
 export default function TaxList() {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [assessments, setAssessments] = useState<TaxAssessment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [search, setSearch] = useState('');
   const [taxYear, setTaxYear] = useState('all');
   const [status, setStatus] = useState('all');
@@ -124,6 +126,100 @@ export default function TaxList() {
     }
   };
 
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+
+      // Fetch ALL assessments matching current filters (no pagination)
+      let query = supabase
+        .from('tax_assessments')
+        .select(`
+          *,
+          property:properties(
+            reference_id,
+            parcel_number,
+            district:districts(name)
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      // Apply same filters as list view
+      if (search) {
+        query = query.ilike('reference_id', `%${search}%`);
+      }
+      if (taxYear && taxYear !== 'all') {
+        query = query.eq('tax_year', parseInt(taxYear));
+      }
+      if (status && status !== 'all') {
+        query = query.eq('status', status);
+      }
+      if (arrearsOnly) {
+        query = query.gt('outstanding_amount', 0);
+      }
+
+      const { data, error } = await query;
+      
+      if (error) throw error;
+
+      // Format data for export
+      const exportData = (data || []).map((assessment: any) => ({
+        'Property Reference': assessment.property?.reference_id || 'N/A',
+        'Parcel Number': assessment.property?.parcel_number || 'N/A',
+        'Tax Year': assessment.tax_year,
+        'District': assessment.property?.district?.name || 'N/A',
+        'Owner Type': assessment.occupancy_type,
+        'Property Type': assessment.property_type,
+        'Land Size (m²)': assessment.land_size,
+        'Built Up Area (m²)': assessment.built_up_area || 'N/A',
+        'Assessment Date': formatDate(assessment.assessment_date),
+        'Due Date': formatDate(assessment.due_date),
+        'Base Assessment': formatCurrencyUtil(assessment.base_assessment),
+        'Exemption': formatCurrencyUtil(assessment.exemption_amount),
+        'Assessed Amount': formatCurrencyUtil(assessment.assessed_amount),
+        'Paid Amount': formatCurrencyUtil(assessment.paid_amount),
+        'Outstanding Amount': formatCurrencyUtil(assessment.outstanding_amount),
+        'Penalty Amount': formatCurrencyUtil(assessment.penalty_amount),
+        'Status': assessment.status,
+      }));
+
+      const filters = [];
+      if (search) filters.push(`Search: ${search}`);
+      if (taxYear !== 'all') filters.push(`Tax Year: ${taxYear}`);
+      if (status !== 'all') filters.push(`Status: ${status}`);
+      if (arrearsOnly) filters.push('Arrears Only: Yes');
+
+      const success = exportToExcel({
+        data: exportData,
+        filename: 'tax_assessments',
+        sheetName: 'Tax Assessments',
+        includeMetadata: true,
+        metadata: {
+          exportedBy: profile?.full_name || 'Unknown',
+          filters: filters.join(', ') || 'None',
+          totalRecords: exportData.length,
+        },
+      });
+
+      if (success) {
+        toast({
+          title: 'Success',
+          description: `Exported ${exportData.length} tax assessments`,
+        });
+      } else {
+        throw new Error('Export failed');
+      }
+    } catch (error: any) {
+      console.error('Export error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to export tax assessments',
+        variant: 'destructive',
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const getStatusBadge = (status: TaxStatus) => {
     const variants: Record<TaxStatus, { variant: any; label: string }> = {
       NOT_ASSESSED: { variant: 'secondary', label: 'Not Assessed' },
@@ -154,9 +250,9 @@ export default function TaxList() {
         </div>
         <div className="flex gap-2">
           {canExport && (
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleExport} disabled={exporting}>
               <FileDown className="mr-2 h-4 w-4" />
-              Export
+              {exporting ? 'Exporting...' : 'Export'}
             </Button>
           )}
           {canCreateAssessment && (
