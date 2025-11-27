@@ -130,39 +130,25 @@ export default function TaxList() {
     try {
       setExporting(true);
 
-      // Fetch ALL assessments matching current filters (no pagination)
-      let query = supabase
-        .from('tax_assessments')
-        .select(`
-          *,
-          property:properties(
-            reference_id,
-            parcel_number,
-            district:districts(name)
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      // Apply same filters as list view
-      if (search) {
-        query = query.ilike('reference_id', `%${search}%`);
-      }
-      if (taxYear && taxYear !== 'all') {
-        query = query.eq('tax_year', parseInt(taxYear));
-      }
-      if (status && status !== 'all') {
-        query = query.eq('status', status);
-      }
-      if (arrearsOnly) {
-        query = query.gt('outstanding_amount', 0);
-      }
-
-      const { data, error } = await query;
+      // Fetch ALL assessments using the edge function (no pagination limit)
+      const { data, error } = await supabase.functions.invoke('get-tax-assessments', {
+        body: {
+          page: 1,
+          limit: 10000, // Large limit to get all records
+          search,
+          taxYear: taxYear !== 'all' ? parseInt(taxYear) : undefined,
+          status: status !== 'all' ? status : undefined,
+          districtId: districtId !== 'all' ? districtId : undefined,
+          arrearsOnly,
+        },
+      });
       
       if (error) throw error;
 
+      const assessments = data?.assessments || [];
+
       // Format data for export
-      const exportData = (data || []).map((assessment: any) => ({
+      const exportData = assessments.map((assessment: any) => ({
         'Property Reference': assessment.property?.reference_id || 'N/A',
         'Parcel Number': assessment.property?.parcel_number || 'N/A',
         'Tax Year': assessment.tax_year,
@@ -196,7 +182,7 @@ export default function TaxList() {
         metadata: {
           exportedBy: profile?.full_name || 'Unknown',
           filters: filters.join(', ') || 'None',
-          totalRecords: exportData.length,
+          totalRecords: assessments.length,
         },
       });
 
