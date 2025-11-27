@@ -221,11 +221,29 @@ export const ReviewQueue = () => {
     try {
       setActionLoading(true);
 
-      const { error } = await supabase.functions.invoke('approve-customer', {
-        body: { entity_id: selectedCustomer.id }
-      });
+      // Update customer status to APPROVED
+      const { error: updateError } = await supabase
+        .from('customers')
+        .update({
+          status: 'APPROVED',
+          approved_by: profile?.id,
+          approved_at: new Date().toISOString()
+        })
+        .eq('id', selectedCustomer.id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // Create activity log
+      await supabase.from('activity_logs').insert({
+        entity_type: 'CUSTOMER',
+        entity_id: selectedCustomer.id,
+        action: 'APPROVED',
+        performed_by: profile?.id,
+        metadata: {
+          reference_id: selectedCustomer.reference_id,
+          customer_type: selectedCustomer.customer_type
+        }
+      });
 
       toast({
         title: 'Success',
@@ -253,11 +271,29 @@ export const ReviewQueue = () => {
     try {
       setActionLoading(true);
 
-      const { error } = await supabase.functions.invoke('reject-customer', {
-        body: { entity_id: selectedCustomer.id, feedback }
-      });
+      // Update customer status to REJECTED
+      const { error: updateError } = await supabase
+        .from('customers')
+        .update({
+          status: 'REJECTED',
+          rejection_feedback: feedback
+        })
+        .eq('id', selectedCustomer.id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // Create activity log
+      await supabase.from('activity_logs').insert({
+        entity_type: 'CUSTOMER',
+        entity_id: selectedCustomer.id,
+        action: 'REJECTED',
+        performed_by: profile?.id,
+        metadata: {
+          reference_id: selectedCustomer.reference_id,
+          customer_type: selectedCustomer.customer_type,
+          feedback
+        }
+      });
 
       toast({
         title: 'Success',
