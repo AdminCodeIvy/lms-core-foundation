@@ -16,6 +16,7 @@ interface ApproveConfirmationDialogProps {
   onConfirm: () => void;
   referenceId: string;
   loading?: boolean;
+  entityType?: 'customer' | 'property';
 }
 
 export const ApproveConfirmationDialog = ({
@@ -23,19 +24,22 @@ export const ApproveConfirmationDialog = ({
   onOpenChange,
   onConfirm,
   referenceId,
-  loading = false
+  loading = false,
+  entityType = 'customer'
 }: ApproveConfirmationDialogProps) => {
+  const entityLabel = entityType === 'customer' ? 'Customer' : 'Property';
+  
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle2 className="h-5 w-5 text-success" />
-            <AlertDialogTitle>Approve Customer</AlertDialogTitle>
+            <AlertDialogTitle>Approve {entityLabel}</AlertDialogTitle>
           </div>
           <AlertDialogDescription className="space-y-4">
             <p>
-              Are you sure you want to approve this customer?
+              Are you sure you want to approve this {entityType}?
             </p>
             <div className="bg-muted p-3 rounded-md">
               <p className="text-sm font-medium">Reference ID: {referenceId}</p>
