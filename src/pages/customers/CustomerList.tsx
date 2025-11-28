@@ -118,14 +118,16 @@ const CustomerList = () => {
         let name = 'Unknown';
         
         switch (customer.customer_type) {
-          case 'PERSON':
-            if (customer.customer_person && customer.customer_person.length > 0) {
-              const person = customer.customer_person[0];
+          case 'PERSON': {
+            const personData = customer.customer_person;
+            const person = Array.isArray(personData) ? personData[0] : personData;
+            if (person) {
               name = (person.fourth_name && person.fourth_name.trim())
                 ? `${person.first_name} ${person.fourth_name}`.trim()
                 : person.first_name;
             }
             break;
+          }
           case 'BUSINESS':
             if (customer.customer_business && customer.customer_business.length > 0) {
               name = customer.customer_business[0].business_name;

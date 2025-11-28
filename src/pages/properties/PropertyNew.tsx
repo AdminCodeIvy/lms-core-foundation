@@ -103,11 +103,14 @@ export default function PropertyNew() {
       // Format customer names based on type
       const formattedCustomers = customersRes.data.map(customer => {
         let name = '';
-        if (customer.customer_type === 'PERSON' && customer.customer_person?.[0]) {
-          const person = customer.customer_person[0];
-          name = (person.fourth_name && person.fourth_name.trim())
-            ? `${person.first_name} ${person.fourth_name}`.trim()
-            : person.first_name;
+        if (customer.customer_type === 'PERSON' && customer.customer_person) {
+          const personData = customer.customer_person;
+          const person = Array.isArray(personData) ? personData[0] : personData;
+          if (person) {
+            name = (person.fourth_name && person.fourth_name.trim())
+              ? `${person.first_name} ${person.fourth_name}`.trim()
+              : person.first_name;
+          }
         } else if (customer.customer_type === 'BUSINESS' && customer.customer_business?.[0]) {
           name = customer.customer_business[0].business_name;
         } else if (customer.customer_type === 'GOVERNMENT' && customer.customer_government?.[0]) {
