@@ -471,6 +471,31 @@ export const ReviewQueue = () => {
         console.error('Error creating activity log for approval:', logError);
       }
 
+      // Audit log for approval (best-effort)
+      const { error: auditError } = await supabase.from('audit_logs').insert([
+        {
+          entity_type: 'property',
+          entity_id: selectedProperty.id,
+          action: 'approve',
+          field: 'status',
+          old_value: property.status,
+          new_value: 'APPROVED',
+          changed_by: profile.id,
+        },
+        {
+          entity_type: 'property',
+          entity_id: selectedProperty.id,
+          action: 'approve',
+          field: 'approved_by',
+          old_value: property.approved_by || null,
+          new_value: profile.id,
+          changed_by: profile.id,
+        },
+      ]);
+      if (auditError) {
+        console.error('Error creating audit log for approval:', auditError);
+      }
+
       // Notification for property creator (best-effort)
       const { error: notificationError } = await supabase.from('notifications').insert({
         user_id: property.created_by,
