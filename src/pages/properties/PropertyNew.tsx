@@ -8,9 +8,23 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ArrowLeft } from 'lucide-react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { ArrowLeft, Check, ChevronsUpDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { MapPicker } from '@/components/property/MapPicker';
+import { cn } from '@/lib/utils';
 
 export default function PropertyNew() {
   const navigate = useNavigate();
@@ -19,9 +33,12 @@ export default function PropertyNew() {
   const [districts, setDistricts] = useState<any[]>([]);
   const [subDistricts, setSubDistricts] = useState<any[]>([]);
   const [propertyTypes, setPropertyTypes] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<any[]>([]);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [openCustomer, setOpenCustomer] = useState(false);
   
   const [formData, setFormData] = useState({
+    customer_id: '',
     property_location: '',
     sub_location: '',
     district_id: '',
@@ -63,13 +80,15 @@ export default function PropertyNew() {
   }, [formData.district_id]);
 
   const fetchLookups = async () => {
-    const [districtsRes, propertyTypesRes] = await Promise.all([
+    const [districtsRes, propertyTypesRes, customersRes] = await Promise.all([
       supabase.from('districts').select('*').eq('is_active', true).order('name'),
-      supabase.from('property_types').select('*').eq('is_active', true).order('name')
+      supabase.from('property_types').select('*').eq('is_active', true).order('name'),
+      supabase.from('customers').select('id, name, reference_id, status').in('status', ['APPROVED', 'SUBMITTED']).order('name').limit(100)
     ]);
 
     if (districtsRes.data) setDistricts(districtsRes.data);
     if (propertyTypesRes.data) setPropertyTypes(propertyTypesRes.data);
+    if (customersRes.data) setCustomers(customersRes.data);
   };
 
   const fetchSubDistricts = async (districtId: string) => {
@@ -99,6 +118,11 @@ export default function PropertyNew() {
     e.preventDefault();
     
     // Validation
+    if (!formData.customer_id) {
+      toast.error('Please select an owner');
+      return;
+    }
+
     if (!formData.district_id || !formData.size || !formData.north_length || 
         !formData.south_length || !formData.east_length || !formData.west_length) {
       toast.error('Please fill in all required fields');
@@ -117,6 +141,7 @@ export default function PropertyNew() {
       const { data: property, error: propertyError } = await supabase
         .from('properties')
         .insert({
+          customer_id: formData.customer_id,
           property_location: formData.property_location || null,
           sub_location: formData.sub_location || null,
           district_id: formData.district_id,
@@ -226,6 +251,69 @@ export default function PropertyNew() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Ownership */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Ownership</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Label>Owner *</Label>
+              <Popover open={openCustomer} onOpenChange={setOpenCustomer}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={openCustomer}
+                    className="w-full justify-between"
+                  >
+                    <span className={cn(!formData.customer_id && "text-muted-foreground")}>
+                      {formData.customer_id
+                        ? customers.find((c) => c.id === formData.customer_id)?.name
+                        : "Select owner..."}
+                    </span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[600px] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search by customer name or reference..." />
+                    <CommandList>
+                      <CommandEmpty>No customers found.</CommandEmpty>
+                      <CommandGroup>
+                        {customers.map((customer) => (
+                          <CommandItem
+                            key={customer.id}
+                            value={`${customer.name} ${customer.reference_id}`}
+                            onSelect={() => {
+                              setFormData({ ...formData, customer_id: customer.id });
+                              setOpenCustomer(false);
+                            }}
+                            className="cursor-pointer"
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                formData.customer_id === customer.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            <div className="flex flex-col">
+                              <div className="font-medium">{customer.name}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {customer.reference_id}
+                              </div>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Basic Information */}
         <Card>
           <CardHeader>
