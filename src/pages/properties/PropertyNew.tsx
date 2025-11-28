@@ -174,11 +174,10 @@ export default function PropertyNew() {
     try {
       setLoading(true);
 
-      // Create property (excluding boundary fields)
+      // Create property (excluding boundary fields and customer_id)
       const { data: property, error: propertyError } = await supabase
         .from('properties')
         .insert({
-          customer_id: formData.customer_id,
           property_location: formData.property_location || null,
           sub_location: formData.sub_location || null,
           district_id: formData.district_id,
@@ -205,6 +204,19 @@ export default function PropertyNew() {
         .maybeSingle();
 
       if (propertyError) throw propertyError;
+
+      // Create property ownership record
+      const { error: ownershipError } = await supabase
+        .from('property_ownership')
+        .insert({
+          property_id: property.id,
+          customer_id: formData.customer_id,
+          ownership_type: 'OWNER',
+          ownership_percentage: 100,
+          is_current: true
+        });
+
+      if (ownershipError) throw ownershipError;
 
       // Create boundaries
       const { error: boundariesError } = await supabase

@@ -108,16 +108,18 @@ export default function TaxList() {
             reference_id,
             parcel_number,
             district:districts(id, name, code),
-            customer:customers(
-              id,
-              reference_id,
-              customer_type,
-              customer_person(first_name, fourth_name),
-              customer_business(business_name),
-              customer_government(full_department_name),
-              customer_mosque_hospital(full_name),
-              customer_non_profit(full_non_profit_name),
-              customer_contractor(full_contractor_name)
+            property_ownership!inner(
+              customer:customers(
+                id,
+                reference_id,
+                customer_type,
+                customer_person(first_name, fourth_name),
+                customer_business(business_name),
+                customer_government(full_department_name),
+                customer_mosque_hospital(full_name),
+                customer_non_profit(full_non_profit_name),
+                customer_contractor(full_contractor_name)
+              )
             )
           )
         `, { count: 'exact' })
@@ -158,7 +160,9 @@ export default function TaxList() {
       const transformedData = (data || []).map((assessment: any) => {
         let customerName = 'N/A';
         
-        const customer = assessment.property?.customer;
+        // Get customer from property_ownership (should be an array with current owner)
+        const ownership = assessment.property?.property_ownership?.[0];
+        const customer = ownership?.customer;
         
         if (customer) {
           switch (customer.customer_type) {
