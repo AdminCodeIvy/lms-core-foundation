@@ -265,18 +265,19 @@ export default function PropertyNew() {
         }
       }
 
-      // Create activity log
+      // Create activity log for draft creation
       await supabase.from('activity_logs').insert({
         entity_type: 'PROPERTY',
         entity_id: property.id,
         action: 'CREATED',
         performed_by: profile?.id,
         metadata: {
-          reference_id: property.reference_id
+          reference_id: property.reference_id,
+          status: 'DRAFT'
         }
       });
 
-      toast.success('Property created successfully');
+      toast.success('Property draft created successfully');
       navigate(`/properties/${property.id}`);
     } catch (error: any) {
       console.error('Error creating property:', error);
