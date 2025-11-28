@@ -126,85 +126,102 @@ export default function MapView() {
     try {
       setLoading(true);
       
-      // Fetch all approved properties
-      const { data: allApproved, error: countError } = await supabase
-        .from('properties')
-        .select('id', { count: 'exact', head: true })
-        .eq('status', 'APPROVED');
+      // Generate dummy data for demonstration
+      const taxStatuses: PropertyParcel['tax_status'][] = ['PAID', 'PARTIAL', 'OVERDUE', 'ASSESSED', 'NOT_ASSESSED'];
+      const districts = ['Addis Ababa', 'Dire Dawa', 'Hargeisa', 'Jigjiga'];
+      const propertyTypes = ['Residential', 'Commercial', 'Industrial', 'Agricultural', 'Apartment', 'Villa'];
+      const ownerNames = ['John Doe', 'Jane Smith', 'Mohamed Ali', 'Sarah Johnson', 'Ahmed Hassan', 'Maria Garcia'];
       
-      // Fetch real properties from database with coordinates
-      const { data: properties, error } = await supabase
-        .from('properties')
-        .select(`
-          id,
-          reference_id,
-          parcel_number,
-          status,
-          coordinates,
-          district_id,
-          property_type_id,
-          districts(name),
-          property_types(name)
-        `)
-        .eq('status', 'APPROVED')
-        .not('coordinates', 'is', null);
-
-      if (error) throw error;
-
-      // Fetch tax assessments for these properties
-      const propertyIds = (properties || []).map(p => p.id);
-      const { data: assessments } = propertyIds.length > 0 ? await supabase
-        .from('tax_assessments')
-        .select('property_id, status, tax_year')
-        .in('property_id', propertyIds)
-        .order('tax_year', { ascending: false }) : { data: [] };
-
-      // Map to PropertyParcel format
-      const mappedParcels: PropertyParcel[] = (properties || []).map((prop: any) => {
-        // Get latest assessment for this property
-        const latestAssessment = assessments?.find(a => a.property_id === prop.id);
+      const dummyParcels: PropertyParcel[] = [];
+      
+      // Generate 50 dummy properties around Addis Ababa area
+      const baseLatAddis = 9.03;
+      const baseLngAddis = 38.74;
+      
+      for (let i = 0; i < 15; i++) {
+        // Random offset within ~5km radius
+        const latOffset = (Math.random() - 0.5) * 0.08;
+        const lngOffset = (Math.random() - 0.5) * 0.08;
         
-        // Extract lat/lng from PostGIS text format: POINT(lng lat)
-        let coordinates: [number, number] | undefined;
-        if (prop.coordinates) {
-          try {
-            // Handle PostGIS text format: POINT(lng lat)
-            if (typeof prop.coordinates === 'string') {
-              const match = prop.coordinates.match(/POINT\(([+-]?\d+\.?\d*)\s+([+-]?\d+\.?\d*)\)/);
-              if (match) {
-                const lng = parseFloat(match[1]);
-                const lat = parseFloat(match[2]);
-                coordinates = [lat, lng]; // Leaflet uses [lat, lng] order
-                console.log(`Parsed coordinates for ${prop.parcel_number}:`, coordinates);
-              }
-            }
-            // Handle GeoJSON format (if database returns it that way)
-            else if (prop.coordinates.coordinates && Array.isArray(prop.coordinates.coordinates)) {
-              const coords = prop.coordinates.coordinates;
-              if (coords.length === 2) {
-                coordinates = [coords[1], coords[0]]; // GeoJSON is [lng, lat], Leaflet needs [lat, lng]
-              }
-            }
-          } catch (e) {
-            console.error('Error parsing coordinates for property:', prop.parcel_number, e);
-          }
-        }
-
-        return {
-          id: prop.id,
-          reference_id: prop.reference_id,
-          parcel_number: prop.parcel_number,
-          tax_status: (latestAssessment?.status || 'NOT_ASSESSED') as PropertyParcel['tax_status'],
-          status: prop.status,
-          district: prop.districts?.name || 'Unknown',
-          property_type: prop.property_types?.name || 'Unknown',
-          coordinates
-        };
-      }).filter(p => p.coordinates); // Only include properties with valid coordinates
-
-      console.log(`Loaded ${mappedParcels.length} properties with coordinates out of ${properties?.length || 0} total approved properties`);
-
-      setParcels(mappedParcels);
+        dummyParcels.push({
+          id: `dummy-${i}`,
+          reference_id: `ADD-2025-${String(i + 1).padStart(5, '0')}`,
+          parcel_number: `PARCEL-AA-${String(i + 1).padStart(4, '0')}`,
+          tax_status: taxStatuses[i % taxStatuses.length],
+          status: 'APPROVED',
+          district: districts[0],
+          property_type: propertyTypes[i % propertyTypes.length],
+          owner_name: ownerNames[i % ownerNames.length],
+          coordinates: [baseLatAddis + latOffset, baseLngAddis + lngOffset]
+        });
+      }
+      
+      // Generate 15 properties around Hargeisa area
+      const baseLatHargeisa = 9.56;
+      const baseLngHargeisa = 44.065;
+      
+      for (let i = 0; i < 15; i++) {
+        const latOffset = (Math.random() - 0.5) * 0.08;
+        const lngOffset = (Math.random() - 0.5) * 0.08;
+        
+        dummyParcels.push({
+          id: `dummy-h-${i}`,
+          reference_id: `HRG-2025-${String(i + 15 + 1).padStart(5, '0')}`,
+          parcel_number: `PARCEL-HG-${String(i + 1).padStart(4, '0')}`,
+          tax_status: taxStatuses[(i + 1) % taxStatuses.length],
+          status: 'APPROVED',
+          district: districts[2],
+          property_type: propertyTypes[(i + 2) % propertyTypes.length],
+          owner_name: ownerNames[(i + 3) % ownerNames.length],
+          coordinates: [baseLatHargeisa + latOffset, baseLngHargeisa + lngOffset]
+        });
+      }
+      
+      // Generate 10 properties around Dire Dawa area
+      const baseLatDire = 9.59;
+      const baseLngDire = 41.87;
+      
+      for (let i = 0; i < 10; i++) {
+        const latOffset = (Math.random() - 0.5) * 0.06;
+        const lngOffset = (Math.random() - 0.5) * 0.06;
+        
+        dummyParcels.push({
+          id: `dummy-d-${i}`,
+          reference_id: `DRD-2025-${String(i + 30 + 1).padStart(5, '0')}`,
+          parcel_number: `PARCEL-DD-${String(i + 1).padStart(4, '0')}`,
+          tax_status: taxStatuses[(i + 2) % taxStatuses.length],
+          status: 'APPROVED',
+          district: districts[1],
+          property_type: propertyTypes[(i + 1) % propertyTypes.length],
+          owner_name: ownerNames[(i + 2) % ownerNames.length],
+          coordinates: [baseLatDire + latOffset, baseLngDire + lngOffset]
+        });
+      }
+      
+      // Generate 10 properties around Jigjiga area
+      const baseLatJigjiga = 9.35;
+      const baseLngJigjiga = 42.80;
+      
+      for (let i = 0; i < 10; i++) {
+        const latOffset = (Math.random() - 0.5) * 0.06;
+        const lngOffset = (Math.random() - 0.5) * 0.06;
+        
+        dummyParcels.push({
+          id: `dummy-j-${i}`,
+          reference_id: `JJG-2025-${String(i + 40 + 1).padStart(5, '0')}`,
+          parcel_number: `PARCEL-JJ-${String(i + 1).padStart(4, '0')}`,
+          tax_status: taxStatuses[(i + 3) % taxStatuses.length],
+          status: 'APPROVED',
+          district: districts[3],
+          property_type: propertyTypes[(i + 3) % propertyTypes.length],
+          owner_name: ownerNames[(i + 4) % ownerNames.length],
+          coordinates: [baseLatJigjiga + latOffset, baseLngJigjiga + lngOffset]
+        });
+      }
+      
+      console.log(`Generated ${dummyParcels.length} dummy properties`);
+      
+      setParcels(dummyParcels);
       setLoading(false);
     } catch (error: any) {
       console.error('Error loading parcels:', error);
