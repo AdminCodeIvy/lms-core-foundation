@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
     }
 
     // Log audit trail
-    await supabase.from('audit_logs').insert([
+    const { error: auditError } = await supabase.from('audit_logs').insert([
       {
         entity_type: 'property',
         entity_id: property_id,
@@ -117,6 +117,12 @@ Deno.serve(async (req) => {
         changed_by: user.id,
       }
     ]);
+
+    if (auditError) {
+      console.error('Error creating audit logs:', auditError);
+    } else {
+      console.log('Audit logs created successfully for property approval');
+    }
 
     // Create activity log
     const { error: logError } = await supabase
