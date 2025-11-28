@@ -77,6 +77,9 @@ export default function TaxNew() {
     due_date: new Date(new Date().setDate(new Date().getDate() + 30)) as Date,
   });
 
+  // Track existing assessment years for selected property
+  const [existingYears, setExistingYears] = useState<number[]>([]);
+
   useEffect(() => {
     loadProperties();
   }, []);
@@ -112,6 +115,30 @@ export default function TaxNew() {
       number_of_floors: property.number_of_floors?.toString() || '',
     }));
     setOpen(false);
+
+    // Fetch existing assessment years for this property
+    try {
+      const { data, error } = await supabase
+        .from('tax_assessments')
+        .select('tax_year')
+        .eq('property_id', property.id);
+
+      if (error) throw error;
+      
+      const years = (data || []).map((assessment: any) => assessment.tax_year);
+      setExistingYears(years);
+
+      // If current selected year already exists, find next available year
+      if (years.includes(formData.tax_year)) {
+        const availableYear = Array.from({ length: 11 }, (_, i) => 2020 + i)
+          .find(year => !years.includes(year));
+        if (availableYear) {
+          setFormData(prev => ({ ...prev, tax_year: availableYear }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching existing assessments:', error);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -328,6 +355,7 @@ export default function TaxNew() {
                     size="sm"
                     onClick={() => {
                       setSelectedProperty(null);
+                      setExistingYears([]);
                       setFormData(prev => ({ ...prev, property_id: '' }));
                     }}
                     className="mt-2 p-0 h-auto"
@@ -348,11 +376,30 @@ export default function TaxNew() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.from({ length: 11 }, (_, i) => 2020 + i).map(year => (
-                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                  ))}
+                  {Array.from({ length: 11 }, (_, i) => 2020 + i).map(year => {
+                    const isAssessed = existingYears.includes(year);
+                    return (
+                      <SelectItem 
+                        key={year} 
+                        value={year.toString()}
+                        disabled={isAssessed}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span>{year}</span>
+                          {isAssessed && (
+                            <span className="text-xs text-muted-foreground">(Already Assessed)</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
+              {existingYears.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  This property has assessments for: {existingYears.sort().join(', ')}
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
