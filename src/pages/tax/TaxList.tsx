@@ -63,6 +63,29 @@ export default function TaxList() {
     fetchAssessments();
   }, [search, taxYear, status, districtId, arrearsOnly, pagination.page]);
 
+  // Real-time subscription for tax assessment changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('tax-assessments-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tax_assessments'
+        },
+        (payload) => {
+          console.log('Tax assessment change detected:', payload);
+          fetchAssessments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [search, taxYear, status, districtId, arrearsOnly, pagination.page]);
+
   const fetchDistricts = async () => {
     const { data } = await supabase
       .from('districts')
@@ -75,16 +98,37 @@ export default function TaxList() {
   const fetchAssessments = async () => {
     setLoading(true);
     try {
-      // Base query
+      // Base query with property relationships
       let query = supabase
         .from('tax_assessments')
-        .select('*', { count: 'exact' })
+        .select(`
+          *,
+          property:properties(
+            id,
+            reference_id,
+            parcel_number,
+            district:districts(id, name, code),
+            property_ownership!property_ownership_property_id_fkey(
+              customer:customers(
+                id,
+                reference_id,
+                customer_type,
+                customer_person(first_name, fourth_name),
+                customer_business(business_name),
+                customer_government(full_department_name),
+                customer_mosque_hospital(full_name),
+                customer_non_profit(full_non_profit_name),
+                customer_contractor(full_contractor_name)
+              )
+            )
+          )
+        `, { count: 'exact' })
         .order('created_at', { ascending: false });
 
       // Apply filters
       if (search) {
-        // Search by assessment reference ID
-        query = query.ilike('reference_id', `%${search}%`);
+        // Search by assessment reference ID or property reference
+        query = query.or(`reference_id.ilike.%${search}%,property.reference_id.ilike.%${search}%`);
       }
 
       if (taxYear && taxYear !== 'all') {
@@ -93,6 +137,10 @@ export default function TaxList() {
 
       if (status && status !== 'all') {
         query = query.eq('status', status);
+      }
+
+      if (districtId && districtId !== 'all') {
+        query = query.eq('property.district_id', districtId);
       }
 
       if (arrearsOnly) {
@@ -108,7 +156,65 @@ export default function TaxList() {
 
       if (error) throw error;
 
-      setAssessments((data as unknown as TaxAssessment[]) || []);
+      // Transform data to include customer name
+      const transformedData = (data || []).map((assessment: any) => {
+        let customerName = 'N/A';
+        
+        if (assessment.property?.property_ownership && assessment.property.property_ownership.length > 0) {
+          const ownership = assessment.property.property_ownership[0];
+          const customer = ownership?.customer;
+          
+          if (customer) {
+            switch (customer.customer_type) {
+              case 'PERSON':
+                if (customer.customer_person) {
+                  const person = customer.customer_person;
+                  customerName = (person.fourth_name && person.fourth_name.trim())
+                    ? `${person.first_name} ${person.fourth_name}`.trim()
+                    : person.first_name;
+                }
+                break;
+              case 'BUSINESS':
+                if (customer.customer_business) {
+                  customerName = customer.customer_business.business_name;
+                }
+                break;
+              case 'GOVERNMENT':
+                if (customer.customer_government) {
+                  customerName = customer.customer_government.full_department_name;
+                }
+                break;
+              case 'MOSQUE_HOSPITAL':
+                if (customer.customer_mosque_hospital) {
+                  customerName = customer.customer_mosque_hospital.full_name;
+                }
+                break;
+              case 'NON_PROFIT':
+                if (customer.customer_non_profit) {
+                  customerName = customer.customer_non_profit.full_non_profit_name;
+                }
+                break;
+              case 'CONTRACTOR':
+                if (customer.customer_contractor) {
+                  customerName = customer.customer_contractor.full_contractor_name;
+                }
+                break;
+            }
+          }
+        }
+
+        return {
+          ...assessment,
+          property: {
+            ...assessment.property,
+            customer: {
+              name: customerName
+            }
+          }
+        };
+      });
+
+      setAssessments(transformedData as unknown as TaxAssessment[]);
       const total = count ?? 0;
       setPagination({
         page: pagination.page,
