@@ -33,12 +33,12 @@ export const AppHeader = () => {
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="gap-2 hover:bg-muted">
+          <Button variant="ghost" className="gap-2 hover:bg-muted [&:hover_span]:text-foreground">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
               <User className="h-4 w-4 text-primary" />
             </div>
             <div className="flex flex-col items-start">
-              <span className="text-sm font-medium">{profile?.full_name}</span>
+              <span className="text-sm font-medium text-foreground">{profile?.full_name}</span>
               <span className="text-xs text-muted-foreground">{profile?.role}</span>
             </div>
           </Button>
