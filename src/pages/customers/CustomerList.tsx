@@ -59,7 +59,11 @@ const CustomerList = () => {
 
   const canCreate = profile?.role === 'INPUTTER' || profile?.role === 'ADMINISTRATOR';
   const canExport = profile?.role === 'APPROVER' || profile?.role === 'ADMINISTRATOR';
-  const canDelete = profile?.role === 'ADMINISTRATOR';
+  
+  const canDelete = (customer: CustomerListItem) => {
+    return profile?.role === 'ADMINISTRATOR' || 
+           (customer.status === 'DRAFT' && profile?.role === 'INPUTTER');
+  };
 
   useEffect(() => {
     fetchCustomers();
@@ -431,7 +435,7 @@ const CustomerList = () => {
                       }}>
                         <Eye className="h-4 w-4" />
                       </Button>
-                      {canDelete && (
+                      {canDelete(customer) && (
                         <Button
                           variant="outline"
                           size="sm"
