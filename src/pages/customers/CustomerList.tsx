@@ -69,6 +69,29 @@ const CustomerList = () => {
     fetchCustomers();
   }, [page, searchQuery, typeFilter, statusFilter]);
 
+  // Real-time subscription for customer changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('customers-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'customers'
+        },
+        (payload) => {
+          console.log('Customer change detected:', payload);
+          fetchCustomers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [page, searchQuery, typeFilter, statusFilter]);
+
   const fetchCustomers = async () => {
     try {
       setLoading(true);
