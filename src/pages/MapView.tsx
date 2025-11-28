@@ -164,17 +164,29 @@ export default function MapView() {
         // Get latest assessment for this property
         const latestAssessment = assessments?.find(a => a.property_id === prop.id);
         
-        // Extract lat/lng from PostGIS geography point
+        // Extract lat/lng from PostGIS text format: POINT(lng lat)
         let coordinates: [number, number] | undefined;
         if (prop.coordinates) {
           try {
-            // PostGIS geography returns as GeoJSON format
-            const coords = prop.coordinates.coordinates;
-            if (coords && coords.length === 2) {
-              coordinates = [coords[1], coords[0]]; // [lat, lng]
+            // Handle PostGIS text format: POINT(lng lat)
+            if (typeof prop.coordinates === 'string') {
+              const match = prop.coordinates.match(/POINT\(([+-]?\d+\.?\d*)\s+([+-]?\d+\.?\d*)\)/);
+              if (match) {
+                const lng = parseFloat(match[1]);
+                const lat = parseFloat(match[2]);
+                coordinates = [lat, lng]; // Leaflet uses [lat, lng] order
+                console.log(`Parsed coordinates for ${prop.parcel_number}:`, coordinates);
+              }
+            }
+            // Handle GeoJSON format (if database returns it that way)
+            else if (prop.coordinates.coordinates && Array.isArray(prop.coordinates.coordinates)) {
+              const coords = prop.coordinates.coordinates;
+              if (coords.length === 2) {
+                coordinates = [coords[1], coords[0]]; // GeoJSON is [lng, lat], Leaflet needs [lat, lng]
+              }
             }
           } catch (e) {
-            console.error('Error parsing coordinates:', e);
+            console.error('Error parsing coordinates for property:', prop.parcel_number, e);
           }
         }
 
@@ -189,6 +201,8 @@ export default function MapView() {
           coordinates
         };
       }).filter(p => p.coordinates); // Only include properties with valid coordinates
+
+      console.log(`Loaded ${mappedParcels.length} properties with coordinates out of ${properties?.length || 0} total approved properties`);
 
       setParcels(mappedParcels);
       setLoading(false);
