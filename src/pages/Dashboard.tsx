@@ -28,13 +28,72 @@ const Dashboard = () => {
     fetchTaxStats();
   }, []);
 
+  // Real-time subscription for customer and property changes
+  useEffect(() => {
+    const customersChannel = supabase
+      .channel('dashboard-customers-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'customers'
+        },
+        (payload) => {
+          console.log('Customer change detected on dashboard:', payload);
+          fetchStats();
+        }
+      )
+      .subscribe();
+
+    const propertiesChannel = supabase
+      .channel('dashboard-properties-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'properties'
+        },
+        (payload) => {
+          console.log('Property change detected on dashboard:', payload);
+          fetchStats();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(customersChannel);
+      supabase.removeChannel(propertiesChannel);
+    };
+  }, []);
+
   const fetchStats = async () => {
     try {
       const { data, error } = await supabase.functions.invoke('get-dashboard-stats');
       if (error) throw error;
       setStats(data);
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      console.error('Error fetching stats from edge function, falling back to direct query:', error);
+      
+      // Fallback: Query database directly
+      try {
+        const [draftsRes, submittedRes, approvedRes, rejectedRes] = await Promise.all([
+          supabase.from('customers').select('id', { count: 'exact', head: true }).eq('status', 'DRAFT'),
+          supabase.from('customers').select('id', { count: 'exact', head: true }).eq('status', 'SUBMITTED'),
+          supabase.from('customers').select('id', { count: 'exact', head: true }).eq('status', 'APPROVED'),
+          supabase.from('customers').select('id', { count: 'exact', head: true }).eq('status', 'REJECTED'),
+        ]);
+
+        setStats({
+          drafts_pending: draftsRes.count || 0,
+          waiting_approval: submittedRes.count || 0,
+          approved: approvedRes.count || 0,
+          rejections: rejectedRes.count || 0,
+        });
+      } catch (fallbackError) {
+        console.error('Fallback query also failed:', fallbackError);
+      }
     } finally {
       setLoading(false);
     }
