@@ -153,42 +153,44 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Tax Collection Stats */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
-            Tax Collection This Year
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Total Assessed</p>
-              <p className="text-2xl font-bold">{formatCurrency(taxStats.total_assessed)}</p>
+      {/* Tax Collection Stats - Admin Only */}
+      {profile?.role === 'ADMINISTRATOR' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5" />
+              Tax Collection This Year
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Assessed</p>
+                <p className="text-2xl font-bold">{formatCurrency(taxStats.total_assessed)}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Collected</p>
+                <p className="text-2xl font-bold text-green-600">{formatCurrency(taxStats.total_collected)}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Collection Rate</p>
+                <p className="text-2xl font-bold">{taxStats.collection_rate.toFixed(1)}%</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Outstanding</p>
+                <p className="text-2xl font-bold text-destructive">{formatCurrency(taxStats.total_outstanding)}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total Collected</p>
-              <p className="text-2xl font-bold text-green-600">{formatCurrency(taxStats.total_collected)}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Collection Rate</p>
-              <p className="text-2xl font-bold">{taxStats.collection_rate.toFixed(1)}%</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Outstanding</p>
-              <p className="text-2xl font-bold text-destructive">{formatCurrency(taxStats.total_outstanding)}</p>
-            </div>
-          </div>
-          <Button
-            variant="outline"
-            className="mt-4"
-            onClick={() => navigate('/tax')}
-          >
-            View All Tax Assessments
-          </Button>
-        </CardContent>
-      </Card>
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => navigate('/tax')}
+            >
+              View All Tax Assessments
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {quickActions.length > 0 && (
         <Card>
