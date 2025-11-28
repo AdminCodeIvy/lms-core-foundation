@@ -236,6 +236,19 @@ export default function PropertyEdit() {
         }
       });
 
+      // Create audit log for update
+      if (profile?.id) {
+        await supabase.from('audit_logs').insert({
+          entity_type: 'property',
+          entity_id: id,
+          action: 'update',
+          field: null,
+          old_value: null,
+          new_value: 'Updated property details',
+          changed_by: profile.id,
+        });
+      }
+
       toast.success('Property updated successfully');
       navigate(`/properties/${id}`);
     } catch (error: any) {

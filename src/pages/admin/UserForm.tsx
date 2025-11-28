@@ -147,6 +147,20 @@ const UserForm = () => {
 
         if (error) throw error;
 
+        // Create audit log for user update
+        const { data: currentUser } = await supabase.auth.getUser();
+        if (currentUser?.user?.id) {
+          await supabase.from('audit_logs').insert({
+            entity_type: 'user',
+            entity_id: editingUser.id,
+            action: 'update',
+            field: null,
+            old_value: null,
+            new_value: `Updated user: ${formData.full_name}`,
+            changed_by: currentUser.user.id,
+          });
+        }
+
         toast({
           title: 'Success',
           description: 'User updated successfully',
@@ -166,7 +180,19 @@ const UserForm = () => {
         if (authError) throw authError;
 
         // The database trigger will automatically create the user profile
-        // No need to manually insert into users table
+        // Create audit log for user creation
+        const { data: currentUser } = await supabase.auth.getUser();
+        if (authData?.user && currentUser?.user?.id) {
+          await supabase.from('audit_logs').insert({
+            entity_type: 'user',
+            entity_id: authData.user.id,
+            action: 'create',
+            field: null,
+            old_value: null,
+            new_value: `Created user: ${formData.full_name} (${formData.email})`,
+            changed_by: currentUser.user.id,
+          });
+        }
 
         toast({
           title: 'Success',

@@ -346,6 +346,31 @@ export const ReviewQueue = () => {
         }
       });
 
+      // Audit log for rejection (best-effort)
+      const { error: auditError } = await supabase.from('audit_logs').insert([
+        {
+          entity_type: 'customer',
+          entity_id: selectedCustomer.id,
+          action: 'reject',
+          field: 'status',
+          old_value: selectedCustomer.status,
+          new_value: 'REJECTED',
+          changed_by: profile.id,
+        },
+        {
+          entity_type: 'customer',
+          entity_id: selectedCustomer.id,
+          action: 'reject',
+          field: 'rejection_feedback',
+          old_value: null,
+          new_value: feedback,
+          changed_by: profile.id,
+        },
+      ]);
+      if (auditError) {
+        console.error('Error creating audit log for rejection:', auditError);
+      }
+
       toast({
         title: 'Success',
         description: 'Customer rejected',
@@ -589,6 +614,31 @@ export const ReviewQueue = () => {
       });
       if (logError) {
         console.error('Error creating activity log for rejection:', logError);
+      }
+
+      // Audit log for rejection (best-effort)
+      const { error: auditError } = await supabase.from('audit_logs').insert([
+        {
+          entity_type: 'property',
+          entity_id: selectedProperty.id,
+          action: 'reject',
+          field: 'status',
+          old_value: property.status,
+          new_value: 'REJECTED',
+          changed_by: profile.id,
+        },
+        {
+          entity_type: 'property',
+          entity_id: selectedProperty.id,
+          action: 'reject',
+          field: 'rejection_feedback',
+          old_value: null,
+          new_value: feedback,
+          changed_by: profile.id,
+        },
+      ]);
+      if (auditError) {
+        console.error('Error creating audit log for rejection:', auditError);
       }
 
       // Notification for property creator (best-effort)
