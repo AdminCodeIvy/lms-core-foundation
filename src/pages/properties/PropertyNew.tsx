@@ -213,6 +213,7 @@ export default function PropertyNew() {
           customer_id: formData.customer_id,
           ownership_type: 'OWNER',
           ownership_percentage: 100,
+          start_date: new Date().toISOString().split('T')[0], // Current date in YYYY-MM-DD format
           is_current: true
         });
 
