@@ -105,7 +105,7 @@ export default function PropertyNew() {
         let name = '';
         if (customer.customer_type === 'PERSON' && customer.customer_person?.[0]) {
           const person = customer.customer_person[0];
-          name = person.fourth_name 
+          name = (person.fourth_name && person.fourth_name.trim())
             ? `${person.first_name} ${person.fourth_name}`.trim()
             : person.first_name;
         } else if (customer.customer_type === 'BUSINESS' && customer.customer_business?.[0]) {
