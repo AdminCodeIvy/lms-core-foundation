@@ -38,6 +38,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { SubmitConfirmationDialog } from '@/components/workflow/SubmitConfirmationDialog';
 import { RejectionBanner } from '@/components/workflow/RejectionBanner';
 import { ActivityLogTab } from '@/components/activity/ActivityLogTab';
+import { AuditLogViewer } from '@/components/audit/AuditLogViewer';
 
 const CustomerDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -575,6 +576,14 @@ const CustomerDetail = () => {
 
         <TabsContent value="activity" className="mt-6">
           <ActivityLogTab customerId={customer.id} />
+        </TabsContent>
+
+        <TabsContent value="audit" className="mt-6">
+          <AuditLogViewer 
+            entityType="customer" 
+            entityId={customer.id}
+            title="Customer Audit Trail"
+          />
         </TabsContent>
       </Tabs>
 
