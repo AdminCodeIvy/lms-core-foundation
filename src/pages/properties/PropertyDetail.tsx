@@ -141,6 +141,17 @@ export default function PropertyDetail() {
         performed_by: user?.id
       });
 
+      // Create audit log for submission
+      await supabase.from('audit_logs').insert({
+        entity_type: 'property',
+        entity_id: property.id,
+        action: 'submit',
+        field: 'status',
+        old_value: property.status || 'DRAFT',
+        new_value: 'SUBMITTED',
+        changed_by: user?.id || property.created_by
+      });
+
       // Create notifications for approvers and administrators
       const { data: approvers } = await supabase
         .from('users')
