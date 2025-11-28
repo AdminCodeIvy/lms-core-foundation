@@ -51,18 +51,35 @@ export const AuditLogViewer = ({ entityType, entityId, title = 'Activity Log' }:
         throw new Error('Not authenticated');
       }
 
-      const { data, error: fetchError } = await supabase.functions.invoke('get-audit-logs', {
-        body: {
-          entityType,
-          entityId,
-          limit: 100,
-          offset: 0,
-        },
-      });
+      const { data, error } = await supabase
+        .from('audit_logs')
+        .select(`
+          id,
+          entity_type,
+          entity_id,
+          action,
+          field,
+          old_value,
+          new_value,
+          changed_by,
+          timestamp,
+          users:users!audit_logs_changed_by_fkey (
+            id,
+            full_name
+          )
+        `)
+        .eq('entity_type', entityType)
+        .eq('entity_id', entityId)
+        .order('timestamp', { ascending: false });
 
-      if (fetchError) throw fetchError;
+      if (error) throw error;
 
-      setLogs(data.logs || []);
+      const normalizedLogs = (data || []).map((log: any) => ({
+        ...log,
+        users: Array.isArray(log.users) ? log.users[0] : log.users,
+      })) as AuditLog[];
+
+      setLogs(normalizedLogs);
     } catch (err: any) {
       console.error('Error fetching audit logs:', err);
       setError(err.message || 'Failed to load activity log');
@@ -70,7 +87,6 @@ export const AuditLogViewer = ({ entityType, entityId, title = 'Activity Log' }:
       setLoading(false);
     }
   };
-
   const getActionBadge = (action: string) => {
     const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
       create: 'default',
