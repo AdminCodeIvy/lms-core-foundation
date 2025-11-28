@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -79,9 +78,9 @@ export const ReviewPanel = ({
               <X className="h-4 w-4" />
               <span className="sr-only">Close</span>
             </button>
-            <SheetHeader className="mt-8">
-              <SheetTitle>Review Customer</SheetTitle>
-            </SheetHeader>
+            <div className="mt-8 mb-6">
+              <h2 className="text-2xl font-bold">Review Customer</h2>
+            </div>
 
           {loading ? (
             <div className="space-y-4 mt-6">
