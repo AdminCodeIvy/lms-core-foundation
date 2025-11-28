@@ -106,6 +106,17 @@ const CustomerNew = () => {
         }
       });
 
+      // Create audit log for draft creation
+      await supabase.from('audit_logs').insert({
+        entity_type: 'customer',
+        entity_id: customer.id,
+        action: 'create',
+        field: 'status',
+        old_value: null,
+        new_value: 'DRAFT',
+        changed_by: user?.id
+      });
+
       toast({
         title: 'Success',
         description: 'Customer draft created successfully',
@@ -159,6 +170,17 @@ const CustomerNew = () => {
           customer_type: 'BUSINESS',
           status: 'DRAFT'
         }
+      });
+
+      // Create audit log for draft creation
+      await supabase.from('audit_logs').insert({
+        entity_type: 'customer',
+        entity_id: customer.id,
+        action: 'create',
+        field: 'status',
+        old_value: null,
+        new_value: 'DRAFT',
+        changed_by: user?.id
       });
 
       toast({
@@ -216,6 +238,17 @@ const CustomerNew = () => {
         }
       });
 
+      // Create audit log for draft creation
+      await supabase.from('audit_logs').insert({
+        entity_type: 'customer',
+        entity_id: customer.id,
+        action: 'create',
+        field: 'status',
+        old_value: null,
+        new_value: 'DRAFT',
+        changed_by: user?.id
+      });
+
       toast({
         title: 'Success',
         description: 'Customer draft created successfully',
@@ -269,6 +302,17 @@ const CustomerNew = () => {
           customer_type: 'MOSQUE_HOSPITAL',
           status: 'DRAFT'
         }
+      });
+
+      // Create audit log for draft creation
+      await supabase.from('audit_logs').insert({
+        entity_type: 'customer',
+        entity_id: customer.id,
+        action: 'create',
+        field: 'status',
+        old_value: null,
+        new_value: 'DRAFT',
+        changed_by: user?.id
       });
 
       toast({
@@ -326,6 +370,17 @@ const CustomerNew = () => {
         }
       });
 
+      // Create audit log for draft creation
+      await supabase.from('audit_logs').insert({
+        entity_type: 'customer',
+        entity_id: customer.id,
+        action: 'create',
+        field: 'status',
+        old_value: null,
+        new_value: 'DRAFT',
+        changed_by: user?.id
+      });
+
       toast({
         title: 'Success',
         description: 'Customer draft created successfully',
@@ -379,6 +434,17 @@ const CustomerNew = () => {
           customer_type: 'CONTRACTOR',
           status: 'DRAFT'
         }
+      });
+
+      // Create audit log for draft creation
+      await supabase.from('audit_logs').insert({
+        entity_type: 'customer',
+        entity_id: customer.id,
+        action: 'create',
+        field: 'status',
+        old_value: null,
+        new_value: 'DRAFT',
+        changed_by: user?.id
       });
 
       toast({

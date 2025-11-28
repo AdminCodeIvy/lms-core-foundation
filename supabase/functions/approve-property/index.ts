@@ -96,6 +96,28 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Log audit trail
+    await supabase.from('audit_logs').insert([
+      {
+        entity_type: 'property',
+        entity_id: property_id,
+        action: 'approve',
+        field: 'status',
+        old_value: 'SUBMITTED',
+        new_value: 'APPROVED',
+        changed_by: user.id,
+      },
+      {
+        entity_type: 'property',
+        entity_id: property_id,
+        action: 'approve',
+        field: 'approved_by',
+        old_value: null,
+        new_value: user.id,
+        changed_by: user.id,
+      }
+    ]);
+
     // Create activity log
     const { error: logError } = await supabase
       .from('activity_logs')
