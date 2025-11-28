@@ -20,8 +20,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import { toast } from '@/hooks/use-toast';
-import { ArrowLeft, CalendarIcon, Search } from 'lucide-react';
+import { ArrowLeft, CalendarIcon, Search, Check, ChevronsUpDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -32,6 +40,7 @@ export default function TaxNew() {
   const [properties, setProperties] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProperty, setSelectedProperty] = useState<any | null>(null);
+  const [open, setOpen] = useState(false);
 
   const currentYear = new Date().getFullYear();
   const [formData, setFormData] = useState({
@@ -69,27 +78,26 @@ export default function TaxNew() {
   });
 
   useEffect(() => {
-    if (searchTerm.length >= 2) {
-      searchProperties();
-    }
-  }, [searchTerm]);
+    loadProperties();
+  }, []);
 
-  const searchProperties = async () => {
+  const loadProperties = async () => {
     try {
       const { data, error } = await supabase
         .from('properties')
         .select(`
           *,
-          district:districts!properties_district_id_fkey(id, name)
+          district:districts!properties_district_id_fkey(id, name),
+          customer:customers!properties_customer_id_fkey(name)
         `)
-        .or(`reference_id.ilike.%${searchTerm}%,parcel_number.ilike.%${searchTerm}%`)
         .in('status', ['APPROVED', 'SUBMITTED'])
-        .limit(10);
+        .order('reference_id', { ascending: true })
+        .limit(100);
 
       if (error) throw error;
       setProperties(data || []);
     } catch (error) {
-      console.error('Error searching properties:', error);
+      console.error('Error loading properties:', error);
     }
   };
 
@@ -104,8 +112,7 @@ export default function TaxNew() {
       number_of_units: property.number_of_units?.toString() || '',
       number_of_floors: property.number_of_floors?.toString() || '',
     }));
-    setSearchTerm('');
-    setProperties([]);
+    setOpen(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -241,40 +248,52 @@ export default function TaxNew() {
             {!selectedProperty ? (
               <div className="space-y-2">
                 <Label>Search Property</Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search by Reference ID or Parcel Number"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (searchTerm.length >= 2) {
-                          searchProperties();
-                        }
-                      }
-                    }}
-                    className="pl-9"
-                  />
-                </div>
-                {properties.length > 0 && (
-                  <div className="border rounded-md">
-                    {properties.map(property => (
-                      <button
-                        key={property.id}
-                        type="button"
-                        onClick={() => selectProperty(property)}
-                        className="w-full p-3 text-left hover:bg-accent border-b last:border-b-0"
-                      >
-                        <div className="font-medium">{property.reference_id}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {property.parcel_number} • {property.district?.name} • {property.customer?.name}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <Popover open={open} onOpenChange={setOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={open}
+                      className="w-full justify-between"
+                    >
+                      <span className="text-muted-foreground">
+                        Select property...
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[600px] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search by Reference ID or Parcel Number..." />
+                      <CommandList>
+                        <CommandEmpty>No properties found.</CommandEmpty>
+                        <CommandGroup>
+                          {properties.map((property) => (
+                            <CommandItem
+                              key={property.id}
+                              value={`${property.reference_id} ${property.parcel_number} ${property.district?.name}`}
+                              onSelect={() => selectProperty(property)}
+                              className="cursor-pointer"
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  "opacity-0"
+                                )}
+                              />
+                              <div className="flex flex-col">
+                                <div className="font-medium">{property.reference_id}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {property.parcel_number} • {property.district?.name} • {property.customer?.name}
+                                </div>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
             ) : (
               <div className="space-y-2">
