@@ -87,8 +87,7 @@ export default function TaxNew() {
         .from('properties')
         .select(`
           *,
-          district:districts!properties_district_id_fkey(id, name),
-          customer:customers!properties_customer_id_fkey(name)
+          district:districts!properties_district_id_fkey(id, name)
         `)
         .in('status', ['APPROVED', 'SUBMITTED'])
         .order('reference_id', { ascending: true })
@@ -284,7 +283,7 @@ export default function TaxNew() {
                               <div className="flex flex-col">
                                 <div className="font-medium">{property.reference_id}</div>
                                 <div className="text-sm text-muted-foreground">
-                                  {property.parcel_number} • {property.district?.name} • {property.customer?.name}
+                                  {property.parcel_number} • {property.district?.name}
                                 </div>
                               </div>
                             </CommandItem>
@@ -301,7 +300,7 @@ export default function TaxNew() {
                 <div className="p-4 border rounded-md bg-accent">
                   <div className="font-medium">{selectedProperty.reference_id}</div>
                   <div className="text-sm text-muted-foreground">
-                    {selectedProperty.parcel_number} • {selectedProperty.district?.name} • {selectedProperty.customer?.name}
+                    {selectedProperty.parcel_number} • {selectedProperty.district?.name}
                   </div>
                   <Button
                     type="button"
