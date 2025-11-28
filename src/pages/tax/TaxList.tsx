@@ -156,19 +156,13 @@ export default function TaxList() {
 
       if (error) throw error;
 
-      console.log('Fetched tax assessments with property data:', JSON.stringify(data, null, 2));
-
       // Transform data to include customer name
       const transformedData = (data || []).map((assessment: any) => {
         let customerName = 'N/A';
         
-        console.log('Processing assessment:', assessment.id, 'Property ownership:', assessment.property?.property_ownership);
-        
         if (assessment.property?.property_ownership && assessment.property.property_ownership.length > 0) {
           const ownership = assessment.property.property_ownership[0];
           const customer = ownership?.customer;
-          
-          console.log('Customer data:', customer);
           
           if (customer) {
             switch (customer.customer_type) {
@@ -208,8 +202,6 @@ export default function TaxList() {
             }
           }
         }
-
-        console.log('Final customer name for assessment:', assessment.id, '=', customerName);
 
         return {
           ...assessment,
