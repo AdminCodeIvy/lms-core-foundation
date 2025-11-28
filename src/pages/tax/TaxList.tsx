@@ -108,7 +108,8 @@ export default function TaxList() {
             reference_id,
             parcel_number,
             district:districts(id, name, code),
-            property_ownership!inner(
+            property_ownership(
+              is_current,
               customer:customers(
                 id,
                 reference_id,
@@ -160,9 +161,10 @@ export default function TaxList() {
       const transformedData = (data || []).map((assessment: any) => {
         let customerName = 'N/A';
         
-        // Get customer from property_ownership (should be an array with current owner)
-        const ownership = assessment.property?.property_ownership?.[0];
-        const customer = ownership?.customer;
+        // Get customer from property_ownership - filter for current ownership only
+        const ownerships = assessment.property?.property_ownership || [];
+        const currentOwnership = ownerships.find((o: any) => o.is_current === true);
+        const customer = currentOwnership?.customer;
         
         if (customer) {
           switch (customer.customer_type) {
@@ -224,6 +226,9 @@ export default function TaxList() {
           ...assessment,
           property: {
             ...assessment.property,
+            reference_id: assessment.property?.reference_id || 'N/A',
+            parcel_number: assessment.property?.parcel_number || 'N/A',
+            district: assessment.property?.district || { name: 'N/A' },
             customer: {
               name: customerName
             }
