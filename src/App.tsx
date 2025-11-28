@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import UserManagement from "./pages/admin/UserManagement";
 import UserForm from "./pages/admin/UserForm";
 import LookupManagement from "./pages/admin/LookupManagement";
+import AuditLogs from "./pages/admin/AuditLogs";
 import CustomerList from "./pages/customers/CustomerList";
 import CustomerDetail from "./pages/customers/CustomerDetail";
 import CustomerNew from "./pages/customers/CustomerNew";
@@ -186,6 +187,7 @@ const App = () => (
               <Route path="admin/users/edit" element={<ProtectedRoute allowedRoles={['ADMINISTRATOR']}><UserForm /></ProtectedRoute>} />
               <Route path="admin/lookups" element={<ProtectedRoute allowedRoles={['ADMINISTRATOR']}><LookupManagement /></ProtectedRoute>} />
               <Route path="admin/ago-settings" element={<ProtectedRoute allowedRoles={['ADMINISTRATOR']}><AgoSettings /></ProtectedRoute>} />
+              <Route path="admin/audit-logs" element={<ProtectedRoute allowedRoles={['ADMINISTRATOR']}><AuditLogs /></ProtectedRoute>} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
