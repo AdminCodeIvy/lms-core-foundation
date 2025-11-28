@@ -18,7 +18,17 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Search, Download, AlertCircle } from 'lucide-react';
+import { Plus, Search, Download, AlertCircle, Trash2, Eye } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import type { CustomerListItem, CustomerType, CustomerStatus } from '@/types/customer';
 import { exportToExcel } from '@/lib/export-utils';
@@ -42,8 +52,14 @@ const CustomerList = () => {
   const [totalPages, setTotalPages] = useState(1);
   const limit = 50;
 
+  // Delete dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState<CustomerListItem | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   const canCreate = profile?.role === 'INPUTTER' || profile?.role === 'ADMINISTRATOR';
   const canExport = profile?.role === 'APPROVER' || profile?.role === 'ADMINISTRATOR';
+  const canDelete = profile?.role === 'ADMINISTRATOR';
 
   useEffect(() => {
     fetchCustomers();
@@ -223,6 +239,47 @@ const CustomerList = () => {
     }
   };
 
+  const handleDeleteClick = (customer: CustomerListItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCustomerToDelete(customer);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!customerToDelete) return;
+
+    try {
+      setDeleteLoading(true);
+
+      // Delete customer record (cascading delete will handle related records)
+      const { error: deleteError } = await supabase
+        .from('customers')
+        .delete()
+        .eq('id', customerToDelete.id);
+
+      if (deleteError) throw deleteError;
+
+      toast({
+        title: 'Success',
+        description: 'Customer deleted successfully',
+      });
+
+      // Refresh the list
+      fetchCustomers();
+      setDeleteDialogOpen(false);
+      setCustomerToDelete(null);
+    } catch (err: any) {
+      console.error('Error deleting customer:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: err.message || 'Failed to delete customer',
+      });
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   if (error) {
     return (
       <div className="space-y-6">
@@ -367,12 +424,23 @@ const CustomerList = () => {
                   </TableCell>
                   <TableCell>{format(new Date(customer.updated_at), 'MMM dd, yyyy')}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="outline" size="sm" onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/customers/${customer.id}`);
-                    }}>
-                      View
-                    </Button>
+                    <div className="flex gap-2 justify-end">
+                      <Button variant="outline" size="sm" onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/customers/${customer.id}`);
+                      }}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      {canDelete && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => handleDeleteClick(customer, e)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -407,6 +475,41 @@ const CustomerList = () => {
           </div>
         )}
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Customer</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>Are you sure you want to delete this customer?</p>
+              {customerToDelete && (
+                <div className="bg-muted p-3 rounded-md space-y-1">
+                  <p className="text-sm font-medium text-foreground">
+                    Reference ID: {customerToDelete.reference_id}
+                  </p>
+                  <p className="text-sm font-medium text-foreground">
+                    Name: {customerToDelete.name}
+                  </p>
+                </div>
+              )}
+              <p className="text-destructive text-sm font-medium pt-2">
+                This action cannot be undone. All related records will also be deleted.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deleteLoading}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {deleteLoading ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
