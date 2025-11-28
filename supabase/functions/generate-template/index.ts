@@ -7,6 +7,7 @@ const corsHeaders = {
 
 interface TemplateRequest {
   uploadType: 'CUSTOMER' | 'PROPERTY' | 'TAX_ASSESSMENT' | 'TAX_PAYMENT';
+  customerSubType?: 'PERSON' | 'BUSINESS' | 'GOVERNMENT' | 'MOSQUE_HOSPITAL' | 'NON_PROFIT' | 'CONTRACTOR';
 }
 
 serve(async (req) => {
@@ -18,7 +19,7 @@ serve(async (req) => {
     // Dynamic import of XLSX to avoid build issues
     const XLSX = await import('https://esm.sh/xlsx@0.18.5');
     
-    const { uploadType }: TemplateRequest = await req.json();
+    const { uploadType, customerSubType }: TemplateRequest = await req.json();
 
     let headers: string[] = [];
     let sampleData: any[] = [];
@@ -26,51 +27,200 @@ serve(async (req) => {
 
     switch (uploadType) {
       case 'CUSTOMER':
-        filename = 'customer_person_template.xlsx';
-        headers = [
-          'First Name *',
-          'Father Name *',
-          'Grandfather Name *',
-          'Fourth Name',
-          'Date of Birth * (YYYY-MM-DD)',
-          'Place of Birth *',
-          'Gender * (Male/Female)',
-          'Nationality *',
-          'Mobile Number 1 *',
-          'Carrier Mobile 1 *',
-          'Mobile Number 2',
-          'Carrier Mobile 2',
-          'Emergency Contact Name *',
-          'Emergency Contact Number *',
-          'Email *',
-          'ID Type *',
-          'ID Number *',
-          'Place of Issue *',
-          'Issue Date * (YYYY-MM-DD)',
-          'Expiry Date * (YYYY-MM-DD)',
-        ];
-        sampleData = [{
-          'First Name *': 'Ahmed',
-          'Father Name *': 'Mohamed',
-          'Grandfather Name *': 'Ali',
-          'Fourth Name': 'Hassan',
-          'Date of Birth * (YYYY-MM-DD)': '1990-05-15',
-          'Place of Birth *': 'Jigjiga',
-          'Gender * (Male/Female)': 'Male',
-          'Nationality *': 'Ethiopia',
-          'Mobile Number 1 *': '+251912345678',
-          'Carrier Mobile 1 *': 'Ethio Telecom',
-          'Mobile Number 2': '+251923456789',
-          'Carrier Mobile 2': 'Safaricom',
-          'Emergency Contact Name *': 'Fatima Ahmed',
-          'Emergency Contact Number *': '+251987654321',
-          'Email *': 'ahmed.mohamed@example.com',
-          'ID Type *': 'National ID Card',
-          'ID Number *': 'ID123456',
-          'Place of Issue *': 'Ethiopia',
-          'Issue Date * (YYYY-MM-DD)': '2015-01-01',
-          'Expiry Date * (YYYY-MM-DD)': '2030-01-01',
-        }];
+        // Generate specific template based on customer subtype
+        if (customerSubType === 'PERSON') {
+          filename = 'customer_person_template.xlsx';
+          headers = [
+            'First Name *',
+            'Father Name *',
+            'Grandfather Name *',
+            'Fourth Name',
+            'Date of Birth * (YYYY-MM-DD)',
+            'Place of Birth *',
+            'Gender * (Male/Female)',
+            'Nationality *',
+            'Mobile Number 1 *',
+            'Carrier Mobile 1 *',
+            'Mobile Number 2',
+            'Carrier Mobile 2',
+            'Emergency Contact Name *',
+            'Emergency Contact Number *',
+            'Email *',
+            'ID Type *',
+            'ID Number *',
+            'Place of Issue *',
+            'Issue Date * (YYYY-MM-DD)',
+            'Expiry Date * (YYYY-MM-DD)',
+          ];
+          sampleData = [{
+            'First Name *': 'Ahmed',
+            'Father Name *': 'Mohamed',
+            'Grandfather Name *': 'Ali',
+            'Fourth Name': 'Hassan',
+            'Date of Birth * (YYYY-MM-DD)': '1990-05-15',
+            'Place of Birth *': 'Jigjiga',
+            'Gender * (Male/Female)': 'Male',
+            'Nationality *': 'Ethiopia',
+            'Mobile Number 1 *': '+251912345678',
+            'Carrier Mobile 1 *': 'Ethio Telecom',
+            'Mobile Number 2': '+251923456789',
+            'Carrier Mobile 2': 'Safaricom',
+            'Emergency Contact Name *': 'Fatima Ahmed',
+            'Emergency Contact Number *': '+251987654321',
+            'Email *': 'ahmed.mohamed@example.com',
+            'ID Type *': 'National ID Card',
+            'ID Number *': 'ID123456',
+            'Place of Issue *': 'Ethiopia',
+            'Issue Date * (YYYY-MM-DD)': '2015-01-01',
+            'Expiry Date * (YYYY-MM-DD)': '2030-01-01',
+          }];
+        } else if (customerSubType === 'BUSINESS') {
+          filename = 'customer_business_template.xlsx';
+          headers = [
+            'Business Name *',
+            'Business Registration Number *',
+            'Business License Number *',
+            'Business Address *',
+            'Contact Name *',
+            'Mobile Number 1 *',
+            'Mobile Number 2',
+            'Carrier Network *',
+            'Email *',
+            'Street *',
+            'District ID *',
+            'Section',
+            'Block',
+          ];
+          sampleData = [{
+            'Business Name *': 'ABC Trading Company',
+            'Business Registration Number *': 'BR123456',
+            'Business License Number *': 'BL789012',
+            'Business Address *': '123 Main Street, Jigjiga',
+            'Contact Name *': 'Ahmed Mohamed',
+            'Mobile Number 1 *': '+251912345678',
+            'Mobile Number 2': '+251923456789',
+            'Carrier Network *': 'Ethio Telecom',
+            'Email *': 'info@abctrading.com',
+            'Street *': 'Main Street',
+            'District ID *': 'JJG',
+            'Section': 'A',
+            'Block': '12',
+          }];
+        } else if (customerSubType === 'GOVERNMENT') {
+          filename = 'customer_government_template.xlsx';
+          headers = [
+            'Full Department Name *',
+            'Department Address *',
+            'Contact Name *',
+            'Mobile Number 1 *',
+            'Carrier Mobile 1 *',
+            'Mobile Number 2',
+            'Carrier Mobile 2',
+            'Email *',
+            'Street *',
+            'District ID *',
+            'Section',
+            'Block',
+          ];
+          sampleData = [{
+            'Full Department Name *': 'Ministry of Finance',
+            'Department Address *': '456 Government Road, Jigjiga',
+            'Contact Name *': 'Director General',
+            'Mobile Number 1 *': '+251911234567',
+            'Carrier Mobile 1 *': 'Ethio Telecom',
+            'Mobile Number 2': '',
+            'Carrier Mobile 2': '',
+            'Email *': 'contact@mof.gov.et',
+            'Street *': 'Government Road',
+            'District ID *': 'JJG',
+            'Section': 'B',
+            'Block': '5',
+          }];
+        } else if (customerSubType === 'MOSQUE_HOSPITAL') {
+          filename = 'customer_mosque_hospital_template.xlsx';
+          headers = [
+            'Full Name *',
+            'Registration Number *',
+            'Address *',
+            'Contact Name *',
+            'Mobile Number 1 *',
+            'Carrier Mobile 1 *',
+            'Mobile Number 2',
+            'Carrier Mobile 2',
+            'Email *',
+            'District ID *',
+            'Section',
+            'Block',
+          ];
+          sampleData = [{
+            'Full Name *': 'Central Mosque',
+            'Registration Number *': 'MOS123456',
+            'Address *': '789 Religious Street, Jigjiga',
+            'Contact Name *': 'Imam Ahmed',
+            'Mobile Number 1 *': '+251913456789',
+            'Carrier Mobile 1 *': 'Ethio Telecom',
+            'Mobile Number 2': '',
+            'Carrier Mobile 2': '',
+            'Email *': 'central.mosque@example.com',
+            'District ID *': 'JJG',
+            'Section': 'C',
+            'Block': '8',
+          }];
+        } else if (customerSubType === 'NON_PROFIT') {
+          filename = 'customer_nonprofit_template.xlsx';
+          headers = [
+            'Full Non-Profit Name *',
+            'Registration Number *',
+            'License Number *',
+            'Address *',
+            'Contact Name *',
+            'Mobile Number 1 *',
+            'Carrier Mobile 1 *',
+            'Mobile Number 2',
+            'Carrier Mobile 2',
+            'Email *',
+            'District ID *',
+            'Section',
+            'Block',
+          ];
+          sampleData = [{
+            'Full Non-Profit Name *': 'Community Development Organization',
+            'Registration Number *': 'NPO123456',
+            'License Number *': 'NPL789012',
+            'Address *': '321 Charity Avenue, Jigjiga',
+            'Contact Name *': 'Director',
+            'Mobile Number 1 *': '+251914567890',
+            'Carrier Mobile 1 *': 'Ethio Telecom',
+            'Mobile Number 2': '',
+            'Carrier Mobile 2': '',
+            'Email *': 'info@cdo.org',
+            'District ID *': 'JJG',
+            'Section': 'D',
+            'Block': '3',
+          }];
+        } else if (customerSubType === 'CONTRACTOR') {
+          filename = 'customer_contractor_template.xlsx';
+          headers = [
+            'Full Contractor Name *',
+            'Contact Name *',
+            'Mobile Number 1 *',
+            'Carrier Mobile 1 *',
+            'Mobile Number 2',
+            'Carrier Mobile 2',
+            'Email *',
+          ];
+          sampleData = [{
+            'Full Contractor Name *': 'Construction Services Ltd',
+            'Contact Name *': 'Engineer Ahmed',
+            'Mobile Number 1 *': '+251915678901',
+            'Carrier Mobile 1 *': 'Ethio Telecom',
+            'Mobile Number 2': '',
+            'Carrier Mobile 2': '',
+            'Email *': 'ahmed@construction.com',
+          }];
+        } else {
+          throw new Error('Invalid customer subtype');
+        }
         break;
 
       case 'PROPERTY':
