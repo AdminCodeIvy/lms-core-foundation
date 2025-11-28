@@ -131,43 +131,236 @@ export default function BulkUpload() {
 
   const handleDownloadTemplate = async () => {
     try {
-      // For customer uploads, call the edge function with the customer subtype
-      if (selectedType === 'CUSTOMER' && selectedCustomerType) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          toast.error('Not authenticated');
+      // For customer uploads, generate template client-side based on subtype
+      if (selectedType === 'CUSTOMER') {
+        if (!selectedCustomerType) {
+          toast.error('Please select a customer type');
           return;
         }
 
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const response = await fetch(`${supabaseUrl}/functions/v1/generate-template`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            uploadType: 'CUSTOMER',
-            customerSubType: selectedCustomerType,
-          }),
-        });
+        let headers: string[] = [];
+        let sampleRow: Record<string, string> = {};
+        let filename = '';
 
-        if (!response.ok) {
-          throw new Error('Failed to generate template');
+        switch (selectedCustomerType) {
+          case 'PERSON':
+            filename = 'customer_person_template.xlsx';
+            headers = [
+              'first_name',
+              'father_name',
+              'grandfather_name',
+              'fourth_name',
+              'date_of_birth',
+              'place_of_birth',
+              'gender',
+              'nationality',
+              'mobile_number_1',
+              'carrier_mobile_1',
+              'mobile_number_2',
+              'carrier_mobile_2',
+              'emergency_contact_name',
+              'emergency_contact_number',
+              'email',
+              'id_type',
+              'id_number',
+              'place_of_issue',
+              'issue_date',
+              'expiry_date',
+            ];
+            sampleRow = {
+              first_name: 'Ahmed',
+              father_name: 'Mohamed',
+              grandfather_name: 'Ali',
+              fourth_name: 'Hassan',
+              date_of_birth: '1990-05-15',
+              place_of_birth: 'Jigjiga',
+              gender: 'MALE',
+              nationality: 'Ethiopia',
+              mobile_number_1: '+251912345678',
+              carrier_mobile_1: 'Ethio Telecom',
+              mobile_number_2: '+251923456789',
+              carrier_mobile_2: 'Safaricom',
+              emergency_contact_name: 'Fatima Ahmed',
+              emergency_contact_number: '+251987654321',
+              email: 'ahmed.mohamed@example.com',
+              id_type: 'National ID Card',
+              id_number: 'ID123456',
+              place_of_issue: 'Ethiopia',
+              issue_date: '2015-01-01',
+              expiry_date: '2030-01-01',
+            };
+            break;
+          case 'BUSINESS':
+            filename = 'customer_business_template.xlsx';
+            headers = [
+              'business_name',
+              'business_registration_number',
+              'business_license_number',
+              'business_address',
+              'contact_name',
+              'mobile_number_1',
+              'mobile_number_2',
+              'carrier_network',
+              'email',
+              'street',
+              'district_id',
+              'section',
+              'block',
+            ];
+            sampleRow = {
+              business_name: 'ABC Trading Company',
+              business_registration_number: 'BR123456',
+              business_license_number: 'BL789012',
+              business_address: '123 Main Street, Jigjiga',
+              contact_name: 'Ahmed Mohamed',
+              mobile_number_1: '+251912345678',
+              mobile_number_2: '+251923456789',
+              carrier_network: 'Ethio Telecom',
+              email: 'info@abctrading.com',
+              street: 'Main Street',
+              district_id: 'JJG',
+              section: 'A',
+              block: '12',
+            };
+            break;
+          case 'GOVERNMENT':
+            filename = 'customer_government_template.xlsx';
+            headers = [
+              'full_department_name',
+              'department_address',
+              'contact_name',
+              'mobile_number_1',
+              'carrier_mobile_1',
+              'mobile_number_2',
+              'carrier_mobile_2',
+              'email',
+              'street',
+              'district_id',
+              'section',
+              'block',
+            ];
+            sampleRow = {
+              full_department_name: 'Ministry of Finance',
+              department_address: '456 Government Road, Jigjiga',
+              contact_name: 'Director General',
+              mobile_number_1: '+251911234567',
+              carrier_mobile_1: 'Ethio Telecom',
+              mobile_number_2: '',
+              carrier_mobile_2: '',
+              email: 'contact@mof.gov.et',
+              street: 'Government Road',
+              district_id: 'JJG',
+              section: 'B',
+              block: '5',
+            };
+            break;
+          case 'MOSQUE_HOSPITAL':
+            filename = 'customer_mosque_hospital_template.xlsx';
+            headers = [
+              'full_name',
+              'registration_number',
+              'address',
+              'contact_name',
+              'mobile_number_1',
+              'carrier_mobile_1',
+              'mobile_number_2',
+              'carrier_mobile_2',
+              'email',
+              'district_id',
+              'section',
+              'block',
+            ];
+            sampleRow = {
+              full_name: 'Central Mosque',
+              registration_number: 'MOS123456',
+              address: '789 Religious Street, Jigjiga',
+              contact_name: 'Imam Ahmed',
+              mobile_number_1: '+251913456789',
+              carrier_mobile_1: 'Ethio Telecom',
+              mobile_number_2: '',
+              carrier_mobile_2: '',
+              email: 'central.mosque@example.com',
+              district_id: 'JJG',
+              section: 'C',
+              block: '8',
+            };
+            break;
+          case 'NON_PROFIT':
+            filename = 'customer_nonprofit_template.xlsx';
+            headers = [
+              'full_non_profit_name',
+              'registration_number',
+              'license_number',
+              'address',
+              'contact_name',
+              'mobile_number_1',
+              'carrier_mobile_1',
+              'mobile_number_2',
+              'carrier_mobile_2',
+              'email',
+              'district_id',
+              'section',
+              'block',
+            ];
+            sampleRow = {
+              full_non_profit_name: 'Community Development Organization',
+              registration_number: 'NPO123456',
+              license_number: 'NPL789012',
+              address: '321 Charity Avenue, Jigjiga',
+              contact_name: 'Director',
+              mobile_number_1: '+251914567890',
+              carrier_mobile_1: 'Ethio Telecom',
+              mobile_number_2: '',
+              carrier_mobile_2: '',
+              email: 'info@cdo.org',
+              district_id: 'JJG',
+              section: 'D',
+              block: '3',
+            };
+            break;
+          case 'CONTRACTOR':
+            filename = 'customer_contractor_template.xlsx';
+            headers = [
+              'full_contractor_name',
+              'contact_name',
+              'mobile_number_1',
+              'carrier_mobile_1',
+              'mobile_number_2',
+              'carrier_mobile_2',
+              'email',
+            ];
+            sampleRow = {
+              full_contractor_name: 'Construction Services Ltd',
+              contact_name: 'Engineer Ahmed',
+              mobile_number_1: '+251915678901',
+              carrier_mobile_1: 'Ethio Telecom',
+              mobile_number_2: '',
+              carrier_mobile_2: '',
+              email: 'ahmed@construction.com',
+            };
+            break;
         }
 
-        const { file: fileArray, filename } = await response.json();
-        const blob = new Blob([new Uint8Array(fileArray)], { 
-          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-        });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet([sampleRow], { header: headers });
+        XLSX.utils.book_append_sheet(wb, ws, 'Data');
+
+        const instructions = [
+          ['Bulk Upload Instructions'],
+          [''],
+          ['1. Fill in the data starting from row 2'],
+          ['2. Column headers must match exactly (case-sensitive, use underscores)'],
+          ['3. Maximum 1,000 rows per upload'],
+          ['4. Date format must be YYYY-MM-DD'],
+          ['5. Gender values: MALE or FEMALE (all caps)'],
+          ['6. For Yes/No fields, use exactly "Yes" or "No"'],
+          ['7. Do not modify column headers'],
+          ['8. Save as .xlsx or .xls before uploading'],
+        ];
+        const wsInstructions = XLSX.utils.aoa_to_sheet(instructions);
+        XLSX.utils.book_append_sheet(wb, wsInstructions, 'Instructions');
+
+        XLSX.writeFile(wb, filename);
 
         toast.success('Template downloaded successfully');
         setStep(4);
@@ -178,20 +371,7 @@ export default function BulkUpload() {
       let templateData: any[] = [];
       let filename = '';
 
-      if (selectedType === 'CUSTOMER') {
-        templateData = [
-          {
-            'Customer Type': 'PERSON | BUSINESS | GOVERNMENT | MOSQUE_HOSPITAL | NON_PROFIT | CONTRACTOR',
-            'First Name': 'John (for PERSON)',
-            'Father Name': 'Smith (for PERSON)',
-            'Business Name': 'ABC Corp (for BUSINESS)',
-            'Email': 'email@example.com',
-            'Mobile 1': '+252611234567',
-            'Notes': 'Fill only relevant columns for your customer type'
-          }
-        ];
-        filename = 'customer-template.xlsx';
-      } else if (selectedType === 'PROPERTY') {
+      if (selectedType === 'PROPERTY') {
         templateData = [
           {
             'Customer Reference ID': 'CUS-2025-00001',
