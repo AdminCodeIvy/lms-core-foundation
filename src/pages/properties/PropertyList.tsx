@@ -171,6 +171,20 @@ export default function PropertyList() {
 
       if (error) throw error;
 
+      // Log the deletion to audit_logs
+      if (user?.id) {
+        await supabase.from('audit_logs').insert({
+          entity_type: 'property',
+          entity_id: propertyToDelete.id,
+          action: 'delete',
+          field: null,
+          old_value: propertyToDelete.reference_id,
+          new_value: null,
+          changed_by: user.id,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
       toast.success('Property deleted successfully');
       setDeleteDialogOpen(false);
       setPropertyToDelete(null);
