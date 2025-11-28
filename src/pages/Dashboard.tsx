@@ -28,7 +28,7 @@ const Dashboard = () => {
     fetchTaxStats();
   }, []);
 
-  // Real-time subscription for customer and property changes
+  // Real-time subscription for customer, property, and tax changes
   useEffect(() => {
     const customersChannel = supabase
       .channel('dashboard-customers-changes')
@@ -62,9 +62,26 @@ const Dashboard = () => {
       )
       .subscribe();
 
+    const taxAssessmentsChannel = supabase
+      .channel('dashboard-tax-assessments-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tax_assessments'
+        },
+        (payload) => {
+          console.log('Tax assessment change detected on dashboard:', payload);
+          fetchTaxStats();
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(customersChannel);
       supabase.removeChannel(propertiesChannel);
+      supabase.removeChannel(taxAssessmentsChannel);
     };
   }, []);
 
@@ -108,7 +125,44 @@ const Dashboard = () => {
       if (error) throw error;
       setTaxStats(data);
     } catch (error) {
-      console.error('Error fetching tax stats:', error);
+      console.error('Error fetching tax stats from edge function, falling back to direct query:', error);
+
+      try {
+        const currentYear = new Date().getFullYear();
+        const { data, error: fallbackError } = await supabase
+          .from('tax_assessments')
+          .select('assessed_amount, paid_amount, outstanding_amount, tax_year')
+          .eq('tax_year', currentYear);
+
+        if (fallbackError) throw fallbackError;
+
+        const totals = (data || []).reduce(
+          (acc, row: any) => {
+            const assessed = Number(row.assessed_amount) || 0;
+            const paid = Number(row.paid_amount) || 0;
+            const outstanding = Number(row.outstanding_amount) || 0;
+            acc.total_assessed += assessed;
+            acc.total_collected += paid;
+            acc.total_outstanding += outstanding;
+            return acc;
+          },
+          { total_assessed: 0, total_collected: 0, total_outstanding: 0 }
+        );
+
+        const collection_rate =
+          totals.total_assessed > 0
+            ? (totals.total_collected / totals.total_assessed) * 100
+            : 0;
+
+        setTaxStats({
+          total_assessed: totals.total_assessed,
+          total_collected: totals.total_collected,
+          total_outstanding: totals.total_outstanding,
+          collection_rate,
+        });
+      } catch (directError) {
+        console.error('Fallback tax stats query failed:', directError);
+      }
     }
   };
 
