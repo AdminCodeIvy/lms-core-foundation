@@ -158,17 +158,47 @@ const LookupManagement = () => {
   const handleSaveDistrict = async () => {
     try {
       setLoading(true);
+      const { data: currentUser } = await supabase.auth.getUser();
+      
       if (districtForm.id) {
         const { error } = await supabase
           .from('districts')
           .update({ code: districtForm.code, name: districtForm.name, is_active: districtForm.is_active })
           .eq('id', districtForm.id);
         if (error) throw error;
+
+        // Audit log for update
+        if (currentUser?.user?.id) {
+          await supabase.from('audit_logs').insert({
+            entity_type: 'lookup',
+            entity_id: districtForm.id,
+            action: 'update',
+            field: 'district',
+            old_value: null,
+            new_value: `${districtForm.code} - ${districtForm.name}`,
+            changed_by: currentUser.user.id,
+          });
+        }
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('districts')
-          .insert({ code: districtForm.code, name: districtForm.name, is_active: districtForm.is_active });
+          .insert({ code: districtForm.code, name: districtForm.name, is_active: districtForm.is_active })
+          .select()
+          .single();
         if (error) throw error;
+
+        // Audit log for create
+        if (currentUser?.user?.id && data) {
+          await supabase.from('audit_logs').insert({
+            entity_type: 'lookup',
+            entity_id: data.id,
+            action: 'create',
+            field: 'district',
+            old_value: null,
+            new_value: `${districtForm.code} - ${districtForm.name}`,
+            changed_by: currentUser.user.id,
+          });
+        }
       }
       toast({ title: 'Success', description: 'District saved successfully' });
       setDistrictDialog(false);
@@ -199,17 +229,47 @@ const LookupManagement = () => {
   const handleSaveSubDistrict = async () => {
     try {
       setLoading(true);
+      const { data: currentUser } = await supabase.auth.getUser();
+      
       if (subDistrictForm.id) {
         const { error } = await supabase
           .from('sub_districts')
           .update({ district_id: subDistrictForm.district_id, name: subDistrictForm.name, is_active: subDistrictForm.is_active })
           .eq('id', subDistrictForm.id);
         if (error) throw error;
+
+        // Audit log for update
+        if (currentUser?.user?.id) {
+          await supabase.from('audit_logs').insert({
+            entity_type: 'lookup',
+            entity_id: subDistrictForm.id,
+            action: 'update',
+            field: 'sub_district',
+            old_value: null,
+            new_value: subDistrictForm.name,
+            changed_by: currentUser.user.id,
+          });
+        }
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('sub_districts')
-          .insert({ district_id: subDistrictForm.district_id, name: subDistrictForm.name, is_active: subDistrictForm.is_active });
+          .insert({ district_id: subDistrictForm.district_id, name: subDistrictForm.name, is_active: subDistrictForm.is_active })
+          .select()
+          .single();
         if (error) throw error;
+
+        // Audit log for create
+        if (currentUser?.user?.id && data) {
+          await supabase.from('audit_logs').insert({
+            entity_type: 'lookup',
+            entity_id: data.id,
+            action: 'create',
+            field: 'sub_district',
+            old_value: null,
+            new_value: subDistrictForm.name,
+            changed_by: currentUser.user.id,
+          });
+        }
       }
       toast({ title: 'Success', description: 'Sub-district saved successfully' });
       setSubDistrictDialog(false);
@@ -226,17 +286,47 @@ const LookupManagement = () => {
   const handleSavePropertyType = async () => {
     try {
       setLoading(true);
+      const { data: currentUser } = await supabase.auth.getUser();
+      
       if (propertyTypeForm.id) {
         const { error } = await supabase
           .from('property_types')
           .update({ name: propertyTypeForm.name, category: propertyTypeForm.category, is_active: propertyTypeForm.is_active })
           .eq('id', propertyTypeForm.id);
         if (error) throw error;
+
+        // Audit log for update
+        if (currentUser?.user?.id) {
+          await supabase.from('audit_logs').insert({
+            entity_type: 'lookup',
+            entity_id: propertyTypeForm.id,
+            action: 'update',
+            field: 'property_type',
+            old_value: null,
+            new_value: `${propertyTypeForm.name} (${propertyTypeForm.category})`,
+            changed_by: currentUser.user.id,
+          });
+        }
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('property_types')
-          .insert({ name: propertyTypeForm.name, category: propertyTypeForm.category, is_active: propertyTypeForm.is_active });
+          .insert({ name: propertyTypeForm.name, category: propertyTypeForm.category, is_active: propertyTypeForm.is_active })
+          .select()
+          .single();
         if (error) throw error;
+
+        // Audit log for create
+        if (currentUser?.user?.id && data) {
+          await supabase.from('audit_logs').insert({
+            entity_type: 'lookup',
+            entity_id: data.id,
+            action: 'create',
+            field: 'property_type',
+            old_value: null,
+            new_value: `${propertyTypeForm.name} (${propertyTypeForm.category})`,
+            changed_by: currentUser.user.id,
+          });
+        }
       }
       toast({ title: 'Success', description: 'Property type saved successfully' });
       setPropertyTypeDialog(false);
@@ -253,17 +343,47 @@ const LookupManagement = () => {
   const handleSaveCarrier = async () => {
     try {
       setLoading(true);
+      const { data: currentUser } = await supabase.auth.getUser();
+      
       if (carrierForm.id) {
         const { error } = await supabase
           .from('carriers')
           .update({ name: carrierForm.name, is_active: carrierForm.is_active })
           .eq('id', carrierForm.id);
         if (error) throw error;
+
+        // Audit log for update
+        if (currentUser?.user?.id) {
+          await supabase.from('audit_logs').insert({
+            entity_type: 'lookup',
+            entity_id: carrierForm.id,
+            action: 'update',
+            field: 'carrier',
+            old_value: null,
+            new_value: carrierForm.name,
+            changed_by: currentUser.user.id,
+          });
+        }
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('carriers')
-          .insert({ name: carrierForm.name, is_active: carrierForm.is_active });
+          .insert({ name: carrierForm.name, is_active: carrierForm.is_active })
+          .select()
+          .single();
         if (error) throw error;
+
+        // Audit log for create
+        if (currentUser?.user?.id && data) {
+          await supabase.from('audit_logs').insert({
+            entity_type: 'lookup',
+            entity_id: data.id,
+            action: 'create',
+            field: 'carrier',
+            old_value: null,
+            new_value: carrierForm.name,
+            changed_by: currentUser.user.id,
+          });
+        }
       }
       toast({ title: 'Success', description: 'Carrier saved successfully' });
       setCarrierDialog(false);
@@ -280,17 +400,47 @@ const LookupManagement = () => {
   const handleSaveCountry = async () => {
     try {
       setLoading(true);
+      const { data: currentUser } = await supabase.auth.getUser();
+      
       if (countryForm.id) {
         const { error } = await supabase
           .from('countries')
           .update({ code: countryForm.code, name: countryForm.name })
           .eq('id', countryForm.id);
         if (error) throw error;
+
+        // Audit log for update
+        if (currentUser?.user?.id) {
+          await supabase.from('audit_logs').insert({
+            entity_type: 'lookup',
+            entity_id: countryForm.id,
+            action: 'update',
+            field: 'country',
+            old_value: null,
+            new_value: `${countryForm.code} - ${countryForm.name}`,
+            changed_by: currentUser.user.id,
+          });
+        }
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('countries')
-          .insert({ code: countryForm.code, name: countryForm.name });
+          .insert({ code: countryForm.code, name: countryForm.name })
+          .select()
+          .single();
         if (error) throw error;
+
+        // Audit log for create
+        if (currentUser?.user?.id && data) {
+          await supabase.from('audit_logs').insert({
+            entity_type: 'lookup',
+            entity_id: data.id,
+            action: 'create',
+            field: 'country',
+            old_value: null,
+            new_value: `${countryForm.code} - ${countryForm.name}`,
+            changed_by: currentUser.user.id,
+          });
+        }
       }
       toast({ title: 'Success', description: 'Country saved successfully' });
       setCountryDialog(false);

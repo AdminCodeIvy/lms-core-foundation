@@ -88,6 +88,20 @@ const CustomerEdit = () => {
       const table = `customer_${customer?.customer_type.toLowerCase()}`;
       const { error } = await supabase.from(table).update(data).eq('customer_id', id);
       if (error) throw error;
+
+      // Create audit log for update
+      if (user?.id && customer) {
+        await supabase.from('audit_logs').insert({
+          entity_type: 'customer',
+          entity_id: id,
+          action: 'update',
+          field: null,
+          old_value: null,
+          new_value: `Updated ${customer.customer_type} details`,
+          changed_by: user.id,
+        });
+      }
+
       toast({ title: 'Success', description: 'Customer updated successfully' });
       navigate(`/customers/${id}`);
     } catch (error: any) {

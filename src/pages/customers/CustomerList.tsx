@@ -35,7 +35,7 @@ import { exportToExcel } from '@/lib/export-utils';
 
 const CustomerList = () => {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const { toast } = useToast();
 
   const [customers, setCustomers] = useState<CustomerListItem[]>([]);
@@ -289,6 +289,19 @@ const CustomerList = () => {
         .eq('id', customerToDelete.id);
 
       if (deleteError) throw deleteError;
+
+      // Log the deletion to audit_logs
+      if (user?.id) {
+        await supabase.from('audit_logs').insert({
+          entity_type: 'customer',
+          entity_id: customerToDelete.id,
+          action: 'delete',
+          field: 'status',
+          old_value: customerToDelete.status,
+          new_value: 'DELETED',
+          changed_by: user.id,
+        });
+      }
 
       toast({
         title: 'Success',

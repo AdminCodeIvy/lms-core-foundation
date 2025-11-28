@@ -70,6 +70,20 @@ const UserManagement = () => {
 
       if (error) throw error;
 
+      // Create audit log for activation/deactivation
+      const { data: currentUser } = await supabase.auth.getUser();
+      if (currentUser?.user?.id) {
+        await supabase.from('audit_logs').insert({
+          entity_type: 'user',
+          entity_id: user.id,
+          action: 'update',
+          field: 'is_active',
+          old_value: user.is_active.toString(),
+          new_value: (!user.is_active).toString(),
+          changed_by: currentUser.user.id,
+        });
+      }
+
       toast({
         title: 'Success',
         description: `User ${!user.is_active ? 'activated' : 'deactivated'} successfully`,

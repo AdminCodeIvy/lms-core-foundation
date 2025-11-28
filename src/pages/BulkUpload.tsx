@@ -427,6 +427,20 @@ export default function BulkUpload() {
       // Generate and download
       XLSX.writeFile(wb, filename);
 
+      // Create audit log for template download
+      const { data: currentUser } = await supabase.auth.getUser();
+      if (currentUser?.user?.id) {
+        await supabase.from('audit_logs').insert({
+          entity_type: 'bulk_upload',
+          entity_id: crypto.randomUUID(),
+          action: 'create',
+          field: 'template_download',
+          old_value: null,
+          new_value: `Downloaded ${selectedType}${selectedCustomerType ? ` (${selectedCustomerType})` : ''} template`,
+          changed_by: currentUser.user.id,
+        });
+      }
+
       toast.success('Template downloaded successfully');
       setStep(4);
     } catch (error: any) {
@@ -560,6 +574,20 @@ export default function BulkUpload() {
       };
 
       reader.readAsBinaryString(file);
+
+      // Create audit log for file upload
+      const { data: currentUser } = await supabase.auth.getUser();
+      if (currentUser?.user?.id && file) {
+        await supabase.from('audit_logs').insert({
+          entity_type: 'bulk_upload',
+          entity_id: crypto.randomUUID(),
+          action: 'create',
+          field: 'file_upload',
+          old_value: null,
+          new_value: `Uploaded ${selectedType}${selectedCustomerType ? ` (${selectedCustomerType})` : ''} file: ${file.name}`,
+          changed_by: currentUser.user.id,
+        });
+      }
     } catch (error: any) {
       console.error('Upload error:', error);
       toast.error('Failed to upload file');
@@ -595,6 +623,19 @@ export default function BulkUpload() {
 
       setStep(6);
       toast.success(`Processing complete. ${validRows.length} records are ready.`);
+
+      // Create audit log for commit
+      if (user) {
+        await supabase.from('audit_logs').insert({
+          entity_type: 'bulk_upload',
+          entity_id: crypto.randomUUID(),
+          action: 'create',
+          field: 'commit_upload',
+          old_value: null,
+          new_value: `Committed ${selectedType} upload: ${validRows.length} valid records`,
+          changed_by: user.id,
+        });
+      }
     } catch (error: any) {
       console.error('Commit error:', error);
       toast.error('Failed to process records');
