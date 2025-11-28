@@ -83,12 +83,44 @@ export default function PropertyNew() {
     const [districtsRes, propertyTypesRes, customersRes] = await Promise.all([
       supabase.from('districts').select('*').eq('is_active', true).order('name'),
       supabase.from('property_types').select('*').eq('is_active', true).order('name'),
-      supabase.from('customers').select('id, name, reference_id, status').in('status', ['APPROVED', 'SUBMITTED']).order('name').limit(100)
+      supabase.from('customers').select(`
+        id,
+        reference_id,
+        customer_type,
+        status,
+        customer_person(first_name, father_name, family_name),
+        customer_business(business_name),
+        customer_government(full_department_name),
+        customer_mosque_hospital(full_name),
+        customer_non_profit(full_non_profit_name),
+        customer_contractor(full_contractor_name)
+      `).in('status', ['APPROVED', 'SUBMITTED']).order('updated_at', { ascending: false }).limit(100)
     ]);
 
     if (districtsRes.data) setDistricts(districtsRes.data);
     if (propertyTypesRes.data) setPropertyTypes(propertyTypesRes.data);
-    if (customersRes.data) setCustomers(customersRes.data);
+    if (customersRes.data) {
+      // Format customer names based on type
+      const formattedCustomers = customersRes.data.map(customer => {
+        let name = '';
+        if (customer.customer_type === 'PERSON' && customer.customer_person?.[0]) {
+          const person = customer.customer_person[0];
+          name = `${person.first_name} ${person.father_name} ${person.family_name || ''}`.trim();
+        } else if (customer.customer_type === 'BUSINESS' && customer.customer_business?.[0]) {
+          name = customer.customer_business[0].business_name;
+        } else if (customer.customer_type === 'GOVERNMENT' && customer.customer_government?.[0]) {
+          name = customer.customer_government[0].full_department_name;
+        } else if (customer.customer_type === 'MOSQUE_HOSPITAL' && customer.customer_mosque_hospital?.[0]) {
+          name = customer.customer_mosque_hospital[0].full_name;
+        } else if (customer.customer_type === 'NON_PROFIT' && customer.customer_non_profit?.[0]) {
+          name = customer.customer_non_profit[0].full_non_profit_name;
+        } else if (customer.customer_type === 'CONTRACTOR' && customer.customer_contractor?.[0]) {
+          name = customer.customer_contractor[0].full_contractor_name;
+        }
+        return { ...customer, name };
+      });
+      setCustomers(formattedCustomers);
+    }
   };
 
   const fetchSubDistricts = async (districtId: string) => {
