@@ -72,30 +72,85 @@ const AuditLogs = () => {
   };
 
   const fetchLogs = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
-      const { data: { session } } = await supabase.auth.getSession();
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) {
         throw new Error('Not authenticated');
       }
 
-      const { data, error: fetchError } = await supabase.functions.invoke('get-all-audit-logs', {
-        body: {
-          entityType: entityType === 'all' ? undefined : entityType,
-          userId: userId === 'all' ? undefined : userId,
-          action: action === 'all' ? undefined : action,
-          startDate: startDate || undefined,
-          endDate: endDate || undefined,
-          limit: 100,
-          offset: 0,
-        },
-      });
+      try {
+        const { data, error: fetchError } = await supabase.functions.invoke('get-all-audit-logs', {
+          body: {
+            entityType: entityType === 'all' ? undefined : entityType,
+            userId: userId === 'all' ? undefined : userId,
+            action: action === 'all' ? undefined : action,
+            startDate: startDate || undefined,
+            endDate: endDate || undefined,
+            limit: 100,
+            offset: 0,
+          },
+        });
 
-      if (fetchError) throw fetchError;
+        if (fetchError) throw fetchError;
 
-      setLogs(data.logs || []);
+        setLogs((data as any).logs || []);
+      } catch (fnError: any) {
+        console.error('Edge function get-all-audit-logs failed, falling back to direct query:', fnError);
+
+        // Fallback: query audit_logs table directly (RLS still enforced)
+        let query = supabase
+          .from('audit_logs')
+          .select(
+            `
+            id,
+            entity_type,
+            entity_id,
+            action,
+            field,
+            old_value,
+            new_value,
+            changed_by,
+            timestamp,
+            users:users!audit_logs_changed_by_fkey (
+              id,
+              full_name
+            )
+          `,
+          );
+
+        if (entityType && entityType !== 'all') {
+          query = query.eq('entity_type', entityType);
+        }
+
+        if (userId && userId !== 'all') {
+          query = query.eq('changed_by', userId);
+        }
+
+        if (action && action !== 'all') {
+          query = query.eq('action', action);
+        }
+
+        if (startDate) {
+          query = query.gte('timestamp', startDate);
+        }
+
+        if (endDate) {
+          query = query.lte('timestamp', endDate);
+        }
+
+        const { data: directData, error: directError } = await query
+          .order('timestamp', { ascending: false })
+          .limit(100);
+
+        if (directError) throw directError;
+
+        setLogs((directData as any as AuditLog[]) || []);
+      }
     } catch (err: any) {
       console.error('Error fetching audit logs:', err);
       setError(err.message || 'Failed to load audit logs');
