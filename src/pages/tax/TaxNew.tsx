@@ -149,6 +149,26 @@ export default function TaxNew() {
         }
       }
 
+      // Check for existing assessment for this property and year
+      const { data: existingAssessment, error: checkError } = await supabase
+        .from('tax_assessments')
+        .select('id, reference_id')
+        .eq('property_id', formData.property_id)
+        .eq('tax_year', formData.tax_year)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+
+      if (existingAssessment) {
+        toast({
+          title: 'Assessment Already Exists',
+          description: `A tax assessment for this property in ${formData.tax_year} already exists (${existingAssessment.reference_id}). Please select a different year or edit the existing assessment.`,
+          variant: 'destructive'
+        });
+        setLoading(false);
+        return;
+      }
+
       const payload = {
         property_id: formData.property_id,
         tax_year: formData.tax_year,
