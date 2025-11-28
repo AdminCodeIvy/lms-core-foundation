@@ -62,11 +62,7 @@ export const AuditLogViewer = ({ entityType, entityId, title = 'Activity Log' }:
           old_value,
           new_value,
           changed_by,
-          timestamp,
-          users:users!audit_logs_changed_by_fkey (
-            id,
-            full_name
-          )
+          timestamp
         `)
         .eq('entity_type', entityType)
         .eq('entity_id', entityId)
@@ -74,9 +70,28 @@ export const AuditLogViewer = ({ entityType, entityId, title = 'Activity Log' }:
 
       if (error) throw error;
 
+      // Fetch user details separately to avoid relationship issues
+      const userIds = [...new Set((data || []).map(log => log.changed_by).filter(Boolean))];
+      
+      let usersMap: Record<string, { id: string; full_name: string }> = {};
+      
+      if (userIds.length > 0) {
+        const { data: usersData } = await supabase
+          .from('users')
+          .select('id, full_name')
+          .in('id', userIds);
+        
+        if (usersData) {
+          usersMap = usersData.reduce((acc, user) => {
+            acc[user.id] = user;
+            return acc;
+          }, {} as Record<string, { id: string; full_name: string }>);
+        }
+      }
+
       const normalizedLogs = (data || []).map((log: any) => ({
         ...log,
-        users: Array.isArray(log.users) ? log.users[0] : log.users,
+        users: usersMap[log.changed_by] || { id: log.changed_by, full_name: 'Unknown User' },
       })) as AuditLog[];
 
       setLogs(normalizedLogs);
