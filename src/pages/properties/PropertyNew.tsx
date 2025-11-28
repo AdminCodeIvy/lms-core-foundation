@@ -105,6 +105,11 @@ export default function PropertyNew() {
       return;
     }
 
+    if (!formData.coordinates) {
+      toast.error('Please select a location on the map');
+      return;
+    }
+
     try {
       setLoading(true);
 

@@ -317,6 +317,10 @@ export default function PropertyDetail() {
             <Users className="h-4 w-4 mr-2" />
             Ownership ({ownership.length})
           </TabsTrigger>
+          <TabsTrigger value="location">
+            <MapPin className="h-4 w-4 mr-2" />
+            Location
+          </TabsTrigger>
           <TabsTrigger value="tax">
             <Receipt className="h-4 w-4 mr-2" />
             Tax Summary ({taxAssessments.length})
@@ -560,6 +564,128 @@ export default function PropertyDetail() {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="location">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                Property Location
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {property.coordinates ? (
+                <div className="space-y-4">
+                  <div className="rounded-lg border p-4 bg-muted/30">
+                    <div className="flex items-start gap-3">
+                      <MapPin className="h-5 w-5 text-primary mt-1" />
+                      <div className="flex-1">
+                        <h3 className="font-semibold mb-2">GPS Coordinates</h3>
+                        <p className="text-lg font-mono mb-1">
+                          {(() => {
+                            try {
+                              const match = property.coordinates.match(/POINT\(([+-]?\d+\.?\d*)\s+([+-]?\d+\.?\d*)\)/);
+                              if (match) {
+                                const lng = parseFloat(match[1]);
+                                const lat = parseFloat(match[2]);
+                                return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                              }
+                              return property.coordinates;
+                            } catch (e) {
+                              return property.coordinates;
+                            }
+                          })()}
+                        </p>
+                        <p className="text-sm text-muted-foreground">Latitude, Longitude</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="rounded-lg border p-3">
+                      <p className="text-sm text-muted-foreground mb-1">Latitude</p>
+                      <p className="font-mono font-semibold">
+                        {(() => {
+                          try {
+                            const match = property.coordinates.match(/POINT\(([+-]?\d+\.?\d*)\s+([+-]?\d+\.?\d*)\)/);
+                            if (match) {
+                              return parseFloat(match[2]).toFixed(6);
+                            }
+                            return '-';
+                          } catch (e) {
+                            return '-';
+                          }
+                        })()}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border p-3">
+                      <p className="text-sm text-muted-foreground mb-1">Longitude</p>
+                      <p className="font-mono font-semibold">
+                        {(() => {
+                          try {
+                            const match = property.coordinates.match(/POINT\(([+-]?\d+\.?\d*)\s+([+-]?\d+\.?\d*)\)/);
+                            if (match) {
+                              return parseFloat(match[1]).toFixed(6);
+                            }
+                            return '-';
+                          } catch (e) {
+                            return '-';
+                          }
+                        })()}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border p-4">
+                    <h3 className="font-semibold mb-3">Location Details</h3>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">District:</span>
+                        <span className="font-medium">{property.district?.name}</span>
+                      </div>
+                      {property.sub_district && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Sub-District:</span>
+                          <span className="font-medium">{property.sub_district.name}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Downtown Area:</span>
+                        <Badge variant={property.is_downtown ? 'default' : 'secondary'}>
+                          {property.is_downtown ? 'Yes' : 'No'}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        const match = property.coordinates?.match(/POINT\(([+-]?\d+\.?\d*)\s+([+-]?\d+\.?\d*)\)/);
+                        if (match) {
+                          const lng = parseFloat(match[1]);
+                          const lat = parseFloat(match[2]);
+                          window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+                        }
+                      }}
+                    >
+                      <MapPin className="h-4 w-4 mr-2" />
+                      Open in Google Maps
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <MapPin className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                  <p>No location coordinates available</p>
+                  <p className="text-sm mt-1">Location was not set when creating this property</p>
                 </div>
               )}
             </CardContent>
