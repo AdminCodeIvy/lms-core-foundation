@@ -88,7 +88,7 @@ export default function PropertyNew() {
         reference_id,
         customer_type,
         status,
-        customer_person(first_name, father_name),
+        customer_person(first_name, fourth_name),
         customer_business(business_name),
         customer_government(full_department_name),
         customer_mosque_hospital(full_name),
@@ -105,8 +105,8 @@ export default function PropertyNew() {
         let name = '';
         if (customer.customer_type === 'PERSON' && customer.customer_person?.[0]) {
           const person = customer.customer_person[0];
-          name = person.father_name 
-            ? `${person.first_name} ${person.father_name}`.trim()
+          name = person.fourth_name 
+            ? `${person.first_name} ${person.fourth_name}`.trim()
             : person.first_name;
         } else if (customer.customer_type === 'BUSINESS' && customer.customer_business?.[0]) {
           name = customer.customer_business[0].business_name;
