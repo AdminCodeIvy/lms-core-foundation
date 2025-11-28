@@ -278,6 +278,17 @@ export default function PropertyNew() {
         }
       });
 
+      // Create audit log for draft creation
+      await supabase.from('audit_logs').insert({
+        entity_type: 'property',
+        entity_id: property.id,
+        action: 'create',
+        field: 'status',
+        old_value: null,
+        new_value: 'DRAFT',
+        changed_by: profile?.id
+      });
+
       toast.success('Property draft created successfully');
       navigate(`/properties/${property.id}`);
     } catch (error: any) {
