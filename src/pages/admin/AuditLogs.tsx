@@ -105,23 +105,7 @@ const AuditLogs = () => {
         // Fallback: query audit_logs table directly (RLS still enforced)
         let query = supabase
           .from('audit_logs')
-          .select(
-            `
-            id,
-            entity_type,
-            entity_id,
-            action,
-            field,
-            old_value,
-            new_value,
-            changed_by,
-            timestamp,
-            users:users!audit_logs_changed_by_fkey (
-              id,
-              full_name
-            )
-          `,
-          );
+          .select('*');
 
         if (entityType && entityType !== 'all') {
           query = query.eq('entity_type', entityType);
@@ -149,7 +133,21 @@ const AuditLogs = () => {
 
         if (directError) throw directError;
 
-        setLogs((directData as any as AuditLog[]) || []);
+        // Fetch user names separately
+        const userIds = [...new Set(directData?.map((log: any) => log.changed_by))];
+        const { data: usersData } = await supabase
+          .from('users')
+          .select('id, full_name')
+          .in('id', userIds);
+
+        const usersMap = new Map(usersData?.map((u: any) => [u.id, u]) || []);
+        
+        const logsWithUsers = directData?.map((log: any) => ({
+          ...log,
+          users: usersMap.get(log.changed_by) || { id: log.changed_by, full_name: 'Unknown User' }
+        })) || [];
+
+        setLogs(logsWithUsers as AuditLog[]);
       }
     } catch (err: any) {
       console.error('Error fetching audit logs:', err);
