@@ -141,12 +141,15 @@ export default function PropertyList() {
 
     try {
       setDeleting(true);
+      console.log('Deleting property:', propertyToDelete.id, propertyToDelete.reference_id);
 
       // Fetch all photos for this property
       const { data: photos } = await supabase
         .from('property_photos')
         .select('photo_url')
         .eq('property_id', propertyToDelete.id);
+
+      console.log('Found photos to delete:', photos?.length || 0);
 
       // Delete images from storage
       if (photos && photos.length > 0) {
@@ -156,24 +159,38 @@ export default function PropertyList() {
           const pathParts = url.pathname.split('/property-photos/');
           if (pathParts.length > 1) {
             const filePath = pathParts[1];
-            await supabase.storage
+            const { error: storageError } = await supabase.storage
               .from('property-photos')
               .remove([filePath]);
+            
+            if (storageError) {
+              console.error('Error deleting photo from storage:', storageError);
+            }
           }
         }
       }
 
       // Delete property (cascade will handle related records)
-      const { error } = await supabase
+      const { error, data } = await supabase
         .from('properties')
         .delete()
-        .eq('id', propertyToDelete.id);
+        .eq('id', propertyToDelete.id)
+        .select();
 
-      if (error) throw error;
+      console.log('Delete result:', { error, deletedCount: data?.length });
+
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error('Property not deleted - permission denied or does not exist');
+      }
 
       // Log the deletion to audit_logs
       if (user?.id) {
-        await supabase.from('audit_logs').insert({
+        const { error: auditError } = await supabase.from('audit_logs').insert({
           entity_type: 'property',
           entity_id: propertyToDelete.id,
           action: 'delete',
@@ -183,6 +200,10 @@ export default function PropertyList() {
           changed_by: user.id,
           timestamp: new Date().toISOString(),
         });
+
+        if (auditError) {
+          console.error('Audit log error:', auditError);
+        }
       }
 
       toast.success('Property deleted successfully');
