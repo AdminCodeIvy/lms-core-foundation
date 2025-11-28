@@ -296,7 +296,7 @@ const CustomerDetail = () => {
         </div>
         <TooltipProvider>
           <div className="flex gap-2">
-            {(profile?.role === 'INPUTTER' && customer.status === 'DRAFT' && customer.created_by === user?.id) ||
+            {(profile?.role === 'INPUTTER' && (customer.status === 'DRAFT' || customer.status === 'REJECTED') && customer.created_by === user?.id) ||
              (profile?.role === 'APPROVER' && (customer.status === 'SUBMITTED' || customer.status === 'APPROVED' || customer.status === 'REJECTED')) ||
              profile?.role === 'ADMINISTRATOR' ? (
               <Button variant="outline" onClick={() => navigate(`/customers/${customer.id}/edit`)}>
@@ -316,8 +316,8 @@ const CustomerDetail = () => {
                 </TooltipContent>
               </Tooltip>
             )}
-            {(customer.status === 'DRAFT' && (customer.created_by === user?.id || profile?.role === 'ADMINISTRATOR')) ||
-             (customer.status === 'REJECTED' && (customer.created_by === user?.id || profile?.role === 'ADMINISTRATOR')) ? (
+            {((customer.status === 'DRAFT' || customer.status === 'REJECTED') && 
+              (customer.created_by === user?.id || profile?.role === 'ADMINISTRATOR')) ? (
               <Button onClick={() => setSubmitDialogOpen(true)}>
                 <Send className="h-4 w-4 mr-2" />
                 {customer.status === 'REJECTED' ? 'Resubmit' : 'Submit'}
