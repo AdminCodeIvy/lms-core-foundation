@@ -45,6 +45,7 @@ export default function PropertyDetail() {
           *,
           district:districts(id, name, code),
           sub_district:sub_districts(id, name),
+          property_type:property_types(id, name),
           creator:users!properties_created_by_fkey(id, full_name),
           approver:users!properties_approved_by_fkey(id, full_name)
         `)
@@ -335,44 +336,156 @@ export default function PropertyDetail() {
             <CardHeader>
               <CardTitle>Property Details</CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-6 md:grid-cols-2">
+            <CardContent className="space-y-6">
+              {/* Basic Information Section */}
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Reference ID</label>
-                <p className="mt-1 font-mono">{property.reference_id}</p>
+                <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Reference ID</label>
+                    <p className="mt-1 font-mono">{property.reference_id}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Parcel Number</label>
+                    <p className="mt-1 font-mono">{property.parcel_number}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Property Location</label>
+                    <p className="mt-1">{property.property_location || '-'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Sub Location</label>
+                    <p className="mt-1">{property.sub_location || '-'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">District</label>
+                    <p className="mt-1">{property.district?.name}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Sub-District</label>
+                    <p className="mt-1">{property.sub_district?.name || '-'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Downtown</label>
+                    <Badge variant={property.is_downtown ? 'default' : 'secondary'}>
+                      {property.is_downtown ? 'Yes' : 'No'}
+                    </Badge>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Type</label>
+                    <Badge variant={property.is_building ? 'default' : 'outline'}>
+                      {property.is_building ? 'Building' : 'Empty Land'}
+                    </Badge>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Has Built Area</label>
+                    <Badge variant={property.has_built_area ? 'default' : 'secondary'}>
+                      {property.has_built_area ? 'Yes' : 'No'}
+                    </Badge>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Number of Floors</label>
+                    <p className="mt-1">{property.number_of_floors || '-'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Size</label>
+                    <p className="mt-1">{property.size} m²</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Parcel Area</label>
+                    <p className="mt-1">{property.parcel_area ? `${property.parcel_area} m²` : '-'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Property Type</label>
+                    <p className="mt-1">{property.property_type?.name || '-'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Property Wall</label>
+                    <Badge variant={property.has_property_wall ? 'default' : 'secondary'}>
+                      {property.has_property_wall ? 'Yes' : 'No'}
+                    </Badge>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Parcel Number</label>
-                <p className="mt-1 font-mono">{property.parcel_number}</p>
+
+              {/* Address Details Section */}
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-semibold mb-4">Address Details</h3>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Door Number</label>
+                    <p className="mt-1">{property.door_number || '-'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Road Name</label>
+                    <p className="mt-1">{property.road_name || '-'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Postal/Zip Code</label>
+                    <p className="mt-1">{property.postal_zip_code || '-'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Section</label>
+                    <p className="mt-1">{property.section || '-'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Block</label>
+                    <p className="mt-1">{property.block || '-'}</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">District</label>
-                <p className="mt-1">{property.district?.name}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Sub-District</label>
-                <p className="mt-1">{property.sub_district?.name || '-'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Downtown</label>
-                <Badge variant={property.is_downtown ? 'default' : 'secondary'}>
-                  {property.is_downtown ? 'Yes' : 'No'}
-                </Badge>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Type</label>
-                <Badge variant={property.is_building ? 'default' : 'outline'}>
-                  {property.is_building ? 'Building' : 'Empty Land'}
-                </Badge>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Size</label>
-                <p className="mt-1">{property.size} m²</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Property Wall</label>
-                <Badge variant={property.has_property_wall ? 'default' : 'secondary'}>
-                  {property.has_property_wall ? 'Yes' : 'No'}
-                </Badge>
+
+              {/* Map Location Section */}
+              {property.coordinates && (
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold mb-4">Map Location</h3>
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Coordinates</label>
+                      <p className="mt-1 font-mono text-sm">{property.coordinates}</p>
+                    </div>
+                    {property.map_url && (
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Map URL</label>
+                        <a 
+                          href={property.map_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="mt-1 text-primary hover:underline block truncate"
+                        >
+                          View on Map
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Metadata Section */}
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-semibold mb-4">Record Information</h3>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Created By</label>
+                    <p className="mt-1">{property.creator?.full_name || '-'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Created At</label>
+                    <p className="mt-1">{property.created_at ? format(new Date(property.created_at), 'PPp') : '-'}</p>
+                  </div>
+                  {property.approved_by && (
+                    <>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Approved By</label>
+                        <p className="mt-1">{property.approver?.full_name || '-'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Approved At</label>
+                        <p className="mt-1">{property.approved_at ? format(new Date(property.approved_at), 'PPp') : '-'}</p>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
