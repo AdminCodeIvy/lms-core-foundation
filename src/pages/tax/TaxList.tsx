@@ -108,18 +108,16 @@ export default function TaxList() {
             reference_id,
             parcel_number,
             district:districts(id, name, code),
-            property_ownership!property_ownership_property_id_fkey(
-              customer:customers(
-                id,
-                reference_id,
-                customer_type,
-                customer_person(first_name, fourth_name),
-                customer_business(business_name),
-                customer_government(full_department_name),
-                customer_mosque_hospital(full_name),
-                customer_non_profit(full_non_profit_name),
-                customer_contractor(full_contractor_name)
-              )
+            customer:customers(
+              id,
+              reference_id,
+              customer_type,
+              customer_person(first_name, fourth_name),
+              customer_business(business_name),
+              customer_government(full_department_name),
+              customer_mosque_hospital(full_name),
+              customer_non_profit(full_non_profit_name),
+              customer_contractor(full_contractor_name)
             )
           )
         `, { count: 'exact' })
@@ -160,46 +158,61 @@ export default function TaxList() {
       const transformedData = (data || []).map((assessment: any) => {
         let customerName = 'N/A';
         
-        if (assessment.property?.property_ownership && assessment.property.property_ownership.length > 0) {
-          const ownership = assessment.property.property_ownership[0];
-          const customer = ownership?.customer;
-          
-          if (customer) {
-            switch (customer.customer_type) {
-              case 'PERSON':
-                if (customer.customer_person) {
-                  const person = customer.customer_person;
+        const customer = assessment.property?.customer;
+        
+        if (customer) {
+          switch (customer.customer_type) {
+            case 'PERSON':
+              if (customer.customer_person) {
+                const personData = customer.customer_person;
+                const person = Array.isArray(personData) ? personData[0] : personData;
+                if (person) {
                   customerName = (person.fourth_name && person.fourth_name.trim())
                     ? `${person.first_name} ${person.fourth_name}`.trim()
                     : person.first_name;
                 }
-                break;
-              case 'BUSINESS':
-                if (customer.customer_business) {
-                  customerName = customer.customer_business.business_name;
-                }
-                break;
-              case 'GOVERNMENT':
-                if (customer.customer_government) {
-                  customerName = customer.customer_government.full_department_name;
-                }
-                break;
-              case 'MOSQUE_HOSPITAL':
-                if (customer.customer_mosque_hospital) {
-                  customerName = customer.customer_mosque_hospital.full_name;
-                }
-                break;
-              case 'NON_PROFIT':
-                if (customer.customer_non_profit) {
-                  customerName = customer.customer_non_profit.full_non_profit_name;
-                }
-                break;
-              case 'CONTRACTOR':
-                if (customer.customer_contractor) {
-                  customerName = customer.customer_contractor.full_contractor_name;
-                }
-                break;
-            }
+              }
+              break;
+            case 'BUSINESS':
+              const business = Array.isArray(customer.customer_business) 
+                ? customer.customer_business[0] 
+                : customer.customer_business;
+              if (business) {
+                customerName = business.business_name;
+              }
+              break;
+            case 'GOVERNMENT':
+              const govt = Array.isArray(customer.customer_government) 
+                ? customer.customer_government[0] 
+                : customer.customer_government;
+              if (govt) {
+                customerName = govt.full_department_name;
+              }
+              break;
+            case 'MOSQUE_HOSPITAL':
+              const mosque = Array.isArray(customer.customer_mosque_hospital) 
+                ? customer.customer_mosque_hospital[0] 
+                : customer.customer_mosque_hospital;
+              if (mosque) {
+                customerName = mosque.full_name;
+              }
+              break;
+            case 'NON_PROFIT':
+              const nonProfit = Array.isArray(customer.customer_non_profit) 
+                ? customer.customer_non_profit[0] 
+                : customer.customer_non_profit;
+              if (nonProfit) {
+                customerName = nonProfit.full_non_profit_name;
+              }
+              break;
+            case 'CONTRACTOR':
+              const contractor = Array.isArray(customer.customer_contractor) 
+                ? customer.customer_contractor[0] 
+                : customer.customer_contractor;
+              if (contractor) {
+                customerName = contractor.full_contractor_name;
+              }
+              break;
           }
         }
 
