@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import * as XLSX from 'xlsx';
 
 type UploadType = 'CUSTOMER' | 'PROPERTY' | 'TAX_ASSESSMENT' | 'TAX_PAYMENT';
+type CustomerSubType = 'PERSON' | 'BUSINESS' | 'GOVERNMENT' | 'MOSQUE_HOSPITAL' | 'NON_PROFIT' | 'CONTRACTOR';
 
 interface ValidationRow {
   rowNumber: number;
@@ -55,8 +56,9 @@ const uploadTypes = [
 export default function BulkUpload() {
   const { profile } = useAuth();
   const navigate = useNavigate();
-  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6>(1);
   const [selectedType, setSelectedType] = useState<UploadType | null>(null);
+  const [selectedCustomerType, setSelectedCustomerType] = useState<CustomerSubType | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [validating, setValidating] = useState(false);
@@ -67,6 +69,26 @@ export default function BulkUpload() {
   const [sessionId, setSessionId] = useState<string | null>(null);
 
   const canUpload = profile?.role === 'INPUTTER' || profile?.role === 'ADMINISTRATOR';
+
+  // Map UI steps to progress bar steps
+  const getProgressStep = () => {
+    if (selectedType === 'CUSTOMER') {
+      // For customers: 1→1, 2→2, 3→3, 4→4, 5→4, 6→5
+      if (step <= 3) return step;
+      if (step === 4) return 4;
+      if (step === 5) return 4; // Validation is part of upload step in progress
+      return 5; // Complete
+    } else {
+      // For non-customers (skip step 2): 1→1, 3→2, 4→3, 5→4, 6→5
+      if (step === 1) return 1;
+      if (step === 3) return 2;
+      if (step === 4) return 3;
+      if (step === 5) return 4;
+      return 5; // Complete
+    }
+  };
+
+  const progressStep = getProgressStep();
 
   if (!canUpload) {
     return (
@@ -83,15 +105,79 @@ export default function BulkUpload() {
 
   const handleTypeSelect = (type: UploadType) => {
     setSelectedType(type);
-    setStep(2);
+    // If customer type selected, go to customer sub-type selection
+    // Otherwise go directly to template download
+    if (type === 'CUSTOMER') {
+      setStep(2); // Customer type selection
+    } else {
+      setSelectedCustomerType(null);
+      setStep(3); // Skip to template download
+    }
   };
+
+  const handleCustomerTypeSelect = (subType: CustomerSubType) => {
+    setSelectedCustomerType(subType);
+    setStep(3); // Go to template download
+  };
+
+  const customerSubTypes = [
+    { type: 'PERSON' as CustomerSubType, title: 'Person', description: 'Individual customers', icon: Users },
+    { type: 'BUSINESS' as CustomerSubType, title: 'Business', description: 'Business entities and companies', icon: Users },
+    { type: 'GOVERNMENT' as CustomerSubType, title: 'Government', description: 'Government departments and agencies', icon: Users },
+    { type: 'MOSQUE_HOSPITAL' as CustomerSubType, title: 'Mosque/Hospital', description: 'Religious and healthcare facilities', icon: Users },
+    { type: 'NON_PROFIT' as CustomerSubType, title: 'Non-Profit', description: 'Non-profit organizations', icon: Users },
+    { type: 'CONTRACTOR' as CustomerSubType, title: 'Contractor', description: 'Contractors and service providers', icon: Users },
+  ];
 
   const handleDownloadTemplate = async () => {
     try {
+      // For customer uploads, call the edge function with the customer subtype
+      if (selectedType === 'CUSTOMER' && selectedCustomerType) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          toast.error('Not authenticated');
+          return;
+        }
+
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const response = await fetch(`${supabaseUrl}/functions/v1/generate-template`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            uploadType: 'CUSTOMER',
+            customerSubType: selectedCustomerType,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to generate template');
+        }
+
+        const { file: fileArray, filename } = await response.json();
+        const blob = new Blob([new Uint8Array(fileArray)], { 
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+        });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        toast.success('Template downloaded successfully');
+        setStep(4);
+        return;
+      }
+
+      // For other upload types, generate template client-side
       let templateData: any[] = [];
       let filename = '';
 
-      // Generate template based on upload type
       if (selectedType === 'CUSTOMER') {
         templateData = [
           {
@@ -162,7 +248,7 @@ export default function BulkUpload() {
       XLSX.writeFile(wb, filename);
 
       toast.success('Template downloaded successfully');
-      setStep(3);
+      setStep(4);
     } catch (error: any) {
       console.error('Download error:', error);
       toast.error('Failed to download template');
@@ -285,7 +371,7 @@ export default function BulkUpload() {
           const validRows = results.filter(r => r.status === 'valid').length;
           const errorRows = results.filter(r => r.status === 'error').length;
           
-          setStep(4);
+          setStep(5);
           toast.success(`Validation complete: ${validRows} valid, ${errorRows} errors`);
         } catch (parseError: any) {
           console.error('Parse error:', parseError);
@@ -327,8 +413,8 @@ export default function BulkUpload() {
         toast.info('Tax payment bulk upload requires manual processing. Please contact support.');
       }
 
-      setStep(5);
-      toast.success(`Validation complete. ${validRows.length} records ready for processing.`);
+      setStep(6);
+      toast.success(`Processing complete. ${validRows.length} records are ready.`);
     } catch (error: any) {
       console.error('Commit error:', error);
       toast.error('Failed to process records');
@@ -388,23 +474,23 @@ export default function BulkUpload() {
             {[1, 2, 3, 4, 5].map((s, i) => (
               <div key={s} className="flex items-center flex-1">
                 <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
-                  step >= s ? 'border-primary bg-primary text-primary-foreground' : 'border-muted bg-background'
+                  progressStep >= s ? 'border-primary bg-primary text-primary-foreground' : 'border-muted bg-background'
                 }`}>
                   {s}
                 </div>
                 {i < 4 && (
                   <div className={`flex-1 h-0.5 mx-2 transition-colors ${
-                    step > s ? 'bg-primary' : 'bg-muted'
+                    progressStep > s ? 'bg-primary' : 'bg-muted'
                   }`} />
                 )}
               </div>
             ))}
           </div>
           <div className="flex justify-between mt-2">
-            <span className="text-xs text-muted-foreground">Select Type</span>
+            <span className="text-xs text-muted-foreground">Data Type</span>
+            <span className="text-xs text-muted-foreground">{selectedType === 'CUSTOMER' ? 'Customer Type' : 'Template'}</span>
             <span className="text-xs text-muted-foreground">Template</span>
-            <span className="text-xs text-muted-foreground">Upload</span>
-            <span className="text-xs text-muted-foreground">Validate</span>
+            <span className="text-xs text-muted-foreground">Upload & Validate</span>
             <span className="text-xs text-muted-foreground">Complete</span>
           </div>
         </CardContent>
@@ -435,8 +521,50 @@ export default function BulkUpload() {
         </div>
       )}
 
-      {/* Step 2: Download Template */}
-      {step === 2 && selectedType && (
+      {/* Step 2: Select Customer Type (only for CUSTOMER uploads) */}
+      {step === 2 && selectedType === 'CUSTOMER' && (
+        <div>
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle>Select Customer Type</CardTitle>
+              <CardDescription>
+                Choose the type of customers you want to upload
+              </CardDescription>
+            </CardHeader>
+          </Card>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {customerSubTypes.map((subType) => (
+              <Card
+                key={subType.type}
+                className="cursor-pointer hover:border-primary transition-all hover:shadow-lg"
+                onClick={() => handleCustomerTypeSelect(subType.type)}
+              >
+                <CardHeader>
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-blue-500 bg-opacity-10">
+                      <subType.icon className="h-8 w-8 text-blue-500" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">{subType.title}</CardTitle>
+                      <CardDescription>{subType.description}</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+
+          <div className="mt-4">
+            <Button variant="outline" onClick={() => setStep(1)}>
+              Back
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 3: Download Template */}
+      {step === 3 && selectedType && (
         <Card>
           <CardHeader>
             <CardTitle>Download Template</CardTitle>
@@ -464,7 +592,7 @@ export default function BulkUpload() {
                 <Download className="mr-2 h-4 w-4" />
                 Download Template
               </Button>
-              <Button variant="outline" onClick={() => setStep(1)}>
+              <Button variant="outline" onClick={() => selectedType === 'CUSTOMER' ? setStep(2) : setStep(1)}>
                 Back
               </Button>
             </div>
@@ -472,8 +600,8 @@ export default function BulkUpload() {
         </Card>
       )}
 
-      {/* Step 3: Upload File */}
-      {step === 3 && (
+      {/* Step 4: Upload File */}
+      {step === 4 && (
         <Card>
           <CardHeader>
             <CardTitle>Upload File</CardTitle>
@@ -532,7 +660,7 @@ export default function BulkUpload() {
               <Button onClick={handleUpload} disabled={!file || uploading} size="lg">
                 {uploading ? 'Validating...' : 'Upload & Validate'}
               </Button>
-              <Button variant="outline" onClick={() => setStep(2)} disabled={uploading}>
+              <Button variant="outline" onClick={() => setStep(3)} disabled={uploading}>
                 Back
               </Button>
             </div>
@@ -540,8 +668,8 @@ export default function BulkUpload() {
         </Card>
       )}
 
-      {/* Step 4: Preview & Validate */}
-      {step === 4 && (
+      {/* Step 5: Preview & Validate */}
+      {step === 5 && (
         <div className="space-y-4">
           {/* Summary Cards */}
           <div className="grid grid-cols-4 gap-4">
@@ -701,8 +829,8 @@ export default function BulkUpload() {
         </div>
       )}
 
-      {/* Step 5: Complete */}
-      {step === 5 && (
+      {/* Step 6: Complete */}
+      {step === 6 && (
         <Card>
           <CardHeader>
             <div className="flex items-center gap-4">
@@ -742,6 +870,7 @@ export default function BulkUpload() {
               <Button variant="outline" onClick={() => {
                 setStep(1);
                 setSelectedType(null);
+                setSelectedCustomerType(null);
                 setFile(null);
                 setValidationResults([]);
                 setSessionId(null);
