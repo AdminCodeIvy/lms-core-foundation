@@ -73,14 +73,26 @@ export default function PropertyNew() {
   };
 
   const fetchSubDistricts = async (districtId: string) => {
-    const { data } = await supabase
+    console.log('Fetching sub-districts for district:', districtId);
+    const { data, error } = await supabase
       .from('sub_districts')
       .select('*')
       .eq('district_id', districtId)
       .eq('is_active', true)
       .order('name');
     
-    if (data) setSubDistricts(data);
+    console.log('Sub-districts fetched:', { count: data?.length || 0, data, error });
+    
+    if (data) {
+      setSubDistricts(data);
+    } else {
+      setSubDistricts([]);
+    }
+    
+    if (error) {
+      console.error('Error fetching sub-districts:', error);
+      toast.error('Failed to load sub-districts');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -254,10 +266,16 @@ export default function PropertyNew() {
               <Select 
                 value={formData.sub_district_id} 
                 onValueChange={(value) => setFormData({ ...formData, sub_district_id: value })}
-                disabled={!formData.district_id}
+                disabled={!formData.district_id || subDistricts.length === 0}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select sub-district" />
+                  <SelectValue placeholder={
+                    !formData.district_id 
+                      ? "Select district first" 
+                      : subDistricts.length === 0 
+                        ? "No sub-districts available" 
+                        : "Select sub-district"
+                  } />
                 </SelectTrigger>
                 <SelectContent>
                   {subDistricts.map(subDistrict => (
@@ -267,6 +285,11 @@ export default function PropertyNew() {
                   ))}
                 </SelectContent>
               </Select>
+              {formData.district_id && subDistricts.length === 0 && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  No sub-districts found for selected district
+                </p>
+              )}
             </div>
 
             <div>
