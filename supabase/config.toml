@@ -127,3 +127,9 @@ verify_jwt = true
 [functions.mock-ago-sync]
 verify_jwt = true
 
+[functions.log-audit]
+verify_jwt = true
+
+[functions.get-audit-logs]
+verify_jwt = true
+

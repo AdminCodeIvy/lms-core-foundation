@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, FileText, MapPin, Camera, Users, Activity, Receipt, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { ActivityLogTab } from '@/components/activity/ActivityLogTab';
+import { AuditLogViewer } from '@/components/audit/AuditLogViewer';
 import { SubmitConfirmationDialog } from '@/components/workflow/SubmitConfirmationDialog';
 import { format } from 'date-fns';
 
@@ -323,6 +324,10 @@ export default function PropertyDetail() {
             <Activity className="h-4 w-4 mr-2" />
             Activity
           </TabsTrigger>
+          <TabsTrigger value="audit">
+            <Activity className="h-4 w-4 mr-2" />
+            Audit Trail
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="details">
@@ -612,6 +617,14 @@ export default function PropertyDetail() {
 
         <TabsContent value="activity">
           <ActivityLogTab customerId={property.id} />
+        </TabsContent>
+
+        <TabsContent value="audit">
+          <AuditLogViewer 
+            entityType="property" 
+            entityId={property.id}
+            title="Property Audit Trail"
+          />
         </TabsContent>
       </Tabs>
 
