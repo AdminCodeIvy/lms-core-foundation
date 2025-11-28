@@ -121,7 +121,9 @@ const CustomerList = () => {
           case 'PERSON':
             if (customer.customer_person && customer.customer_person.length > 0) {
               const person = customer.customer_person[0];
-              name = `${person.first_name} ${person.father_name}`;
+              name = person.father_name 
+                ? `${person.first_name} ${person.father_name}`.trim()
+                : person.first_name;
             }
             break;
           case 'BUSINESS':

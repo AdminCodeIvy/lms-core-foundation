@@ -105,7 +105,9 @@ export default function PropertyNew() {
         let name = '';
         if (customer.customer_type === 'PERSON' && customer.customer_person?.[0]) {
           const person = customer.customer_person[0];
-          name = `${person.first_name} ${person.father_name}`.trim();
+          name = person.father_name 
+            ? `${person.first_name} ${person.father_name}`.trim()
+            : person.first_name;
         } else if (customer.customer_type === 'BUSINESS' && customer.customer_business?.[0]) {
           name = customer.customer_business[0].business_name;
         } else if (customer.customer_type === 'GOVERNMENT' && customer.customer_government?.[0]) {
