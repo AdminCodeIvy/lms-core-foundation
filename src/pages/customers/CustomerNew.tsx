@@ -93,9 +93,22 @@ const CustomerNew = () => {
 
       if (personError) throw personError;
 
+      // Create activity log for draft creation
+      await supabase.from('activity_logs').insert({
+        entity_type: 'CUSTOMER',
+        entity_id: customer.id,
+        action: 'CREATED',
+        performed_by: user?.id,
+        metadata: {
+          reference_id: customer.reference_id,
+          customer_type: 'PERSON',
+          status: 'DRAFT'
+        }
+      });
+
       toast({
         title: 'Success',
-        description: 'Customer created successfully',
+        description: 'Customer draft created successfully',
       });
 
       navigate(`/customers/${customer.id}`);
@@ -135,9 +148,22 @@ const CustomerNew = () => {
 
       if (businessError) throw businessError;
 
+      // Create activity log for draft creation
+      await supabase.from('activity_logs').insert({
+        entity_type: 'CUSTOMER',
+        entity_id: customer.id,
+        action: 'CREATED',
+        performed_by: user?.id,
+        metadata: {
+          reference_id: customer.reference_id,
+          customer_type: 'BUSINESS',
+          status: 'DRAFT'
+        }
+      });
+
       toast({
         title: 'Success',
-        description: 'Customer created successfully',
+        description: 'Customer draft created successfully',
       });
 
       navigate(`/customers/${customer.id}`);
@@ -177,9 +203,22 @@ const CustomerNew = () => {
 
       if (govError) throw govError;
 
+      // Create activity log for draft creation
+      await supabase.from('activity_logs').insert({
+        entity_type: 'CUSTOMER',
+        entity_id: customer.id,
+        action: 'CREATED',
+        performed_by: user?.id,
+        metadata: {
+          reference_id: customer.reference_id,
+          customer_type: 'GOVERNMENT',
+          status: 'DRAFT'
+        }
+      });
+
       toast({
         title: 'Success',
-        description: 'Customer created successfully',
+        description: 'Customer draft created successfully',
       });
 
       navigate(`/customers/${customer.id}`);
@@ -219,9 +258,22 @@ const CustomerNew = () => {
 
       if (mhError) throw mhError;
 
+      // Create activity log for draft creation
+      await supabase.from('activity_logs').insert({
+        entity_type: 'CUSTOMER',
+        entity_id: customer.id,
+        action: 'CREATED',
+        performed_by: user?.id,
+        metadata: {
+          reference_id: customer.reference_id,
+          customer_type: 'MOSQUE_HOSPITAL',
+          status: 'DRAFT'
+        }
+      });
+
       toast({
         title: 'Success',
-        description: 'Customer created successfully',
+        description: 'Customer draft created successfully',
       });
 
       navigate(`/customers/${customer.id}`);
@@ -261,9 +313,22 @@ const CustomerNew = () => {
 
       if (npError) throw npError;
 
+      // Create activity log for draft creation
+      await supabase.from('activity_logs').insert({
+        entity_type: 'CUSTOMER',
+        entity_id: customer.id,
+        action: 'CREATED',
+        performed_by: user?.id,
+        metadata: {
+          reference_id: customer.reference_id,
+          customer_type: 'NON_PROFIT',
+          status: 'DRAFT'
+        }
+      });
+
       toast({
         title: 'Success',
-        description: 'Customer created successfully',
+        description: 'Customer draft created successfully',
       });
 
       navigate(`/customers/${customer.id}`);
@@ -303,9 +368,22 @@ const CustomerNew = () => {
 
       if (contractorError) throw contractorError;
 
+      // Create activity log for draft creation
+      await supabase.from('activity_logs').insert({
+        entity_type: 'CUSTOMER',
+        entity_id: customer.id,
+        action: 'CREATED',
+        performed_by: user?.id,
+        metadata: {
+          reference_id: customer.reference_id,
+          customer_type: 'CONTRACTOR',
+          status: 'DRAFT'
+        }
+      });
+
       toast({
         title: 'Success',
-        description: 'Customer created successfully',
+        description: 'Customer draft created successfully',
       });
 
       navigate(`/customers/${customer.id}`);
