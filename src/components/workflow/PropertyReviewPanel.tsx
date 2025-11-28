@@ -89,7 +89,7 @@ export const PropertyReviewPanel = ({
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="sm:max-w-2xl overflow-y-auto">
+        <SheetContent className="w-screen max-w-full h-full overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Review Property</SheetTitle>
           </SheetHeader>
