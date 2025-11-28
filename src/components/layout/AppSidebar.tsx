@@ -24,6 +24,7 @@ import {
   Map,
   Cloud,
   Bell,
+  History,
 } from 'lucide-react';
 
 const menuItems = [
@@ -92,6 +93,11 @@ const adminItems = [
     title: 'AGO Settings',
     url: '/admin/ago-settings',
     icon: Cloud,
+  },
+  {
+    title: 'Audit Logs',
+    url: '/admin/audit-logs',
+    icon: History,
   },
 ];
 

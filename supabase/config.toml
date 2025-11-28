@@ -133,3 +133,6 @@ verify_jwt = true
 [functions.get-audit-logs]
 verify_jwt = true
 
+[functions.get-all-audit-logs]
+verify_jwt = true
+
