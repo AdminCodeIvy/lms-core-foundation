@@ -82,7 +82,7 @@ const CustomerList = () => {
           customer_type,
           status,
           updated_at,
-          customer_person(first_name, father_name),
+          customer_person(first_name, fourth_name),
           customer_business(business_name),
           customer_government(full_department_name),
           customer_mosque_hospital(full_name),
@@ -121,8 +121,8 @@ const CustomerList = () => {
           case 'PERSON':
             if (customer.customer_person && customer.customer_person.length > 0) {
               const person = customer.customer_person[0];
-              name = person.father_name 
-                ? `${person.first_name} ${person.father_name}`.trim()
+              name = person.fourth_name 
+                ? `${person.first_name} ${person.fourth_name}`.trim()
                 : person.first_name;
             }
             break;
