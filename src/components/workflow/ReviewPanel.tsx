@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -64,11 +64,24 @@ export const ReviewPanel = ({
 
   return (
     <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="full" className="h-full overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Review Customer</SheetTitle>
-          </SheetHeader>
+      {open && (
+        <div className="fixed inset-0 z-[9999]">
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={() => onOpenChange(false)}
+          />
+          <div className="absolute inset-0 flex h-full w-full flex-col bg-background p-6 overflow-y-auto animate-in slide-in-from-right duration-300">
+            <button
+              type="button"
+              className="absolute right-6 top-6 rounded-full border border-border bg-background/80 p-1 text-muted-foreground hover:bg-muted"
+              onClick={() => onOpenChange(false)}
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </button>
+            <SheetHeader className="mt-8">
+              <SheetTitle>Review Customer</SheetTitle>
+            </SheetHeader>
 
           {loading ? (
             <div className="space-y-4 mt-6">
@@ -399,8 +412,10 @@ export const ReviewPanel = ({
               <p className="text-muted-foreground">No customer selected</p>
             </div>
           )}
-        </SheetContent>
-      </Sheet>
+        </div>
+      </div>
+      )}
+
 
       {customer && (
         <>
