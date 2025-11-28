@@ -58,6 +58,27 @@ const CustomerDetail = () => {
     }
   }, [id]);
 
+  useEffect(() => {
+    if (customer && user && profile) {
+      console.log('CustomerDetail - Debug Info:', {
+        customerStatus: customer.status,
+        customerCreatedBy: customer.created_by,
+        currentUserId: user.id,
+        userRole: profile.role,
+        isOwner: customer.created_by === user.id,
+        shouldEnableEdit: (
+          (profile.role === 'INPUTTER' && (customer.status === 'DRAFT' || customer.status === 'REJECTED') && customer.created_by === user.id) ||
+          (profile.role === 'APPROVER' && (customer.status === 'SUBMITTED' || customer.status === 'APPROVED' || customer.status === 'REJECTED')) ||
+          profile.role === 'ADMINISTRATOR'
+        ),
+        shouldShowSubmit: (
+          (customer.status === 'DRAFT' || customer.status === 'REJECTED') && 
+          (customer.created_by === user.id || profile.role === 'ADMINISTRATOR')
+        )
+      });
+    }
+  }, [customer, user, profile]);
+
   const fetchCustomer = async () => {
     try {
       setLoading(true);
