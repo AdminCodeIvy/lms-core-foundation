@@ -554,7 +554,206 @@ const CustomerDetail = () => {
             </>
           )}
 
-          {/* Add similar sections for other customer types */}
+          {/* Government Type */}
+          {customer.customer_type === 'GOVERNMENT' && customer.government_data && (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5" />
+                    Government Entity Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-0">
+                  <InfoItem icon={IdCard} label="Reference ID" value={customer.reference_id} />
+                  <InfoItem icon={Building2} label="Department Name" value={customer.government_data.full_department_name} />
+                  <InfoItem icon={MapPin} label="District" value={customer.government_data.districts?.name} />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Phone className="h-5 w-5" />
+                    Contact Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-0">
+                  <InfoItem icon={User} label="Contact Name" value={customer.government_data.contact_name} />
+                  <InfoItem icon={Phone} label="Mobile Number 1" value={`${customer.government_data.mobile_number_1} (${customer.government_data.carrier_mobile_1})`} />
+                  {customer.government_data.mobile_number_2 && (
+                    <InfoItem icon={Phone} label="Mobile Number 2" value={`${customer.government_data.mobile_number_2} (${customer.government_data.carrier_mobile_2})`} />
+                  )}
+                  <InfoItem icon={Mail} label="Email" value={customer.government_data.email} />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MapPin className="h-5 w-5" />
+                    Department Address
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-0">
+                  <InfoItem icon={MapPin} label="Department Address" value={customer.government_data.department_address} />
+                  <InfoItem icon={MapPin} label="Street" value={customer.government_data.street} />
+                  {customer.government_data.section && (
+                    <InfoItem icon={MapPin} label="Section" value={customer.government_data.section} />
+                  )}
+                  {customer.government_data.block && (
+                    <InfoItem icon={MapPin} label="Block" value={customer.government_data.block} />
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {/* Mosque/Hospital Type */}
+          {customer.customer_type === 'MOSQUE_HOSPITAL' && customer.mosque_hospital_data && (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5" />
+                    Institution Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-0">
+                  <InfoItem icon={IdCard} label="Reference ID" value={customer.reference_id} />
+                  <InfoItem icon={Building2} label="Institution Name" value={customer.mosque_hospital_data.full_name} />
+                  <InfoItem icon={IdCard} label="Registration Number" value={customer.mosque_hospital_data.registration_number} />
+                  <InfoItem icon={MapPin} label="District" value={customer.mosque_hospital_data.districts?.name} />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Phone className="h-5 w-5" />
+                    Contact Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-0">
+                  <InfoItem icon={User} label="Contact Name" value={customer.mosque_hospital_data.contact_name} />
+                  <InfoItem icon={Phone} label="Mobile Number 1" value={`${customer.mosque_hospital_data.mobile_number_1} (${customer.mosque_hospital_data.carrier_mobile_1})`} />
+                  {customer.mosque_hospital_data.mobile_number_2 && (
+                    <InfoItem icon={Phone} label="Mobile Number 2" value={`${customer.mosque_hospital_data.mobile_number_2} (${customer.mosque_hospital_data.carrier_mobile_2})`} />
+                  )}
+                  <InfoItem icon={Mail} label="Email" value={customer.mosque_hospital_data.email} />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MapPin className="h-5 w-5" />
+                    Institution Address
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-0">
+                  <InfoItem icon={MapPin} label="Address" value={customer.mosque_hospital_data.address} />
+                  {customer.mosque_hospital_data.section && (
+                    <InfoItem icon={MapPin} label="Section" value={customer.mosque_hospital_data.section} />
+                  )}
+                  {customer.mosque_hospital_data.block && (
+                    <InfoItem icon={MapPin} label="Block" value={customer.mosque_hospital_data.block} />
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {/* Non-Profit Type */}
+          {customer.customer_type === 'NON_PROFIT' && customer.non_profit_data && (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5" />
+                    Organization Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-0">
+                  <InfoItem icon={IdCard} label="Reference ID" value={customer.reference_id} />
+                  <InfoItem icon={Building2} label="Organization Name" value={customer.non_profit_data.full_non_profit_name} />
+                  <InfoItem icon={IdCard} label="Registration Number" value={customer.non_profit_data.registration_number} />
+                  <InfoItem icon={IdCard} label="License Number" value={customer.non_profit_data.license_number} />
+                  <InfoItem icon={MapPin} label="District" value={customer.non_profit_data.districts?.name} />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Phone className="h-5 w-5" />
+                    Contact Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-0">
+                  <InfoItem icon={User} label="Contact Name" value={customer.non_profit_data.contact_name} />
+                  <InfoItem icon={Phone} label="Mobile Number 1" value={`${customer.non_profit_data.mobile_number_1} (${customer.non_profit_data.carrier_mobile_1})`} />
+                  {customer.non_profit_data.mobile_number_2 && (
+                    <InfoItem icon={Phone} label="Mobile Number 2" value={`${customer.non_profit_data.mobile_number_2} (${customer.non_profit_data.carrier_mobile_2})`} />
+                  )}
+                  <InfoItem icon={Mail} label="Email" value={customer.non_profit_data.email} />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MapPin className="h-5 w-5" />
+                    Organization Address
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-0">
+                  <InfoItem icon={MapPin} label="Address" value={customer.non_profit_data.address} />
+                  {customer.non_profit_data.section && (
+                    <InfoItem icon={MapPin} label="Section" value={customer.non_profit_data.section} />
+                  )}
+                  {customer.non_profit_data.block && (
+                    <InfoItem icon={MapPin} label="Block" value={customer.non_profit_data.block} />
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {/* Contractor Type */}
+          {customer.customer_type === 'CONTRACTOR' && customer.contractor_data && (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    Contractor Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-0">
+                  <InfoItem icon={IdCard} label="Reference ID" value={customer.reference_id} />
+                  <InfoItem icon={User} label="Contractor Name" value={customer.contractor_data.full_contractor_name} />
+                  <InfoItem icon={User} label="Contact Name" value={customer.contractor_data.contact_name} />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Phone className="h-5 w-5" />
+                    Contact Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-0">
+                  <InfoItem icon={Phone} label="Mobile Number 1" value={`${customer.contractor_data.mobile_number_1} (${customer.contractor_data.carrier_mobile_1})`} />
+                  {customer.contractor_data.mobile_number_2 && (
+                    <InfoItem icon={Phone} label="Mobile Number 2" value={`${customer.contractor_data.mobile_number_2} (${customer.contractor_data.carrier_mobile_2})`} />
+                  )}
+                  <InfoItem icon={Mail} label="Email" value={customer.contractor_data.email} />
+                </CardContent>
+              </Card>
+            </>
+          )}
 
           {/* Record Information */}
           <Card>
