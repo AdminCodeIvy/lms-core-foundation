@@ -114,6 +114,10 @@ export const ReviewQueueDetail = () => {
         .single();
 
       if (customerData && !customerError) {
+        console.log('Customer data fetched:', customerData);
+        console.log('Customer business data:', customerData.customer_business);
+        console.log('Customer person data:', customerData.customer_person);
+        
         const transformedData: CustomerWithDetails = {
           ...customerData,
           person_data: customerData.customer_person?.[0],
@@ -125,6 +129,10 @@ export const ReviewQueueDetail = () => {
           created_by_user: customerData.created_by_user,
           approved_by_user: customerData.approved_by_user,
         };
+        
+        console.log('Transformed customer data:', transformedData);
+        console.log('Business data after transform:', transformedData.business_data);
+        
         setCustomer(transformedData);
         setEntityType('CUSTOMER');
         return;
@@ -525,6 +533,10 @@ const CustomerReviewContent = ({
   onReject: () => void;
   actionLoading: boolean;
 }) => {
+  console.log('CustomerReviewContent - Customer:', customer);
+  console.log('CustomerReviewContent - Customer Type:', customer.customer_type);
+  console.log('CustomerReviewContent - Business Data:', customer.business_data);
+  
   return (
     <>
       <Card className="mb-6">
