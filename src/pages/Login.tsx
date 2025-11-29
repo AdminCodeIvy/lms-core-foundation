@@ -213,56 +213,31 @@ const Login = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/80 to-primary/70" />
         
         {/* Content */}
-        <div className="relative z-10 flex flex-col justify-between p-12 text-white">
-          {/* Top Brand */}
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm">
-              <Building2 className="h-7 w-7" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold">Jigjiga City</h2>
-              <p className="text-sm text-white/80">Administration</p>
-            </div>
-          </div>
-
-          {/* Center Content */}
-          <div className="space-y-6">
-            <h1 className="text-5xl font-bold leading-tight">
-              Land Management
-              <br />
-              <span className="text-white/90">System</span>
-            </h1>
-            <p className="text-lg text-white/90 max-w-md">
-              Comprehensive digital platform for property registration, 
-              ownership records, and municipal tax administration
-            </p>
-
-            {/* Features */}
-            <div className="space-y-4 pt-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm">
-                  <MapPin className="h-5 w-5" />
-                </div>
-                <span className="text-white/90">Property & Land Registration</span>
+        <div className="relative z-10 flex flex-col items-center justify-center h-full p-12 text-white">
+          <div className="space-y-8 text-center max-w-xl">
+            {/* Brand */}
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm">
+                <Building2 className="h-9 w-9" />
               </div>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm">
-                  <Database className="h-5 w-5" />
-                </div>
-                <span className="text-white/90">Digital Records Management</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm">
-                  <Shield className="h-5 w-5" />
-                </div>
-                <span className="text-white/90">Secure & Compliant</span>
+              <div>
+                <h2 className="text-2xl font-bold">Jigjiga City</h2>
+                <p className="text-base text-white/80">Administration</p>
               </div>
             </div>
-          </div>
 
-          {/* Bottom */}
-          <div className="text-sm text-white/70">
-            © 2024 Jigjiga City Administration
+            {/* Main Heading */}
+            <div className="space-y-6">
+              <h1 className="text-6xl font-bold leading-tight">
+                Land Management
+                <br />
+                <span className="text-white/90">System</span>
+              </h1>
+              <p className="text-xl text-white/90">
+                Comprehensive digital platform for property registration, 
+                ownership records, and municipal tax administration
+              </p>
+            </div>
           </div>
         </div>
       </div>
