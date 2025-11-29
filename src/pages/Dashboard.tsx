@@ -326,17 +326,6 @@ const Dashboard = () => {
         </Card>
       )}
 
-      <Card className="border-info/20 bg-info/5">
-        <CardHeader>
-          <CardTitle className="text-info">System Information</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            This is Phase 1 of the Land Management System. Customer, Property, and Tax management
-            features will be available in upcoming phases.
-          </p>
-        </CardContent>
-      </Card>
     </div>
   );
 };

@@ -213,8 +213,8 @@ const Login = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/80 to-primary/70" />
         
         {/* Content */}
-        <div className="relative z-10 flex flex-col items-center justify-center h-full p-12 text-white">
-          <div className="space-y-8 text-center max-w-xl">
+        <div className="relative z-10 flex flex-col items-center justify-center h-full p-12 text-white w-full">
+          <div className="space-y-8 text-center max-w-xl mx-auto">
             {/* Brand */}
             <div className="flex flex-col items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm">
