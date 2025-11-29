@@ -35,12 +35,12 @@ Deno.serve(async (req) => {
     const currentYear = new Date().getFullYear();
     const year = taxYear ? parseInt(taxYear) : currentYear;
 
-    console.log('Get tax stats v2 - Fetching for year:', year);
+    console.log('Get tax stats - Fetching for year:', year);
 
     // Get assessments for the year
     const { data: assessments, error: assessmentsError } = await supabase
       .from('tax_assessments')
-      .select('assessed_amount, paid_amount, outstanding_amount, status')
+      .select('assessed_amount, paid_amount, outstanding_amount, status, tax_year')
       .eq('tax_year', year);
 
     if (assessmentsError) {
@@ -50,6 +50,9 @@ Deno.serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    console.log(`Found ${assessments.length} assessments for year ${year}`);
+    console.log('Assessment details:', JSON.stringify(assessments, null, 2));
 
     // Calculate statistics
     const totalAssessed = assessments.reduce((sum, a) => sum + (a.assessed_amount || 0), 0);

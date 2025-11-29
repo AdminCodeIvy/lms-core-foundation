@@ -10,6 +10,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
@@ -121,19 +122,28 @@ export const AppSidebar = () => {
 
   return (
     <Sidebar className={collapsed ? 'w-16' : 'w-64'} collapsible="icon">
-      <div className="flex h-16 items-center gap-3 border-b px-4">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary">
-          <Building2 className="h-6 w-6 text-primary-foreground" />
-        </div>
-        {!collapsed && (
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold">LMS</span>
-            <span className="text-xs text-muted-foreground">Jigjiga City</span>
+      <div className={`flex h-16 items-center border-b ${collapsed ? 'justify-center px-2' : 'gap-3 px-4'}`}>
+        {!collapsed ? (
+          <>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary">
+              <Building2 className="h-6 w-6 text-primary-foreground" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold">LMS</span>
+              <span className="text-xs text-muted-foreground">Jigjiga City</span>
+            </div>
+          </>
+        ) : (
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary">
+            <Building2 className="h-4 w-4 text-primary-foreground" />
           </div>
         )}
       </div>
 
-      <SidebarContent>
+      <SidebarContent className="pt-2">
+        <div className="px-2 pb-2">
+          <SidebarTrigger className="hover:bg-muted/50" />
+        </div>
         <SidebarGroup>
           <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
           <SidebarGroupContent>
