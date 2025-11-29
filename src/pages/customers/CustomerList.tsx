@@ -74,18 +74,62 @@ const CustomerList = () => {
     e.stopPropagation();
     
     try {
-      const { error } = await supabase.functions.invoke('archive-customer', {
-        body: { 
-          customer_id: customer.id,
-          unarchive: customer.status === 'ARCHIVED'
-        }
-      });
+      const isCurrentlyArchived = customer.status === 'ARCHIVED';
 
-      if (error) throw error;
+      // Fetch latest customer status and approval info
+      const { data: fullCustomer, error: fetchError } = await supabase
+        .from('customers')
+        .select('status, approved_by, reference_id')
+        .eq('id', customer.id)
+        .single();
+
+      if (fetchError || !fullCustomer) {
+        throw fetchError || new Error('Customer not found');
+      }
+
+      let newStatus: CustomerStatus;
+      if (isCurrentlyArchived) {
+        if (fullCustomer.status !== 'ARCHIVED') {
+          throw new Error('Customer is not archived');
+        }
+        newStatus = fullCustomer.approved_by ? 'APPROVED' : 'DRAFT';
+      } else {
+        if (fullCustomer.status === 'ARCHIVED') {
+          throw new Error('Customer is already archived');
+        }
+        newStatus = 'ARCHIVED';
+      }
+
+      const { error: updateError } = await supabase
+        .from('customers')
+        .update({ status: newStatus })
+        .eq('id', customer.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Audit log
+      if (user?.id) {
+        const { error: auditError } = await supabase.from('audit_logs').insert({
+          entity_type: 'customer',
+          entity_id: customer.id,
+          action: isCurrentlyArchived ? 'unarchive' : 'archive',
+          field: 'status',
+          old_value: fullCustomer.status,
+          new_value: newStatus,
+          changed_by: user.id,
+          timestamp: new Date().toISOString(),
+        });
+
+        if (auditError) {
+          console.error('Audit log error (archive customer):', auditError);
+        }
+      }
 
       toast({
         title: 'Success',
-        description: customer.status === 'ARCHIVED' ? 'Customer unarchived successfully' : 'Customer archived successfully',
+        description: isCurrentlyArchived ? 'Customer unarchived successfully' : 'Customer archived successfully',
       });
 
       fetchCustomers();

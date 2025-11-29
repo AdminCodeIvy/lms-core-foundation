@@ -229,18 +229,62 @@ export default function PropertyList() {
 
   const handleArchive = async (property: Property, e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     try {
-      const { error } = await supabase.functions.invoke('archive-property', {
-        body: { 
-          property_id: property.id,
-          unarchive: property.status === 'ARCHIVED'
+      const isCurrentlyArchived = property.status === 'ARCHIVED';
+
+      // Fetch latest property status and approval info
+      const { data: fullProperty, error: fetchError } = await supabase
+        .from('properties')
+        .select('status, approved_by, reference_id')
+        .eq('id', property.id)
+        .single();
+
+      if (fetchError || !fullProperty) {
+        throw fetchError || new Error('Property not found');
+      }
+
+      let newStatus: string;
+      if (isCurrentlyArchived) {
+        if (fullProperty.status !== 'ARCHIVED') {
+          throw new Error('Property is not archived');
         }
-      });
+        newStatus = fullProperty.approved_by ? 'APPROVED' : 'DRAFT';
+      } else {
+        if (fullProperty.status === 'ARCHIVED') {
+          throw new Error('Property is already archived');
+        }
+        newStatus = 'ARCHIVED';
+      }
 
-      if (error) throw error;
+      const { error: updateError } = await supabase
+        .from('properties')
+        .update({ status: newStatus })
+        .eq('id', property.id);
 
-      toast.success(property.status === 'ARCHIVED' ? 'Property unarchived successfully' : 'Property archived successfully');
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Audit log
+      if (user?.id) {
+        const { error: auditError } = await supabase.from('audit_logs').insert({
+          entity_type: 'property',
+          entity_id: property.id,
+          action: isCurrentlyArchived ? 'unarchive' : 'archive',
+          field: 'status',
+          old_value: fullProperty.status,
+          new_value: newStatus,
+          changed_by: user.id,
+          timestamp: new Date().toISOString(),
+        });
+
+        if (auditError) {
+          console.error('Audit log error (archive property):', auditError);
+        }
+      }
+
+      toast.success(isCurrentlyArchived ? 'Property unarchived successfully' : 'Property archived successfully');
       fetchProperties();
     } catch (err: any) {
       console.error('Error archiving property:', err);
