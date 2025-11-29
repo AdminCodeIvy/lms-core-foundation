@@ -74,13 +74,13 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.get-notifications]
-verify_jwt = true
+verify_jwt = false
 
 [functions.mark-notification-read]
 verify_jwt = true
 
 [functions.get-dashboard-stats]
-verify_jwt = true
+verify_jwt = false
 
 [functions.get-properties]
 verify_jwt = true
@@ -119,7 +119,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.get-tax-stats]
-verify_jwt = true
+verify_jwt = false
 
 [functions.generate-template]
 verify_jwt = true
