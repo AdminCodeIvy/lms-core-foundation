@@ -31,7 +31,7 @@ import * as XLSX from 'xlsx';
 
 export default function TaxList() {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const [assessments, setAssessments] = useState<TaxAssessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -498,18 +498,38 @@ export default function TaxList() {
     e.stopPropagation();
     
     try {
-      const { error } = await supabase.functions.invoke('archive-tax-assessment', {
-        body: { 
-          assessment_id: assessment.id,
-          unarchive: (assessment as any).is_archived
-        }
-      });
+      const isCurrentlyArchived = Boolean((assessment as any).is_archived);
 
-      if (error) throw error;
+      const { error: updateError } = await supabase
+        .from('tax_assessments')
+        .update({ is_archived: !isCurrentlyArchived })
+        .eq('id', assessment.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Audit log
+      if (user?.id) {
+        const { error: auditError } = await supabase.from('audit_logs').insert({
+          entity_type: 'tax_assessment',
+          entity_id: assessment.id,
+          action: isCurrentlyArchived ? 'unarchive' : 'archive',
+          field: 'is_archived',
+          old_value: isCurrentlyArchived ? 'true' : 'false',
+          new_value: !isCurrentlyArchived ? 'true' : 'false',
+          changed_by: user.id,
+          timestamp: new Date().toISOString(),
+        });
+
+        if (auditError) {
+          console.error('Audit log error (archive tax assessment):', auditError);
+        }
+      }
 
       toast({
         title: 'Success',
-        description: (assessment as any).is_archived ? 'Tax assessment unarchived successfully' : 'Tax assessment archived successfully',
+        description: isCurrentlyArchived ? 'Tax assessment unarchived successfully' : 'Tax assessment archived successfully',
       });
 
       fetchAssessments();
