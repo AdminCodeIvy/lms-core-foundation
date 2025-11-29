@@ -459,7 +459,7 @@ const CustomerList = () => {
 
       {/* Filters */}
       <Card className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-center">
           <div className="md:col-span-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -475,7 +475,7 @@ const CustomerList = () => {
             </div>
           </div>
           <Select value={typeFilter} onValueChange={(value) => { setTypeFilter(value); setPage(1); }}>
-            <SelectTrigger>
+            <SelectTrigger className="h-10">
               <SelectValue placeholder="All Types" />
             </SelectTrigger>
             <SelectContent>
@@ -489,7 +489,7 @@ const CustomerList = () => {
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={(value) => { setStatusFilter(value); setPage(1); }}>
-            <SelectTrigger>
+            <SelectTrigger className="h-10">
               <SelectValue placeholder="All Statuses" />
             </SelectTrigger>
             <SelectContent>
@@ -501,25 +501,25 @@ const CustomerList = () => {
               {canArchive() && <SelectItem value="ARCHIVED">Archived Only</SelectItem>}
             </SelectContent>
           </Select>
+          
+          {canArchive() && (
+            <div className="flex items-center gap-2 justify-center">
+              <input
+                type="checkbox"
+                id="showArchivedCustomers"
+                checked={showArchived}
+                onChange={(e) => {
+                  setShowArchived(e.target.checked);
+                  setPage(1);
+                }}
+                className="rounded"
+              />
+              <label htmlFor="showArchivedCustomers" className="text-sm whitespace-nowrap">
+                Show Archived
+              </label>
+            </div>
+          )}
         </div>
-        
-        {canArchive() && (
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="showArchivedCustomers"
-              checked={showArchived}
-              onChange={(e) => {
-                setShowArchived(e.target.checked);
-                setPage(1);
-              }}
-              className="rounded"
-            />
-            <label htmlFor="showArchivedCustomers" className="text-sm">
-              Show Archived
-            </label>
-          </div>
-        )}
       </Card>
 
       {/* Table */}
