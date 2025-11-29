@@ -27,13 +27,29 @@ interface PropertyDetails {
   parcel_number: string;
   status: string;
   size: number;
-  latitude: number;
-  longitude: number;
+  property_location?: string;
+  sub_location?: string;
+  is_downtown?: boolean;
+  is_building?: boolean;
+  has_built_area?: boolean;
+  number_of_floors?: number;
+  parcel_area?: number;
+  has_property_wall?: boolean;
+  door_number?: string;
+  road_name?: string;
+  postal_zip_code?: string;
+  section?: string;
+  block?: string;
+  coordinates?: any;
+  latitude?: number;
+  longitude?: number;
   district?: { name: string };
   sub_district?: { name: string };
   property_type?: { name: string };
   creator?: { full_name: string };
   boundaries?: any;
+  photos?: any[];
+  ownership?: any[];
   updated_at: string;
 }
 
@@ -135,9 +151,38 @@ export const ReviewQueueDetail = () => {
         .eq('property_id', id)
         .maybeSingle();
 
+      // Fetch photos
+      const { data: photosData } = await supabase
+        .from('property_photos')
+        .select(`
+          *,
+          uploader:users(id, full_name)
+        `)
+        .eq('property_id', id);
+
+      // Fetch ownership
+      const { data: ownershipData } = await supabase
+        .from('property_ownership')
+        .select(`
+          *,
+          customer:customers(
+            id,
+            reference_id,
+            customer_type,
+            first_name,
+            last_name,
+            full_name_ar,
+            business_name
+          )
+        `)
+        .eq('property_id', id)
+        .eq('is_current', true);
+
       setProperty({
         ...propertyData,
-        boundaries: boundariesData
+        boundaries: boundariesData,
+        photos: photosData || [],
+        ownership: ownershipData || []
       });
       setEntityType('PROPERTY');
     } catch (err: any) {
@@ -584,46 +629,178 @@ const PropertyReviewContent = ({
 }) => {
   return (
     <>
+      {/* Basic Information */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Property Information</CardTitle>
+          <CardTitle>Basic Information</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-6 md:grid-cols-2">
           <InfoItem label="Reference ID" value={property.reference_id} />
           <InfoItem label="Parcel Number" value={property.parcel_number} />
-          <InfoItem label="Status" value={property.status} />
-          <InfoItem label="Property Type" value={property.property_type?.name} />
+          <InfoItem label="Property Location" value={property.property_location} />
+          <InfoItem label="Sub Location" value={property.sub_location} />
           <InfoItem label="District" value={property.district?.name} />
-          <InfoItem label="Sub District" value={property.sub_district?.name} />
-          <InfoItem label="Size (sq m)" value={property.size?.toString()} />
-          <InfoItem label="Submitted By" value={property.creator?.full_name} />
+          <InfoItem label="Sub-District" value={property.sub_district?.name} />
+          
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">Downtown</p>
+            <Badge variant={property.is_downtown ? 'default' : 'secondary'}>
+              {property.is_downtown ? 'Yes' : 'No'}
+            </Badge>
+          </div>
+          
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">Type</p>
+            <Badge variant={property.is_building ? 'default' : 'outline'}>
+              {property.is_building ? 'Building' : 'Empty Land'}
+            </Badge>
+          </div>
+          
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">Has Built Area</p>
+            <Badge variant={property.has_built_area ? 'default' : 'secondary'}>
+              {property.has_built_area ? 'Yes' : 'No'}
+            </Badge>
+          </div>
+          
+          <InfoItem label="Number of Floors" value={property.number_of_floors?.toString()} />
+          <InfoItem label="Size" value={property.size ? `${property.size} m²` : undefined} />
+          <InfoItem label="Parcel Area" value={property.parcel_area ? `${property.parcel_area} m²` : undefined} />
+          <InfoItem label="Property Type" value={property.property_type?.name} />
+          
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">Property Wall</p>
+            <Badge variant={property.has_property_wall ? 'default' : 'secondary'}>
+              {property.has_property_wall ? 'Yes' : 'No'}
+            </Badge>
+          </div>
         </CardContent>
       </Card>
 
+      {/* Address Details */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Location Details</CardTitle>
+          <CardTitle>Address Details</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-6 md:grid-cols-2">
-          <InfoItem label="Latitude" value={property.latitude?.toString()} />
-          <InfoItem label="Longitude" value={property.longitude?.toString()} />
+          <InfoItem label="Door Number" value={property.door_number} />
+          <InfoItem label="Road Name" value={property.road_name} />
+          <InfoItem label="Postal/Zip Code" value={property.postal_zip_code} />
+          <InfoItem label="Section" value={property.section} />
+          <InfoItem label="Block" value={property.block} />
         </CardContent>
       </Card>
 
+      {/* Location Details */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Location Coordinates</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-6 md:grid-cols-2">
+          <InfoItem 
+            label="Latitude" 
+            value={property.coordinates?.coordinates?.[1]?.toString() || property.latitude?.toString()} 
+          />
+          <InfoItem 
+            label="Longitude" 
+            value={property.coordinates?.coordinates?.[0]?.toString() || property.longitude?.toString()} 
+          />
+        </CardContent>
+      </Card>
+
+      {/* Boundaries */}
       {property.boundaries && (
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>Boundaries</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-6 md:grid-cols-2">
-            <InfoItem label="North" value={property.boundaries.north} />
-            <InfoItem label="South" value={property.boundaries.south} />
-            <InfoItem label="East" value={property.boundaries.east} />
-            <InfoItem label="West" value={property.boundaries.west} />
+            <InfoItem label="North" value={property.boundaries.north_boundary} />
+            <InfoItem label="South" value={property.boundaries.south_boundary} />
+            <InfoItem label="East" value={property.boundaries.east_boundary} />
+            <InfoItem label="West" value={property.boundaries.west_boundary} />
           </CardContent>
         </Card>
       )}
 
+      {/* Photos */}
+      {property.photos && property.photos.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Property Photos ({property.photos.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-3">
+              {property.photos.map((photo: any) => (
+                <div key={photo.id} className="space-y-2">
+                  <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
+                    <img
+                      src={photo.photo_url}
+                      alt={photo.caption || 'Property photo'}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                  {photo.caption && (
+                    <p className="text-sm text-muted-foreground">{photo.caption}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Uploaded by {photo.uploader?.full_name || 'Unknown'}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Ownership */}
+      {property.ownership && property.ownership.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Ownership Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {property.ownership.map((owner: any) => (
+                <div key={owner.id} className="border rounded-lg p-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <InfoItem 
+                      label="Owner" 
+                      value={
+                        owner.customer?.business_name || 
+                        `${owner.customer?.first_name || ''} ${owner.customer?.last_name || ''}`.trim() ||
+                        owner.customer?.full_name_ar ||
+                        'N/A'
+                      }
+                    />
+                    <InfoItem label="Customer Reference" value={owner.customer?.reference_id} />
+                    <InfoItem label="Ownership %" value={`${owner.ownership_percentage || 100}%`} />
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">Status</p>
+                      <Badge variant={owner.is_current ? 'default' : 'secondary'}>
+                        {owner.is_current ? 'Current' : 'Historical'}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Workflow Information */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Workflow Information</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-6 md:grid-cols-2">
+          <InfoItem label="Submitted By" value={property.creator?.full_name} />
+          <InfoItem label="Status" value={property.status} />
+        </CardContent>
+      </Card>
+
+      {/* Action Buttons */}
       <div className="flex gap-4">
         <Button onClick={onApprove} disabled={actionLoading} className="flex-1">
           <CheckCircle className="h-4 w-4 mr-2" />
