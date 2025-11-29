@@ -4,11 +4,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { Building2, AlertTriangle } from 'lucide-react';
+import { Building2, AlertTriangle, Mail, Lock, MapPin, Shield, Database } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import loginHeroBg from '@/assets/login-hero-bg.jpg';
 
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 30 * 60 * 1000; // 30 minutes
@@ -58,7 +58,6 @@ const Login = () => {
         setIsLockedOut(true);
         setLockoutTimeRemaining(LOCKOUT_DURATION_MS - timeSinceLockout);
       } else if (timeSinceLockout >= LOCKOUT_DURATION_MS) {
-        // Clear lockout if duration has passed
         localStorage.removeItem(`lockout_${email}`);
         setIsLockedOut(false);
       }
@@ -74,7 +73,6 @@ const Login = () => {
       const data = JSON.parse(lockoutData);
       const timeSinceLastAttempt = Date.now() - data.timestamp;
       
-      // Reset attempts if more than lockout duration has passed
       if (timeSinceLastAttempt >= LOCKOUT_DURATION_MS) {
         attempts = 1;
       } else {
@@ -107,7 +105,6 @@ const Login = () => {
   const from = (location.state as any)?.from?.pathname || '/';
 
   useEffect(() => {
-    // Auto-redirect authenticated users who directly visit the login page
     if (!hasSubmitted && user && profile && !authLoading) {
       navigate(from, { replace: true });
     }
@@ -116,7 +113,6 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Check if account is locked out
     if (isLockedOut) {
       toast({
         variant: 'destructive',
@@ -152,7 +148,6 @@ const Login = () => {
         return;
       }
 
-      // Credentials are valid, now verify profile and role before redirecting
       const { data: userResult, error: userError } = await supabase.auth.getUser();
 
       if (userError || !userResult?.user) {
@@ -188,7 +183,6 @@ const Login = () => {
         return;
       }
 
-      // Clear failed attempts on successful login
       clearFailedAttempts(email);
 
       toast({
@@ -209,75 +203,182 @@ const Login = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="space-y-3 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-            <Building2 className="h-8 w-8 text-primary" />
+    <div className="flex min-h-screen">
+      {/* Left Hero Section */}
+      <div 
+        className="hidden lg:flex lg:w-1/2 relative bg-cover bg-center"
+        style={{ backgroundImage: `url(${loginHeroBg})` }}
+      >
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/80 to-primary/70" />
+        
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-between p-12 text-white">
+          {/* Top Brand */}
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm">
+              <Building2 className="h-7 w-7" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">Jigjiga City</h2>
+              <p className="text-sm text-white/80">Administration</p>
+            </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Land Management System</CardTitle>
-          <CardDescription>
-            Sign in to access the Jigjiga City Administration LMS
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+
+          {/* Center Content */}
+          <div className="space-y-6">
+            <h1 className="text-5xl font-bold leading-tight">
+              Land Management
+              <br />
+              <span className="text-white/90">System</span>
+            </h1>
+            <p className="text-lg text-white/90 max-w-md">
+              Comprehensive digital platform for property registration, 
+              ownership records, and municipal tax administration
+            </p>
+
+            {/* Features */}
+            <div className="space-y-4 pt-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm">
+                  <MapPin className="h-5 w-5" />
+                </div>
+                <span className="text-white/90">Property & Land Registration</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm">
+                  <Database className="h-5 w-5" />
+                </div>
+                <span className="text-white/90">Digital Records Management</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm">
+                  <Shield className="h-5 w-5" />
+                </div>
+                <span className="text-white/90">Secure & Compliant</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom */}
+          <div className="text-sm text-white/70">
+            © 2024 Jigjiga City Administration
+          </div>
+        </div>
+      </div>
+
+      {/* Right Form Section */}
+      <div className="flex w-full lg:w-1/2 items-center justify-center p-8 bg-background">
+        <div className="w-full max-w-md space-y-8">
+          {/* Mobile Logo */}
+          <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+              <Building2 className="h-7 w-7 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">Land Management System</h2>
+              <p className="text-sm text-muted-foreground">Jigjiga City Administration</p>
+            </div>
+          </div>
+
+          {/* Form Header */}
+          <div className="space-y-2">
+            <h2 className="text-3xl font-bold tracking-tight">Welcome Back</h2>
+            <p className="text-muted-foreground">
+              Sign in to access your administrative dashboard
+            </p>
+          </div>
+
+          {/* Configuration Alert */}
           {!isSupabaseConfigured && (
-            <Alert variant="destructive" className="mb-4">
+            <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Configuration Required</AlertTitle>
-              <AlertDescription>
-                Supabase is not configured. Please create a <code className="text-xs">.env</code> file and add:{' '}
-                <code className="text-xs">VITE_SUPABASE_URL</code> and{' '}
-                <code className="text-xs">VITE_SUPABASE_ANON_KEY</code>.
-                <br />
-                <span className="text-xs mt-2 block">See SETUP-GUIDE.md for detailed instructions.</span>
+              <AlertDescription className="text-xs">
+                Supabase is not configured. Please add <code>VITE_SUPABASE_URL</code> and{' '}
+                <code>VITE_SUPABASE_ANON_KEY</code> to your .env file.
               </AlertDescription>
             </Alert>
           )}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="your.email@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Link
-                  to="/forgot-password"
-                  className="text-sm text-primary hover:underline"
-                >
-                  Forgot password?
-                </Link>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              {/* Email */}
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium">
+                  Email Address
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="your.email@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={loading}
+                    className="pl-10"
+                  />
+                </div>
               </div>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading}
-              />
+
+              {/* Password */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-sm font-medium">
+                    Password
+                  </Label>
+                  <Link
+                    to="/forgot-password"
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={loading}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
             </div>
-            <Button type="submit" className="w-full" disabled={loading || isLockedOut}>
+
+            {/* Submit Button */}
+            <Button 
+              type="submit" 
+              className="w-full h-11 text-base font-medium" 
+              disabled={loading || isLockedOut}
+            >
               {loading ? 'Signing in...' : isLockedOut ? `Locked (${formatTimeRemaining(lockoutTimeRemaining)})` : 'Sign In'}
             </Button>
+
+            {/* Lockout Warning */}
             {isLockedOut && (
-              <p className="text-sm text-center text-destructive mt-2">
-                Account locked due to too many failed attempts. Try again in {formatTimeRemaining(lockoutTimeRemaining)}.
-              </p>
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="text-sm">
+                  Account locked due to multiple failed attempts. Try again in {formatTimeRemaining(lockoutTimeRemaining)}.
+                </AlertDescription>
+              </Alert>
             )}
           </form>
-        </CardContent>
-      </Card>
+
+          {/* Footer */}
+          <div className="text-center text-sm text-muted-foreground">
+            <p>Contact your system administrator for access</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
