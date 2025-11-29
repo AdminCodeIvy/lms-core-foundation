@@ -114,10 +114,6 @@ export const ReviewQueueDetail = () => {
         .single();
 
       if (customerData && !customerError) {
-        console.log('Customer data fetched:', customerData);
-        console.log('Customer business data:', customerData.customer_business);
-        console.log('Customer person data:', customerData.customer_person);
-        
         const transformedData: CustomerWithDetails = {
           ...customerData,
           person_data: customerData.customer_person?.[0],
@@ -129,10 +125,6 @@ export const ReviewQueueDetail = () => {
           created_by_user: customerData.created_by_user,
           approved_by_user: customerData.approved_by_user,
         };
-        
-        console.log('Transformed customer data:', transformedData);
-        console.log('Business data after transform:', transformedData.business_data);
-        
         setCustomer(transformedData);
         setEntityType('CUSTOMER');
         return;
@@ -533,10 +525,6 @@ const CustomerReviewContent = ({
   onReject: () => void;
   actionLoading: boolean;
 }) => {
-  console.log('CustomerReviewContent - Customer:', customer);
-  console.log('CustomerReviewContent - Customer Type:', customer.customer_type);
-  console.log('CustomerReviewContent - Business Data:', customer.business_data);
-  
   return (
     <>
       <Card className="mb-6">
@@ -649,21 +637,24 @@ const CustomerReviewContent = ({
         <>
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Government Entity Information</CardTitle>
+              <CardTitle>Department Information</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-6 md:grid-cols-2">
               <InfoItem label="Full Department Name" value={customer.government_data.full_department_name} />
-              <InfoItem label="Contact Name" value={customer.government_data.contact_name} />
+              <InfoItem label="Department Address" value={customer.government_data.department_address} />
             </CardContent>
           </Card>
 
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Contact & Location</CardTitle>
+              <CardTitle>Contact & Address</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-6 md:grid-cols-2">
+              <InfoItem label="Contact Name" value={customer.government_data.contact_name} />
               <InfoItem label="Mobile 1" value={customer.government_data.mobile_number_1} />
+              <InfoItem label="Carrier Mobile 1" value={customer.government_data.carrier_mobile_1} />
               <InfoItem label="Mobile 2" value={customer.government_data.mobile_number_2} />
+              <InfoItem label="Carrier Mobile 2" value={customer.government_data.carrier_mobile_2} />
               <InfoItem label="Email" value={customer.government_data.email} />
               <InfoItem label="Street" value={customer.government_data.street} />
               <InfoItem label="District" value={customer.government_data.districts?.name} />
@@ -678,11 +669,12 @@ const CustomerReviewContent = ({
         <>
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Mosque/Hospital Information</CardTitle>
+              <CardTitle>Basic Information</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-6 md:grid-cols-2">
               <InfoItem label="Full Name" value={customer.mosque_hospital_data.full_name} />
-              <InfoItem label="Contact Name" value={customer.mosque_hospital_data.contact_name} />
+              <InfoItem label="Registration Number" value={customer.mosque_hospital_data.registration_number} />
+              <InfoItem label="Address" value={customer.mosque_hospital_data.address} />
             </CardContent>
           </Card>
 
@@ -691,8 +683,11 @@ const CustomerReviewContent = ({
               <CardTitle>Contact & Location</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-6 md:grid-cols-2">
+              <InfoItem label="Contact Name" value={customer.mosque_hospital_data.contact_name} />
               <InfoItem label="Mobile 1" value={customer.mosque_hospital_data.mobile_number_1} />
+              <InfoItem label="Carrier Mobile 1" value={customer.mosque_hospital_data.carrier_mobile_1} />
               <InfoItem label="Mobile 2" value={customer.mosque_hospital_data.mobile_number_2} />
+              <InfoItem label="Carrier Mobile 2" value={customer.mosque_hospital_data.carrier_mobile_2} />
               <InfoItem label="Email" value={customer.mosque_hospital_data.email} />
               <InfoItem label="District" value={customer.mosque_hospital_data.districts?.name} />
               <InfoItem label="Section" value={customer.mosque_hospital_data.section} />
@@ -706,11 +701,13 @@ const CustomerReviewContent = ({
         <>
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Non-Profit Information</CardTitle>
+              <CardTitle>Organization Information</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-6 md:grid-cols-2">
-              <InfoItem label="Full Name" value={customer.non_profit_data.full_non_profit_name} />
-              <InfoItem label="Contact Name" value={customer.non_profit_data.contact_name} />
+              <InfoItem label="Full Non-Profit Name" value={customer.non_profit_data.full_non_profit_name} />
+              <InfoItem label="Registration Number" value={customer.non_profit_data.registration_number} />
+              <InfoItem label="License Number" value={customer.non_profit_data.license_number} />
+              <InfoItem label="Address" value={customer.non_profit_data.address} />
             </CardContent>
           </Card>
 
@@ -719,8 +716,11 @@ const CustomerReviewContent = ({
               <CardTitle>Contact & Location</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-6 md:grid-cols-2">
+              <InfoItem label="Contact Name" value={customer.non_profit_data.contact_name} />
               <InfoItem label="Mobile 1" value={customer.non_profit_data.mobile_number_1} />
+              <InfoItem label="Carrier Mobile 1" value={customer.non_profit_data.carrier_mobile_1} />
               <InfoItem label="Mobile 2" value={customer.non_profit_data.mobile_number_2} />
+              <InfoItem label="Carrier Mobile 2" value={customer.non_profit_data.carrier_mobile_2} />
               <InfoItem label="Email" value={customer.non_profit_data.email} />
               <InfoItem label="District" value={customer.non_profit_data.districts?.name} />
               <InfoItem label="Section" value={customer.non_profit_data.section} />
@@ -737,9 +737,20 @@ const CustomerReviewContent = ({
               <CardTitle>Contractor Information</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-6 md:grid-cols-2">
-              <InfoItem label="Full Name" value={customer.contractor_data.full_contractor_name} />
+              <InfoItem label="Full Contractor Name" value={customer.contractor_data.full_contractor_name} />
+              <InfoItem label="Contact Name" value={customer.contractor_data.contact_name} />
+            </CardContent>
+          </Card>
+
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Contact Information</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-6 md:grid-cols-2">
               <InfoItem label="Mobile 1" value={customer.contractor_data.mobile_number_1} />
+              <InfoItem label="Carrier Mobile 1" value={customer.contractor_data.carrier_mobile_1} />
               <InfoItem label="Mobile 2" value={customer.contractor_data.mobile_number_2} />
+              <InfoItem label="Carrier Mobile 2" value={customer.contractor_data.carrier_mobile_2} />
               <InfoItem label="Email" value={customer.contractor_data.email} />
             </CardContent>
           </Card>
