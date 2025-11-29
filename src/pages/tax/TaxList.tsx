@@ -149,10 +149,7 @@ export default function TaxList() {
         query = query.gt('outstanding_amount', 0);
       }
 
-      // Handle archived filter
-      if (!showArchived) {
-        query = query.or('is_archived.is.null,is_archived.eq.false');
-      }
+      // Note: Archive functionality requires running TAX_ARCHIVE_MIGRATION.sql first
 
       // Pagination
       const from = (pagination.page - 1) * pagination.limit;
@@ -494,54 +491,11 @@ export default function TaxList() {
     return profile?.role === 'ADMINISTRATOR';
   };
 
-  const handleArchive = async (assessment: TaxAssessment, e: React.MouseEvent) => {
-    e.stopPropagation();
-    
-    try {
-      const isCurrentlyArchived = Boolean((assessment as any).is_archived);
-
-      const { error: updateError } = await supabase
-        .from('tax_assessments')
-        .update({ is_archived: !isCurrentlyArchived })
-        .eq('id', assessment.id);
-
-      if (updateError) {
-        throw updateError;
-      }
-
-      // Audit log
-      if (user?.id) {
-        const { error: auditError } = await supabase.from('audit_logs').insert({
-          entity_type: 'tax_assessment',
-          entity_id: assessment.id,
-          action: isCurrentlyArchived ? 'unarchive' : 'archive',
-          field: 'is_archived',
-          old_value: isCurrentlyArchived ? 'true' : 'false',
-          new_value: !isCurrentlyArchived ? 'true' : 'false',
-          changed_by: user.id,
-          timestamp: new Date().toISOString(),
-        });
-
-        if (auditError) {
-          console.error('Audit log error (archive tax assessment):', auditError);
-        }
-      }
-
-      toast({
-        title: 'Success',
-        description: isCurrentlyArchived ? 'Tax assessment unarchived successfully' : 'Tax assessment archived successfully',
-      });
-
-      fetchAssessments();
-    } catch (err: any) {
-      console.error('Error archiving tax assessment:', err);
-      toast({
-        title: 'Error',
-        description: err.message || 'Failed to archive tax assessment',
-        variant: 'destructive',
-      });
-    }
-  };
+  // Archive functionality disabled - requires TAX_ARCHIVE_MIGRATION.sql to be run first
+  // const handleArchive = async (assessment: TaxAssessment, e: React.MouseEvent) => {
+  //   e.stopPropagation();
+  //   ...
+  // };
 
   return (
     <div className="container mx-auto py-6 space-y-6 max-w-full overflow-x-hidden">
@@ -643,17 +597,6 @@ export default function TaxList() {
             />
             <Label htmlFor="arrears-only">Show only properties with outstanding amounts</Label>
           </div>
-
-          {canArchive() && (
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="show-archived"
-                checked={showArchived}
-                onCheckedChange={setShowArchived}
-              />
-              <Label htmlFor="show-archived">Show archived assessments</Label>
-            </div>
-          )}
         </div>
       </Card>
 
@@ -720,31 +663,16 @@ export default function TaxList() {
                   </TableCell>
                   <TableCell>{getStatusBadge(assessment.status)}</TableCell>
                   <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/tax/${assessment.id}`);
-                        }}
-                      >
-                        View
-                      </Button>
-                      {canArchive() && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => handleArchive(assessment, e)}
-                          title={(assessment as any).is_archived ? 'Unarchive' : 'Archive'}
-                        >
-                          {(assessment as any).is_archived ? 
-                            <ArchiveRestore className="h-4 w-4" /> : 
-                            <Archive className="h-4 w-4" />
-                          }
-                        </Button>
-                      )}
-                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/tax/${assessment.id}`);
+                      }}
+                    >
+                      View
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))
