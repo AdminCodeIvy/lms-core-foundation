@@ -100,6 +100,12 @@ verify_jwt = true
 [functions.archive-property]
 verify_jwt = true
 
+[functions.archive-customer]
+verify_jwt = true
+
+[functions.archive-tax-assessment]
+verify_jwt = true
+
 [functions.get-tax-assessments]
 verify_jwt = true
 
