@@ -95,11 +95,17 @@ export default function PropertyList() {
         );
       }
 
+      // Handle status filtering with proper archived logic
       if (statusFilter && statusFilter !== 'all') {
+        // If a specific status is selected, show only that status
         query = query.eq('status', statusFilter);
-      } else if (!showArchived) {
-        // By default, hide archived properties
-        query = query.neq('status', 'ARCHIVED');
+      } else {
+        // When "All Status" is selected
+        if (!showArchived) {
+          // Hide archived properties unless explicitly shown
+          query = query.neq('status', 'ARCHIVED');
+        }
+        // If showArchived is true, show everything (no status filter)
       }
 
       if (districtFilter && districtFilter !== 'all') {
@@ -356,12 +362,14 @@ export default function PropertyList() {
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="all">All Status (Except Archived)</SelectItem>
                 <SelectItem value="DRAFT">Draft</SelectItem>
                 <SelectItem value="SUBMITTED">Submitted</SelectItem>
                 <SelectItem value="APPROVED">Approved</SelectItem>
                 <SelectItem value="REJECTED">Rejected</SelectItem>
-                <SelectItem value="ARCHIVED">Archived</SelectItem>
+                {['APPROVER', 'ADMINISTRATOR'].includes(profile?.role || '') && (
+                  <SelectItem value="ARCHIVED">Archived Only</SelectItem>
+                )}
               </SelectContent>
             </Select>
 

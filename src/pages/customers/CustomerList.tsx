@@ -196,11 +196,17 @@ const CustomerList = () => {
         query = query.eq('customer_type', typeFilter);
       }
 
+      // Handle status filtering with proper archived logic
       if (statusFilter !== 'ALL') {
+        // If a specific status is selected, show only that status
         query = query.eq('status', statusFilter);
-      } else if (!showArchived) {
-        // By default, hide archived customers
-        query = query.neq('status', 'ARCHIVED');
+      } else {
+        // When "All Statuses" is selected
+        if (!showArchived) {
+          // Hide archived customers unless explicitly shown
+          query = query.neq('status', 'ARCHIVED');
+        }
+        // If showArchived is true, show everything (no status filter)
       }
 
       // Apply search (reference_id or name)
@@ -487,12 +493,12 @@ const CustomerList = () => {
               <SelectValue placeholder="All Statuses" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">All Statuses</SelectItem>
+              <SelectItem value="ALL">All Statuses (Except Archived)</SelectItem>
               <SelectItem value="DRAFT">Draft</SelectItem>
               <SelectItem value="SUBMITTED">Submitted</SelectItem>
               <SelectItem value="APPROVED">Approved</SelectItem>
               <SelectItem value="REJECTED">Rejected</SelectItem>
-              {canArchive() && <SelectItem value="ARCHIVED">Archived</SelectItem>}
+              {canArchive() && <SelectItem value="ARCHIVED">Archived Only</SelectItem>}
             </SelectContent>
           </Select>
         </div>
