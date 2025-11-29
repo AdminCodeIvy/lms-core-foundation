@@ -105,26 +105,16 @@ const CustomerDetail = () => {
       // Transform data
       const transformedData: CustomerWithDetails = {
         ...data,
-        person_data: data.customer_person?.[0],
-        business_data: data.customer_business?.[0],
-        government_data: data.customer_government?.[0],
-        mosque_hospital_data: data.customer_mosque_hospital?.[0],
-        non_profit_data: data.customer_non_profit?.[0],
-        contractor_data: data.customer_contractor?.[0],
+        person_data: data.customer_person,
+        business_data: data.customer_business,
+        government_data: data.customer_government,
+        mosque_hospital_data: data.customer_mosque_hospital,
+        non_profit_data: data.customer_non_profit,
+        contractor_data: data.customer_contractor,
         created_by_user: data.created_by_user,
         approved_by_user: data.approved_by_user,
       };
 
-      console.log('Customer data loaded:', {
-        customer_type: transformedData.customer_type,
-        has_person_data: !!transformedData.person_data,
-        has_business_data: !!transformedData.business_data,
-        has_government_data: !!transformedData.government_data,
-        has_mosque_hospital_data: !!transformedData.mosque_hospital_data,
-        has_non_profit_data: !!transformedData.non_profit_data,
-        has_contractor_data: !!transformedData.contractor_data,
-        raw_data: data
-      });
       setCustomer(transformedData);
     } catch (err: any) {
       console.error('Error fetching customer:', err);
