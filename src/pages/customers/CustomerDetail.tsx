@@ -115,6 +115,16 @@ const CustomerDetail = () => {
         approved_by_user: data.approved_by_user,
       };
 
+      console.log('Customer data loaded:', {
+        customer_type: transformedData.customer_type,
+        has_person_data: !!transformedData.person_data,
+        has_business_data: !!transformedData.business_data,
+        has_government_data: !!transformedData.government_data,
+        has_mosque_hospital_data: !!transformedData.mosque_hospital_data,
+        has_non_profit_data: !!transformedData.non_profit_data,
+        has_contractor_data: !!transformedData.contractor_data,
+        raw_data: data
+      });
       setCustomer(transformedData);
     } catch (err: any) {
       console.error('Error fetching customer:', err);
