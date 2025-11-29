@@ -141,9 +141,6 @@ export const AppSidebar = () => {
       </div>
 
       <SidebarContent className="pt-2">
-        <div className="px-2 pb-2">
-          <SidebarTrigger className="hover:bg-muted/50" />
-        </div>
         <SidebarGroup>
           <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
           <SidebarGroupContent>

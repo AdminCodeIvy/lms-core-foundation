@@ -25,7 +25,7 @@ export const AppHeader = () => {
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-6">
-      <SidebarTrigger className="hover:bg-accent" />
+      <SidebarTrigger className="hover:bg-muted/50" />
       
       <div className="flex-1" />
 
