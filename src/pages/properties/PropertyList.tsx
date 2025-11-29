@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Search, Filter, Trash2 } from 'lucide-react';
+import { Plus, Search, Filter, Trash2, Archive, ArchiveRestore } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -223,6 +223,31 @@ export default function PropertyList() {
            (property.status === 'DRAFT' && property.created_by === user?.id && profile?.role === 'INPUTTER');
   };
 
+  const canArchive = () => {
+    return ['APPROVER', 'ADMINISTRATOR'].includes(profile?.role || '');
+  };
+
+  const handleArchive = async (property: Property, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    try {
+      const { error } = await supabase.functions.invoke('archive-property', {
+        body: { 
+          property_id: property.id,
+          unarchive: property.status === 'ARCHIVED'
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success(property.status === 'ARCHIVED' ? 'Property unarchived successfully' : 'Property archived successfully');
+      fetchProperties();
+    } catch (err: any) {
+      console.error('Error archiving property:', err);
+      toast.error(err.message || 'Failed to archive property');
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'DRAFT': return 'bg-gray-500';
@@ -377,6 +402,19 @@ export default function PropertyList() {
                           >
                             View
                           </Button>
+                          {canArchive() && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => handleArchive(property, e)}
+                              title={property.status === 'ARCHIVED' ? 'Unarchive' : 'Archive'}
+                            >
+                              {property.status === 'ARCHIVED' ? 
+                                <ArchiveRestore className="h-4 w-4" /> : 
+                                <Archive className="h-4 w-4" />
+                              }
+                            </Button>
+                          )}
                           {canDelete(property) && (
                             <Button
                               variant="destructive"
