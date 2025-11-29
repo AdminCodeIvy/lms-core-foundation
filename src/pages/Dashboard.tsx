@@ -119,10 +119,12 @@ const Dashboard = () => {
   const fetchTaxStats = async () => {
     try {
       const currentYear = new Date().getFullYear();
+      console.log('Dashboard: Fetching tax stats for year:', currentYear);
       const { data, error } = await supabase.functions.invoke('get-tax-stats', {
         body: { tax_year: currentYear.toString() }
       });
       if (error) throw error;
+      console.log('Dashboard: Tax stats received:', data);
       setTaxStats(data);
     } catch (error) {
       console.error('Error fetching tax stats from edge function, falling back to direct query:', error);
