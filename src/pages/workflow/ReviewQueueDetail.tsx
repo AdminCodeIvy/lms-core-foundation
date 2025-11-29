@@ -67,9 +67,10 @@ export const ReviewQueueDetail = () => {
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(true);
-  const [entityType, setEntityType] = useState<'CUSTOMER' | 'PROPERTY' | null>(null);
+  const [entityType, setEntityType] = useState<'CUSTOMER' | 'PROPERTY' | 'TAX' | null>(null);
   const [customer, setCustomer] = useState<CustomerWithDetails | null>(null);
   const [property, setProperty] = useState<PropertyDetails | null>(null);
+  const [tax, setTax] = useState<any | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
@@ -199,6 +200,9 @@ export const ReviewQueueDetail = () => {
         ownership: ownershipData || []
       });
       setEntityType('PROPERTY');
+      return;
+    
+      // If not a property, try to fetch as tax assessment (no changes needed yet)
     } catch (err: any) {
       console.error('Error fetching entity:', err);
       toast({
@@ -401,7 +405,7 @@ export const ReviewQueueDetail = () => {
     );
   }
 
-  if (!customer && !property) {
+  if (!customer && !property && !tax) {
     return (
       <div className="container mx-auto py-8 px-4">
         <div className="text-center">
@@ -454,7 +458,7 @@ export const ReviewQueueDetail = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-3xl font-bold">
-            {entityType === 'CUSTOMER' ? 'Customer Review' : 'Property Review'}
+            {entityType === 'CUSTOMER' ? 'Customer Review' : entityType === 'PROPERTY' ? 'Property Review' : 'Tax Assessment Review'}
           </h1>
         </div>
         <Badge variant={daysPending > 3 ? 'destructive' : 'default'}>
@@ -480,13 +484,22 @@ export const ReviewQueueDetail = () => {
         />
       )}
 
+      {tax && entityType === 'TAX' && (
+        <TaxReviewContent
+          tax={tax}
+          onApprove={() => setApproveDialogOpen(true)}
+          onReject={() => setRejectDialogOpen(true)}
+          actionLoading={actionLoading}
+        />
+      )}
+
       <ApproveConfirmationDialog
         open={approveDialogOpen}
         onOpenChange={setApproveDialogOpen}
         onConfirm={handleApprove}
         loading={actionLoading}
-        entityType={entityType === 'CUSTOMER' ? 'customer' : 'property'}
-        referenceId={customer?.reference_id || property?.reference_id || ''}
+        entityType={entityType === 'CUSTOMER' ? 'customer' : entityType === 'PROPERTY' ? 'property' : 'tax'}
+        referenceId={customer?.reference_id || property?.reference_id || tax?.reference_id || ''}
       />
 
       <RejectFeedbackDialog
@@ -494,8 +507,8 @@ export const ReviewQueueDetail = () => {
         onOpenChange={setRejectDialogOpen}
         onConfirm={handleReject}
         loading={actionLoading}
-        referenceId={customer?.reference_id || property?.reference_id || ''}
-        entityType={entityType === 'CUSTOMER' ? 'customer' : 'property'}
+        referenceId={customer?.reference_id || property?.reference_id || tax?.reference_id || ''}
+        entityType={entityType === 'CUSTOMER' ? 'customer' : entityType === 'PROPERTY' ? 'property' : 'tax'}
       />
     </div>
   );
@@ -531,89 +544,194 @@ const CustomerReviewContent = ({
       </Card>
 
       {customer.customer_type === 'PERSON' && customer.person_data && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Person Details</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-6 md:grid-cols-2">
-            <InfoItem label="First Name" value={customer.person_data.first_name} />
-            <InfoItem label="Father Name" value={customer.person_data.father_name} />
-            <InfoItem label="Grandfather Name" value={customer.person_data.grandfather_name} />
-            <InfoItem label="Gender" value={customer.person_data.gender} />
-            <InfoItem label="Mobile 1" value={customer.person_data.mobile_number_1} />
-            <InfoItem label="Email" value={customer.person_data.email} />
-          </CardContent>
-        </Card>
+        <>
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Basic Information</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-6 md:grid-cols-2">
+              <InfoItem label="First Name" value={customer.person_data.first_name} />
+              <InfoItem label="Father Name" value={customer.person_data.father_name} />
+              <InfoItem label="Grandfather Name" value={customer.person_data.grandfather_name} />
+              <InfoItem label="Fourth Name" value={customer.person_data.fourth_name} />
+              <InfoItem label="Gender" value={customer.person_data.gender} />
+              <InfoItem label="Place of Birth" value={customer.person_data.place_of_birth} />
+              <InfoItem label="Nationality" value={customer.person_data.nationality} />
+              <InfoItem 
+                label="Date of Birth" 
+                value={customer.person_data.date_of_birth ? format(new Date(customer.person_data.date_of_birth), 'MMM dd, yyyy') : undefined}
+              />
+            </CardContent>
+          </Card>
+
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Contact Information</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-6 md:grid-cols-2">
+              <InfoItem label="Mobile 1" value={customer.person_data.mobile_number_1} />
+              <InfoItem label="Carrier 1" value={customer.person_data.carrier_mobile_1} />
+              <InfoItem label="Mobile 2" value={customer.person_data.mobile_number_2} />
+              <InfoItem label="Carrier 2" value={customer.person_data.carrier_mobile_2} />
+              <InfoItem label="Emergency Contact Name" value={customer.person_data.emergency_contact_name} />
+              <InfoItem label="Emergency Contact Number" value={customer.person_data.emergency_contact_number} />
+              <InfoItem label="Email" value={customer.person_data.email} />
+            </CardContent>
+          </Card>
+
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Identification</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-6 md:grid-cols-2">
+              <InfoItem label="ID Type" value={customer.person_data.id_type} />
+              <InfoItem label="ID Number" value={customer.person_data.id_number} />
+              <InfoItem label="Place of Issue" value={customer.person_data.place_of_issue} />
+              <InfoItem 
+                label="Issue Date" 
+                value={customer.person_data.issue_date ? format(new Date(customer.person_data.issue_date), 'MMM dd, yyyy') : undefined}
+              />
+              <InfoItem 
+                label="Expiry Date" 
+                value={customer.person_data.expiry_date ? format(new Date(customer.person_data.expiry_date), 'MMM dd, yyyy') : undefined}
+              />
+            </CardContent>
+          </Card>
+        </>
       )}
 
       {customer.customer_type === 'BUSINESS' && customer.business_data && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Business Details</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-6 md:grid-cols-2">
-            <InfoItem label="Business Name" value={customer.business_data.business_name} />
-            <InfoItem label="Registration Number" value={customer.business_data.business_registration_number} />
-            <InfoItem label="District" value={customer.business_data.districts?.name} />
-            <InfoItem label="Mobile 1" value={customer.business_data.mobile_number_1} />
-            <InfoItem label="Email" value={customer.business_data.email} />
-          </CardContent>
-        </Card>
+        <>
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Business Information</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-6 md:grid-cols-2">
+              <InfoItem label="Business Name" value={customer.business_data.business_name} />
+              <InfoItem label="Registration Number" value={customer.business_data.business_registration_number} />
+              <InfoItem label="License Number" value={customer.business_data.business_license_number} />
+              <InfoItem label="Business Address" value={customer.business_data.business_address} />
+              <InfoItem label="Contact Name" value={customer.business_data.contact_name} />
+            </CardContent>
+          </Card>
+
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Contact & Location</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-6 md:grid-cols-2">
+              <InfoItem label="Mobile 1" value={customer.business_data.mobile_number_1} />
+              <InfoItem label="Mobile 2" value={customer.business_data.mobile_number_2} />
+              <InfoItem label="Carrier Network" value={customer.business_data.carrier_network} />
+              <InfoItem label="Email" value={customer.business_data.email} />
+              <InfoItem label="Street" value={customer.business_data.street} />
+              <InfoItem label="District" value={customer.business_data.districts?.name} />
+              <InfoItem label="Section" value={customer.business_data.section} />
+              <InfoItem label="Block" value={customer.business_data.block} />
+            </CardContent>
+          </Card>
+        </>
       )}
 
       {customer.customer_type === 'GOVERNMENT' && customer.government_data && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Government Entity Details</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-6 md:grid-cols-2">
-            <InfoItem label="Full Department Name" value={customer.government_data.full_department_name} />
-            <InfoItem label="District" value={customer.government_data.districts?.name} />
-            <InfoItem label="Mobile 1" value={customer.government_data.mobile_number_1} />
-            <InfoItem label="Email" value={customer.government_data.email} />
-          </CardContent>
-        </Card>
+        <>
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Government Entity Information</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-6 md:grid-cols-2">
+              <InfoItem label="Full Department Name" value={customer.government_data.full_department_name} />
+              <InfoItem label="Contact Name" value={customer.government_data.contact_name} />
+            </CardContent>
+          </Card>
+
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Contact & Location</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-6 md:grid-cols-2">
+              <InfoItem label="Mobile 1" value={customer.government_data.mobile_number_1} />
+              <InfoItem label="Mobile 2" value={customer.government_data.mobile_number_2} />
+              <InfoItem label="Email" value={customer.government_data.email} />
+              <InfoItem label="Street" value={customer.government_data.street} />
+              <InfoItem label="District" value={customer.government_data.districts?.name} />
+              <InfoItem label="Section" value={customer.government_data.section} />
+              <InfoItem label="Block" value={customer.government_data.block} />
+            </CardContent>
+          </Card>
+        </>
       )}
 
       {customer.customer_type === 'MOSQUE_HOSPITAL' && customer.mosque_hospital_data && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Mosque/Hospital Details</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-6 md:grid-cols-2">
-            <InfoItem label="Full Name" value={customer.mosque_hospital_data.full_name} />
-            <InfoItem label="District" value={customer.mosque_hospital_data.districts?.name} />
-            <InfoItem label="Mobile 1" value={customer.mosque_hospital_data.mobile_number_1} />
-            <InfoItem label="Email" value={customer.mosque_hospital_data.email} />
-          </CardContent>
-        </Card>
+        <>
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Mosque/Hospital Information</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-6 md:grid-cols-2">
+              <InfoItem label="Full Name" value={customer.mosque_hospital_data.full_name} />
+              <InfoItem label="Contact Name" value={customer.mosque_hospital_data.contact_name} />
+            </CardContent>
+          </Card>
+
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Contact & Location</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-6 md:grid-cols-2">
+              <InfoItem label="Mobile 1" value={customer.mosque_hospital_data.mobile_number_1} />
+              <InfoItem label="Mobile 2" value={customer.mosque_hospital_data.mobile_number_2} />
+              <InfoItem label="Email" value={customer.mosque_hospital_data.email} />
+              <InfoItem label="District" value={customer.mosque_hospital_data.districts?.name} />
+              <InfoItem label="Section" value={customer.mosque_hospital_data.section} />
+              <InfoItem label="Block" value={customer.mosque_hospital_data.block} />
+            </CardContent>
+          </Card>
+        </>
       )}
 
       {customer.customer_type === 'NON_PROFIT' && customer.non_profit_data && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Non-Profit Details</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-6 md:grid-cols-2">
-            <InfoItem label="Full Name" value={customer.non_profit_data.full_non_profit_name} />
-            <InfoItem label="District" value={customer.non_profit_data.districts?.name} />
-            <InfoItem label="Mobile 1" value={customer.non_profit_data.mobile_number_1} />
-            <InfoItem label="Email" value={customer.non_profit_data.email} />
-          </CardContent>
-        </Card>
+        <>
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Non-Profit Information</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-6 md:grid-cols-2">
+              <InfoItem label="Full Name" value={customer.non_profit_data.full_non_profit_name} />
+              <InfoItem label="Contact Name" value={customer.non_profit_data.contact_name} />
+            </CardContent>
+          </Card>
+
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Contact & Location</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-6 md:grid-cols-2">
+              <InfoItem label="Mobile 1" value={customer.non_profit_data.mobile_number_1} />
+              <InfoItem label="Mobile 2" value={customer.non_profit_data.mobile_number_2} />
+              <InfoItem label="Email" value={customer.non_profit_data.email} />
+              <InfoItem label="District" value={customer.non_profit_data.districts?.name} />
+              <InfoItem label="Section" value={customer.non_profit_data.section} />
+              <InfoItem label="Block" value={customer.non_profit_data.block} />
+            </CardContent>
+          </Card>
+        </>
       )}
 
       {customer.customer_type === 'CONTRACTOR' && customer.contractor_data && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Contractor Details</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-6 md:grid-cols-2">
-            <InfoItem label="Full Name" value={customer.contractor_data.full_contractor_name} />
-            <InfoItem label="Mobile 1" value={customer.contractor_data.mobile_number_1} />
-            <InfoItem label="Email" value={customer.contractor_data.email} />
-          </CardContent>
-        </Card>
+        <>
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Contractor Information</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-6 md:grid-cols-2">
+              <InfoItem label="Full Name" value={customer.contractor_data.full_contractor_name} />
+              <InfoItem label="Mobile 1" value={customer.contractor_data.mobile_number_1} />
+              <InfoItem label="Mobile 2" value={customer.contractor_data.mobile_number_2} />
+              <InfoItem label="Email" value={customer.contractor_data.email} />
+            </CardContent>
+          </Card>
+        </>
       )}
 
       <div className="flex gap-4">
@@ -853,6 +971,206 @@ const PropertyReviewContent = ({
         <CardContent className="grid gap-6 md:grid-cols-2">
           <InfoItem label="Submitted By" value={property.creator?.full_name} />
           <InfoItem label="Status" value={property.status} />
+        </CardContent>
+      </Card>
+
+      {/* Action Buttons */}
+      <div className="flex gap-4">
+        <Button onClick={onApprove} disabled={actionLoading} className="flex-1">
+          <CheckCircle className="h-4 w-4 mr-2" />
+          Approve
+        </Button>
+        <Button onClick={onReject} disabled={actionLoading} variant="destructive" className="flex-1">
+          <XCircle className="h-4 w-4 mr-2" />
+          Reject
+        </Button>
+      </div>
+    </>
+  );
+};
+
+const TaxReviewContent = ({
+  tax,
+  onApprove,
+  onReject,
+  actionLoading,
+}: {
+  tax: any;
+  onApprove: () => void;
+  onReject: () => void;
+  actionLoading: boolean;
+}) => {
+  return (
+    <>
+      {/* Property & Tax Year */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Tax Assessment Information</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-6 md:grid-cols-2">
+          <InfoItem label="Reference ID" value={tax.reference_id} />
+          <InfoItem label="Tax Year" value={tax.tax_year?.toString()} />
+          <InfoItem label="Property Reference" value={tax.property?.reference_id} />
+          <InfoItem label="Parcel Number" value={tax.property?.parcel_number} />
+          <InfoItem label="District" value={tax.property?.district?.name} />
+          <InfoItem label="Status" value={tax.status} />
+        </CardContent>
+      </Card>
+
+      {/* Occupancy Details */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Occupancy Details</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-6 md:grid-cols-2">
+          <InfoItem label="Occupancy Type" value={tax.occupancy_type} />
+          {tax.occupancy_type === 'RENTED' && (
+            <>
+              <InfoItem label="Renter Name" value={tax.renter_name} />
+              <InfoItem label="Renter Contact" value={tax.renter_contact} />
+              <InfoItem label="Renter National ID" value={tax.renter_national_id} />
+              <InfoItem 
+                label="Monthly Rent" 
+                value={tax.monthly_rent_amount ? `$${tax.monthly_rent_amount.toLocaleString()}` : undefined} 
+              />
+              <InfoItem 
+                label="Rental Start Date" 
+                value={tax.rental_start_date ? format(new Date(tax.rental_start_date), 'MMM dd, yyyy') : undefined}
+              />
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Rental Agreement</p>
+                <Badge variant={tax.has_rental_agreement ? 'default' : 'secondary'}>
+                  {tax.has_rental_agreement ? 'Yes' : 'No'}
+                </Badge>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Property Details */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Property Details</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-6 md:grid-cols-2">
+          <InfoItem label="Property Type" value={tax.property_type} />
+          <InfoItem label="Land Size" value={tax.land_size ? `${tax.land_size} m²` : undefined} />
+          <InfoItem label="Built-Up Area" value={tax.built_up_area ? `${tax.built_up_area} m²` : undefined} />
+          <InfoItem label="Number of Units" value={tax.number_of_units?.toString()} />
+          <InfoItem label="Number of Floors" value={tax.number_of_floors?.toString()} />
+        </CardContent>
+      </Card>
+
+      {/* Utilities & Services */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Utilities & Services</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">Water</p>
+            <Badge variant={tax.has_water ? 'default' : 'secondary'}>
+              {tax.has_water ? 'Yes' : 'No'}
+            </Badge>
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">Electricity</p>
+            <Badge variant={tax.has_electricity ? 'default' : 'secondary'}>
+              {tax.has_electricity ? 'Yes' : 'No'}
+            </Badge>
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">Sewer</p>
+            <Badge variant={tax.has_sewer ? 'default' : 'secondary'}>
+              {tax.has_sewer ? 'Yes' : 'No'}
+            </Badge>
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">Waste Collection</p>
+            <Badge variant={tax.has_waste_collection ? 'default' : 'secondary'}>
+              {tax.has_waste_collection ? 'Yes' : 'No'}
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Construction & Legal Status */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Construction & Legal Status</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-6 md:grid-cols-2">
+          <InfoItem label="Construction Status" value={tax.construction_status} />
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">Property Registered</p>
+            <Badge variant={tax.property_registered ? 'default' : 'secondary'}>
+              {tax.property_registered ? 'Yes' : 'No'}
+            </Badge>
+          </div>
+          {tax.property_registered && (
+            <InfoItem label="Title Deed Number" value={tax.title_deed_number} />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Tax Calculation */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Tax Calculation</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-6 md:grid-cols-2">
+          <InfoItem 
+            label="Base Assessment" 
+            value={tax.base_assessment ? `$${tax.base_assessment.toLocaleString()}` : undefined} 
+          />
+          <InfoItem 
+            label="Exemption Amount" 
+            value={tax.exemption_amount ? `$${tax.exemption_amount.toLocaleString()}` : '$0'} 
+          />
+          <InfoItem 
+            label="Assessed Amount" 
+            value={tax.assessed_amount ? `$${tax.assessed_amount.toLocaleString()}` : undefined} 
+          />
+          <InfoItem 
+            label="Amount Paid" 
+            value={tax.amount_paid ? `$${tax.amount_paid.toLocaleString()}` : '$0'} 
+          />
+          <InfoItem 
+            label="Outstanding" 
+            value={tax.outstanding_amount ? `$${tax.outstanding_amount.toLocaleString()}` : '$0'} 
+          />
+        </CardContent>
+      </Card>
+
+      {/* Dates */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Important Dates</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-6 md:grid-cols-2">
+          <InfoItem 
+            label="Assessment Date" 
+            value={tax.assessment_date ? format(new Date(tax.assessment_date), 'MMM dd, yyyy') : undefined}
+          />
+          <InfoItem 
+            label="Due Date" 
+            value={tax.due_date ? format(new Date(tax.due_date), 'MMM dd, yyyy') : undefined}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Workflow Information */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Workflow Information</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-6 md:grid-cols-2">
+          <InfoItem label="Created By" value={tax.creator?.full_name} />
+          <InfoItem 
+            label="Created At" 
+            value={tax.created_at ? format(new Date(tax.created_at), 'MMM dd, yyyy HH:mm') : undefined}
+          />
         </CardContent>
       </Card>
 
