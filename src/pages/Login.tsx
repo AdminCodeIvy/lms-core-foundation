@@ -216,24 +216,24 @@ const Login = () => {
         <div className="relative z-10 flex flex-col items-center justify-center h-full p-12 text-white">
           <div className="space-y-8 text-center max-w-xl">
             {/* Brand */}
-            <div className="flex flex-col items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm">
-                <Building2 className="h-9 w-9" />
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm">
+                <Building2 className="h-7 w-7" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">Jigjiga City</h2>
-                <p className="text-base text-white/80">Administration</p>
+                <h2 className="text-xl font-bold">Jigjiga City</h2>
+                <p className="text-sm text-white/80">Administration</p>
               </div>
             </div>
 
             {/* Main Heading */}
-            <div className="space-y-6">
-              <h1 className="text-6xl font-bold leading-tight">
+            <div className="space-y-4">
+              <h1 className="text-4xl font-bold leading-tight">
                 Land Management
                 <br />
                 <span className="text-white/90">System</span>
               </h1>
-              <p className="text-xl text-white/90">
+              <p className="text-base text-white/90">
                 Comprehensive digital platform for property registration, 
                 ownership records, and municipal tax administration
               </p>
