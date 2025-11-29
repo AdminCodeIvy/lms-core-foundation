@@ -218,53 +218,8 @@ export const ReviewQueue = () => {
     }
   };
 
-  const handleReview = async (itemId: string) => {
-    try {
-      setCustomerLoading(true);
-      setReviewPanelOpen(true);
-
-      const { data, error } = await supabase
-        .from('customers')
-        .select(`
-          *,
-          customer_person(*),
-          customer_business(*,districts(name)),
-          customer_government(*,districts(name)),
-          customer_mosque_hospital(*,districts(name)),
-          customer_non_profit(*,districts(name)),
-          customer_contractor(*),
-          created_by_user:users!customers_created_by_fkey(full_name),
-          approved_by_user:users!customers_approved_by_fkey(full_name)
-        `)
-        .eq('id', itemId)
-        .single();
-
-      if (error) throw error;
-
-      const transformedData: CustomerWithDetails = {
-        ...data,
-        person_data: data.customer_person?.[0],
-        business_data: data.customer_business?.[0],
-        government_data: data.customer_government?.[0],
-        mosque_hospital_data: data.customer_mosque_hospital?.[0],
-        non_profit_data: data.customer_non_profit?.[0],
-        contractor_data: data.customer_contractor?.[0],
-        created_by_user: data.created_by_user,
-        approved_by_user: data.approved_by_user,
-      };
-
-      setSelectedCustomer(transformedData);
-    } catch (err: any) {
-      console.error('Error fetching customer:', err);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to load customer details',
-      });
-      setReviewPanelOpen(false);
-    } finally {
-      setCustomerLoading(false);
-    }
+  const handleReview = (itemId: string) => {
+    navigate(`/review-queue/${itemId}`);
   };
 
   const handleApprove = async () => {
@@ -391,47 +346,8 @@ export const ReviewQueue = () => {
     }
   };
 
-  const handleReviewProperty = async (propertyId: string) => {
-    try {
-      setPropertyLoading(true);
-      setPropertyPanelOpen(true);
-
-      const { data: propertyData, error } = await supabase
-        .from('properties')
-        .select(`
-          *,
-          district:districts(id, name, code),
-          sub_district:sub_districts(id, name),
-          property_type:property_types(id, name),
-          creator:users!properties_created_by_fkey(id, full_name)
-        `)
-        .eq('id', propertyId)
-        .single();
-
-      if (error) throw error;
-
-      // Fetch boundaries
-      const { data: boundariesData } = await supabase
-        .from('property_boundaries')
-        .select('*')
-        .eq('property_id', propertyId)
-        .maybeSingle();
-
-      setSelectedProperty({
-        ...propertyData,
-        boundaries: boundariesData
-      });
-    } catch (err: any) {
-      console.error('Error fetching property:', err);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to load property details',
-      });
-      setPropertyPanelOpen(false);
-    } finally {
-      setPropertyLoading(false);
-    }
+  const handleReviewProperty = (propertyId: string) => {
+    navigate(`/review-queue/${propertyId}`);
   };
 
   const handleApproveProperty = async () => {

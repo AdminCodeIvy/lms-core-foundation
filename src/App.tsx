@@ -26,6 +26,7 @@ import TaxDetail from "./pages/tax/TaxDetail";
 import TaxNew from "./pages/tax/TaxNew";
 import TaxPaymentNew from "./pages/tax/TaxPaymentNew";
 import { ReviewQueue } from "./pages/workflow/ReviewQueue";
+import { ReviewQueueDetail } from "./pages/workflow/ReviewQueueDetail";
 import BulkUpload from "./pages/BulkUpload";
 import MapView from "./pages/MapView";
 import AgoSettings from "./pages/admin/AgoSettings";
@@ -163,6 +164,14 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={['APPROVER', 'ADMINISTRATOR']}>
                     <ReviewQueue />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="review-queue/:id"
+                element={
+                  <ProtectedRoute allowedRoles={['APPROVER', 'ADMINISTRATOR']}>
+                    <ReviewQueueDetail />
                   </ProtectedRoute>
                 }
               />
