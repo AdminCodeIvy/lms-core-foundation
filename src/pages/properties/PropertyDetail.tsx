@@ -382,21 +382,27 @@ export default function PropertyDetail() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Downtown</label>
-                    <Badge variant={property.is_downtown ? 'default' : 'secondary'}>
-                      {property.is_downtown ? 'Yes' : 'No'}
-                    </Badge>
+                    <div className="mt-2">
+                      <Badge variant={property.is_downtown ? 'default' : 'secondary'}>
+                        {property.is_downtown ? 'Yes' : 'No'}
+                      </Badge>
+                    </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Type</label>
-                    <Badge variant={property.is_building ? 'default' : 'outline'}>
-                      {property.is_building ? 'Building' : 'Empty Land'}
-                    </Badge>
+                    <div className="mt-2">
+                      <Badge variant={property.is_building ? 'default' : 'outline'}>
+                        {property.is_building ? 'Building' : 'Empty Land'}
+                      </Badge>
+                    </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Has Built Area</label>
-                    <Badge variant={property.has_built_area ? 'default' : 'secondary'}>
-                      {property.has_built_area ? 'Yes' : 'No'}
-                    </Badge>
+                    <div className="mt-2">
+                      <Badge variant={property.has_built_area ? 'default' : 'secondary'}>
+                        {property.has_built_area ? 'Yes' : 'No'}
+                      </Badge>
+                    </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Number of Floors</label>
@@ -416,9 +422,11 @@ export default function PropertyDetail() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Property Wall</label>
-                    <Badge variant={property.has_property_wall ? 'default' : 'secondary'}>
-                      {property.has_property_wall ? 'Yes' : 'No'}
-                    </Badge>
+                    <div className="mt-2">
+                      <Badge variant={property.has_property_wall ? 'default' : 'secondary'}>
+                        {property.has_property_wall ? 'Yes' : 'No'}
+                      </Badge>
+                    </div>
                   </div>
                 </div>
               </div>
