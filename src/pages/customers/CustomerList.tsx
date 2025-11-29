@@ -502,6 +502,24 @@ const CustomerList = () => {
             </SelectContent>
           </Select>
         </div>
+        
+        {canArchive() && (
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="showArchivedCustomers"
+              checked={showArchived}
+              onChange={(e) => {
+                setShowArchived(e.target.checked);
+                setPage(1);
+              }}
+              className="rounded"
+            />
+            <label htmlFor="showArchivedCustomers" className="text-sm">
+              Show Archived
+            </label>
+          </div>
+        )}
       </Card>
 
       {/* Table */}
