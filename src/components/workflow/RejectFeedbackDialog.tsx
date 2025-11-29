@@ -19,7 +19,7 @@ interface RejectFeedbackDialogProps {
   onConfirm: (feedback: string) => void;
   referenceId: string;
   loading?: boolean;
-  entityType?: 'customer' | 'property';
+  entityType?: 'customer' | 'property' | 'tax';
 }
 
 export const RejectFeedbackDialog = ({
@@ -30,7 +30,7 @@ export const RejectFeedbackDialog = ({
   loading = false,
   entityType = 'customer'
 }: RejectFeedbackDialogProps) => {
-  const entityLabel = entityType === 'customer' ? 'Customer' : 'Property';
+  const entityLabel = entityType === 'customer' ? 'Customer' : entityType === 'property' ? 'Property' : 'Tax Assessment';
   
   const [feedback, setFeedback] = useState('');
   const [error, setError] = useState('');

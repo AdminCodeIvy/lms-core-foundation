@@ -16,7 +16,7 @@ interface ApproveConfirmationDialogProps {
   onConfirm: () => void;
   referenceId: string;
   loading?: boolean;
-  entityType?: 'customer' | 'property';
+  entityType?: 'customer' | 'property' | 'tax';
 }
 
 export const ApproveConfirmationDialog = ({
@@ -27,7 +27,7 @@ export const ApproveConfirmationDialog = ({
   loading = false,
   entityType = 'customer'
 }: ApproveConfirmationDialogProps) => {
-  const entityLabel = entityType === 'customer' ? 'Customer' : 'Property';
+  const entityLabel = entityType === 'customer' ? 'Customer' : entityType === 'property' ? 'Property' : 'Tax Assessment';
   
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
