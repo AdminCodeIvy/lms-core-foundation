@@ -22,7 +22,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Search, FileDown, Filter } from 'lucide-react';
+import { Plus, Search, FileDown, Filter, Archive, ArchiveRestore } from 'lucide-react';
 import { TaxAssessment, TaxStatus } from '@/types/tax';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -41,6 +41,7 @@ export default function TaxList() {
   const [status, setStatus] = useState('all');
   const [districtId, setDistrictId] = useState('all');
   const [arrearsOnly, setArrearsOnly] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [districts, setDistricts] = useState<any[]>([]);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -61,7 +62,7 @@ export default function TaxList() {
 
   useEffect(() => {
     fetchAssessments();
-  }, [search, taxYear, status, districtId, arrearsOnly, pagination.page]);
+  }, [search, taxYear, status, districtId, arrearsOnly, showArchived, pagination.page]);
 
   // Real-time subscription for tax assessment changes
   useEffect(() => {
@@ -84,7 +85,7 @@ export default function TaxList() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [search, taxYear, status, districtId, arrearsOnly, pagination.page]);
+  }, [search, taxYear, status, districtId, arrearsOnly, showArchived, pagination.page]);
 
   const fetchDistricts = async () => {
     const { data } = await supabase
@@ -146,6 +147,11 @@ export default function TaxList() {
 
       if (arrearsOnly) {
         query = query.gt('outstanding_amount', 0);
+      }
+
+      // Handle archived filter
+      if (!showArchived) {
+        query = query.or('is_archived.is.null,is_archived.eq.false');
       }
 
       // Pagination
@@ -484,6 +490,39 @@ export default function TaxList() {
     }).format(amount);
   };
 
+  const canArchive = () => {
+    return profile?.role === 'ADMINISTRATOR';
+  };
+
+  const handleArchive = async (assessment: TaxAssessment, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    try {
+      const { error } = await supabase.functions.invoke('archive-tax-assessment', {
+        body: { 
+          assessment_id: assessment.id,
+          unarchive: (assessment as any).is_archived
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: (assessment as any).is_archived ? 'Tax assessment unarchived successfully' : 'Tax assessment archived successfully',
+      });
+
+      fetchAssessments();
+    } catch (err: any) {
+      console.error('Error archiving tax assessment:', err);
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to archive tax assessment',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-6 max-w-full overflow-x-hidden">
       {/* Header */}
@@ -584,6 +623,17 @@ export default function TaxList() {
             />
             <Label htmlFor="arrears-only">Show only properties with outstanding amounts</Label>
           </div>
+
+          {canArchive() && (
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="show-archived"
+                checked={showArchived}
+                onCheckedChange={setShowArchived}
+              />
+              <Label htmlFor="show-archived">Show archived assessments</Label>
+            </div>
+          )}
         </div>
       </Card>
 
@@ -650,16 +700,31 @@ export default function TaxList() {
                   </TableCell>
                   <TableCell>{getStatusBadge(assessment.status)}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/tax/${assessment.id}`);
-                      }}
-                    >
-                      View
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/tax/${assessment.id}`);
+                        }}
+                      >
+                        View
+                      </Button>
+                      {canArchive() && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => handleArchive(assessment, e)}
+                          title={(assessment as any).is_archived ? 'Unarchive' : 'Archive'}
+                        >
+                          {(assessment as any).is_archived ? 
+                            <ArchiveRestore className="h-4 w-4" /> : 
+                            <Archive className="h-4 w-4" />
+                          }
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

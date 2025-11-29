@@ -18,7 +18,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Search, Download, AlertCircle, Trash2, Eye } from 'lucide-react';
+import { Plus, Search, Download, AlertCircle, Trash2, Eye, Archive, ArchiveRestore } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,6 +46,7 @@ const CustomerList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [showArchived, setShowArchived] = useState(false);
   
   // Pagination
   const [page, setPage] = useState(1);
@@ -65,9 +66,42 @@ const CustomerList = () => {
            (customer.status === 'DRAFT' && profile?.role === 'INPUTTER');
   };
 
+  const canArchive = () => {
+    return profile?.role === 'ADMINISTRATOR';
+  };
+
+  const handleArchive = async (customer: CustomerListItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    try {
+      const { error } = await supabase.functions.invoke('archive-customer', {
+        body: { 
+          customer_id: customer.id,
+          unarchive: customer.status === 'ARCHIVED'
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: customer.status === 'ARCHIVED' ? 'Customer unarchived successfully' : 'Customer archived successfully',
+      });
+
+      fetchCustomers();
+    } catch (err: any) {
+      console.error('Error archiving customer:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: err.message || 'Failed to archive customer',
+      });
+    }
+  };
+
   useEffect(() => {
     fetchCustomers();
-  }, [page, searchQuery, typeFilter, statusFilter]);
+  }, [page, searchQuery, typeFilter, statusFilter, showArchived]);
 
   // Real-time subscription for customer changes
   useEffect(() => {
@@ -120,6 +154,9 @@ const CustomerList = () => {
 
       if (statusFilter !== 'ALL') {
         query = query.eq('status', statusFilter);
+      } else if (!showArchived) {
+        // By default, hide archived customers
+        query = query.neq('status', 'ARCHIVED');
       }
 
       // Apply search (reference_id or name)
@@ -411,6 +448,7 @@ const CustomerList = () => {
               <SelectItem value="SUBMITTED">Submitted</SelectItem>
               <SelectItem value="APPROVED">Approved</SelectItem>
               <SelectItem value="REJECTED">Rejected</SelectItem>
+              {canArchive() && <SelectItem value="ARCHIVED">Archived</SelectItem>}
             </SelectContent>
           </Select>
         </div>
@@ -475,6 +513,19 @@ const CustomerList = () => {
                       }}>
                         <Eye className="h-4 w-4" />
                       </Button>
+                      {canArchive() && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => handleArchive(customer, e)}
+                          title={customer.status === 'ARCHIVED' ? 'Unarchive' : 'Archive'}
+                        >
+                          {customer.status === 'ARCHIVED' ? 
+                            <ArchiveRestore className="h-4 w-4" /> : 
+                            <Archive className="h-4 w-4" />
+                          }
+                        </Button>
+                      )}
                       {canDelete(customer) && (
                         <Button
                           variant="outline"
