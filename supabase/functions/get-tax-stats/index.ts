@@ -55,9 +55,18 @@ Deno.serve(async (req) => {
     console.log('Assessment details:', JSON.stringify(assessments, null, 2));
 
     // Calculate statistics
-    const totalAssessed = assessments.reduce((sum, a) => sum + (a.assessed_amount || 0), 0);
-    const totalCollected = assessments.reduce((sum, a) => sum + (a.paid_amount || 0), 0);
-    const totalOutstanding = assessments.reduce((sum, a) => sum + (a.outstanding_amount || 0), 0);
+    const toNumber = (value: unknown) => {
+      if (typeof value === 'number') return value;
+      if (typeof value === 'string') {
+        const parsed = parseFloat(value);
+        return Number.isNaN(parsed) ? 0 : parsed;
+      }
+      return 0;
+    };
+
+    const totalAssessed = assessments.reduce((sum, a) => sum + toNumber(a.assessed_amount), 0);
+    const totalCollected = assessments.reduce((sum, a) => sum + toNumber(a.paid_amount), 0);
+    const totalOutstanding = assessments.reduce((sum, a) => sum + toNumber(a.outstanding_amount), 0);
     const collectionRate = totalAssessed > 0 ? (totalCollected / totalAssessed) * 100 : 0;
 
     // Count by status
