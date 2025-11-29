@@ -206,7 +206,7 @@ const Login = () => {
     <div className="flex min-h-screen">
       {/* Left Hero Section */}
       <div 
-        className="hidden lg:flex lg:w-1/2 relative bg-cover bg-center"
+        className="hidden lg:flex lg:w-3/5 relative bg-cover bg-center"
         style={{ backgroundImage: `url(${loginHeroBg})` }}
       >
         {/* Overlay */}
@@ -243,7 +243,7 @@ const Login = () => {
       </div>
 
       {/* Right Form Section */}
-      <div className="flex w-full lg:w-1/2 items-center justify-center p-8 bg-background">
+      <div className="flex w-full lg:w-2/5 items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md space-y-8">
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
