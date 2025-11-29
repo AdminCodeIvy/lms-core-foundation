@@ -151,14 +151,26 @@ export const ReviewQueueDetail = () => {
         .eq('property_id', id)
         .maybeSingle();
 
-      // Fetch photos
+      // Fetch photos with storage URLs
       const { data: photosData } = await supabase
         .from('property_photos')
         .select(`
           *,
           uploader:users(id, full_name)
         `)
-        .eq('property_id', id);
+        .eq('property_id', id)
+        .order('created_at', { ascending: false });
+      
+      // Get public URLs for photos
+      const photosWithUrls = photosData?.map(photo => {
+        if (photo.photo_url && photo.photo_url.startsWith('property-photos/')) {
+          const { data } = supabase.storage
+            .from('property-photos')
+            .getPublicUrl(photo.photo_url);
+          return { ...photo, photo_url: data.publicUrl };
+        }
+        return photo;
+      }) || [];
 
       // Fetch ownership
       const { data: ownershipData } = await supabase
@@ -169,10 +181,12 @@ export const ReviewQueueDetail = () => {
             id,
             reference_id,
             customer_type,
-            first_name,
-            last_name,
-            full_name_ar,
-            business_name
+            customer_person(first_name, fourth_name),
+            customer_business(business_name),
+            customer_government(full_department_name),
+            customer_mosque_hospital(full_name),
+            customer_non_profit(full_non_profit_name),
+            customer_contractor(full_contractor_name)
           )
         `)
         .eq('property_id', id)
@@ -181,7 +195,7 @@ export const ReviewQueueDetail = () => {
       setProperty({
         ...propertyData,
         boundaries: boundariesData,
-        photos: photosData || [],
+        photos: photosWithUrls,
         ownership: ownershipData || []
       });
       setEntityType('PROPERTY');
@@ -712,13 +726,42 @@ const PropertyReviewContent = ({
       {property.boundaries && (
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Boundaries</CardTitle>
+            <CardTitle>Property Boundaries</CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-6 md:grid-cols-2">
-            <InfoItem label="North" value={property.boundaries.north_boundary} />
-            <InfoItem label="South" value={property.boundaries.south_boundary} />
-            <InfoItem label="East" value={property.boundaries.east_boundary} />
-            <InfoItem label="West" value={property.boundaries.west_boundary} />
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2 p-3 border rounded-lg">
+                <p className="font-medium text-sm">North Boundary</p>
+                <div className="grid gap-2">
+                  <InfoItem label="Length" value={property.boundaries.north_length ? `${property.boundaries.north_length} m` : undefined} />
+                  <InfoItem label="Adjacent Type" value={property.boundaries.north_adjacent_type} />
+                </div>
+              </div>
+              
+              <div className="space-y-2 p-3 border rounded-lg">
+                <p className="font-medium text-sm">South Boundary</p>
+                <div className="grid gap-2">
+                  <InfoItem label="Length" value={property.boundaries.south_length ? `${property.boundaries.south_length} m` : undefined} />
+                  <InfoItem label="Adjacent Type" value={property.boundaries.south_adjacent_type} />
+                </div>
+              </div>
+              
+              <div className="space-y-2 p-3 border rounded-lg">
+                <p className="font-medium text-sm">East Boundary</p>
+                <div className="grid gap-2">
+                  <InfoItem label="Length" value={property.boundaries.east_length ? `${property.boundaries.east_length} m` : undefined} />
+                  <InfoItem label="Adjacent Type" value={property.boundaries.east_adjacent_type} />
+                </div>
+              </div>
+              
+              <div className="space-y-2 p-3 border rounded-lg">
+                <p className="font-medium text-sm">West Boundary</p>
+                <div className="grid gap-2">
+                  <InfoItem label="Length" value={property.boundaries.west_length ? `${property.boundaries.west_length} m` : undefined} />
+                  <InfoItem label="Adjacent Type" value={property.boundaries.west_adjacent_type} />
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -767,14 +810,27 @@ const PropertyReviewContent = ({
                     <InfoItem 
                       label="Owner" 
                       value={
-                        owner.customer?.business_name || 
-                        `${owner.customer?.first_name || ''} ${owner.customer?.last_name || ''}`.trim() ||
-                        owner.customer?.full_name_ar ||
-                        'N/A'
+                        owner.customer?.customer_business?.[0]?.business_name ||
+                        owner.customer?.customer_government?.[0]?.full_department_name ||
+                        owner.customer?.customer_mosque_hospital?.[0]?.full_name ||
+                        owner.customer?.customer_non_profit?.[0]?.full_non_profit_name ||
+                        owner.customer?.customer_contractor?.[0]?.full_contractor_name ||
+                        (owner.customer?.customer_person?.[0] 
+                          ? `${owner.customer.customer_person[0].first_name} ${owner.customer.customer_person[0].fourth_name}`.trim()
+                          : 'N/A')
                       }
                     />
                     <InfoItem label="Customer Reference" value={owner.customer?.reference_id} />
+                    <InfoItem label="Customer Type" value={owner.customer?.customer_type} />
                     <InfoItem label="Ownership %" value={`${owner.ownership_percentage || 100}%`} />
+                    <InfoItem 
+                      label="Start Date" 
+                      value={owner.start_date ? format(new Date(owner.start_date), 'MMM dd, yyyy') : undefined}
+                    />
+                    <InfoItem 
+                      label="End Date" 
+                      value={owner.end_date ? format(new Date(owner.end_date), 'MMM dd, yyyy') : 'Current'}
+                    />
                     <div className="space-y-1">
                       <p className="text-sm text-muted-foreground">Status</p>
                       <Badge variant={owner.is_current ? 'default' : 'secondary'}>
