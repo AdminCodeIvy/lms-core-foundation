@@ -116,12 +116,12 @@ export const ReviewQueueDetail = () => {
       if (customerData && !customerError) {
         const transformedData: CustomerWithDetails = {
           ...customerData,
-          person_data: customerData.customer_person?.[0],
-          business_data: customerData.customer_business?.[0],
-          government_data: customerData.customer_government?.[0],
-          mosque_hospital_data: customerData.customer_mosque_hospital?.[0],
-          non_profit_data: customerData.customer_non_profit?.[0],
-          contractor_data: customerData.customer_contractor?.[0],
+          person_data: customerData.customer_person,
+          business_data: customerData.customer_business,
+          government_data: customerData.customer_government,
+          mosque_hospital_data: customerData.customer_mosque_hospital,
+          non_profit_data: customerData.customer_non_profit,
+          contractor_data: customerData.customer_contractor,
           created_by_user: customerData.created_by_user,
           approved_by_user: customerData.approved_by_user,
         };
