@@ -120,7 +120,7 @@ export const AppSidebar = () => {
   const collapsed = state === 'collapsed';
 
   return (
-    <Sidebar className={collapsed ? 'w-14' : 'w-64'} collapsible="icon">
+    <Sidebar className={collapsed ? 'w-16' : 'w-64'} collapsible="icon">
       <div className="flex h-16 items-center gap-3 border-b px-4">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary">
           <Building2 className="h-6 w-6 text-primary-foreground" />
