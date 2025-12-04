@@ -1,0 +1,176 @@
+LMS Backend - Complete File Structure
+=====================================
+
+LMS_Backend/
+│
+├── START_HERE.md ⭐ READ THIS FIRST
+├── INDEX.md (Documentation Navigator)
+├── QUICKSTART.md (5-minute setup)
+├── SETUP.md (Detailed setup guide)
+├── README.md (API documentation)
+├── ARCHITECTURE.md (System architecture & diagrams)
+├── PROJECT_SUMMARY.md (Technical overview)
+├── MIGRATION_GUIDE.md (Frontend migration steps)
+├── IMPLEMENTATION_CHECKLIST.md (Task tracking)
+├── FILE_STRUCTURE.txt (This file)
+│
+├── Configuration Files
+│   ├── package.json (Dependencies)
+│   ├── tsconfig.json (TypeScript config)
+│   ├── .env.example (Environment template)
+│   ├── .env (Your config - CREATE THIS)
+│   └── .gitignore
+│
+├── Installation Scripts
+│   ├── install.sh (macOS/Linux installer)
+│   └── install.bat (Windows installer)
+│
+├── src/ (Source Code)
+│   │
+│   ├── config/
+│   │   ├── env.ts (Environment variables)
+│   │   └── database.ts (Supabase connection)
+│   │
+│   ├── controllers/
+│   │   ├── authController.ts (Auth endpoints)
+│   │   └── customerController.ts (Customer endpoints)
+│   │
+│   ├── middleware/
+│   │   ├── auth.ts (JWT authentication)
+│   │   ├── errorHandler.ts (Error handling)
+│   │   └── validator.ts (Request validation)
+│   │
+│   ├── routes/
+│   │   └── v1/
+│   │       ├── index.ts (Route aggregator)
+│   │       ├── authRoutes.ts (Auth routes)
+│   │       └── customerRoutes.ts (Customer routes)
+│   │
+│   ├── services/
+│   │   ├── authService.ts (Auth business logic)
+│   │   └── customerService.ts (Customer business logic)
+│   │
+│   ├── utils/
+│   │   ├── jwt.ts (JWT utilities)
+│   │   ├── logger.ts (Winston logger)
+│   │   └── response.ts (Response formatter)
+│   │
+│   ├── validators/
+│   │   └── authValidator.ts (Joi schemas)
+│   │
+│   ├── websocket/
+│   │   └── socketHandler.ts (Socket.io setup)
+│   │
+│   ├── app.ts (Express app setup)
+│   └── server.ts (Entry point)
+│
+├── logs/ (Created automatically)
+│   ├── error.log
+│   └── combined.log
+│
+├── uploads/ (Created automatically)
+│   └── (File uploads go here)
+│
+└── node_modules/ (Created by npm install)
+    └── (Dependencies)
+
+
+Key Files to Understand:
+========================
+
+1. Entry Point:
+   src/server.ts → Starts the server
+
+2. App Setup:
+   src/app.ts → Configures Express
+
+3. Routes:
+   src/routes/v1/index.ts → All API routes
+
+4. Example Module (Customer):
+   src/services/customerService.ts → Business logic
+   src/controllers/customerController.ts → Request handling
+   src/routes/v1/customerRoutes.ts → Route definitions
+
+5. Authentication:
+   src/services/authService.ts → Auth logic
+   src/middleware/auth.ts → JWT verification
+
+6. WebSocket:
+   src/websocket/socketHandler.ts → Real-time events
+
+7. Database:
+   src/config/database.ts → Supabase connection
+
+
+Documentation Files:
+===================
+
+START_HERE.md → Installation guide ⭐
+INDEX.md → Documentation navigator
+QUICKSTART.md → 5-minute setup
+SETUP.md → Detailed setup
+README.md → API documentation
+ARCHITECTURE.md → System design
+PROJECT_SUMMARY.md → Technical overview
+MIGRATION_GUIDE.md → Frontend migration
+IMPLEMENTATION_CHECKLIST.md → Task tracking
+
+
+Installation Order:
+==================
+
+1. Run: ./install.sh (or install.bat on Windows)
+2. Edit: .env (add Supabase credentials)
+3. Run: npm run dev
+4. Test: http://localhost:3000/api/v1/health
+
+
+Module Pattern (for new features):
+==================================
+
+To add a new module (e.g., Properties):
+
+1. Create service:
+   src/services/propertyService.ts
+
+2. Create controller:
+   src/controllers/propertyController.ts
+
+3. Create routes:
+   src/routes/v1/propertyRoutes.ts
+
+4. Create validators:
+   src/validators/propertyValidator.ts
+
+5. Register routes:
+   Update src/routes/v1/index.ts
+
+6. Follow customer module as example!
+
+
+API Versioning:
+==============
+
+Current: /api/v1/*
+Future: /api/v2/* (when needed)
+
+All routes are versioned from the start!
+
+
+Quick Commands:
+==============
+
+npm run dev → Development server
+npm run build → Build for production
+npm start → Run production server
+npm run lint → Check code quality
+
+
+Need Help?
+=========
+
+1. Check INDEX.md for documentation navigator
+2. Check SETUP.md for troubleshooting
+3. Review customer module code as example
+4. Check logs/ directory for errors
