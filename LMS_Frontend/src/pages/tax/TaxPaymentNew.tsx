@@ -72,6 +72,17 @@ export default function TaxPaymentNew() {
     setLoading(true);
 
     try {
+      // Check if assessment has a property assigned
+      if (!assessment?.property_id) {
+        toast({
+          title: 'Property Required',
+          description: 'This tax assessment does not have a property assigned yet. Please edit the assessment and add a property before adding payments.',
+          variant: 'default' // Changed from 'destructive' to show as info/warning
+        });
+        setLoading(false);
+        return;
+      }
+
       if (!formData.amount_paid || parseFloat(formData.amount_paid) <= 0) {
         toast({
           title: 'Error',

@@ -263,6 +263,11 @@ export class TaxService {
       throw new AppError('Tax assessment not found', 404);
     }
 
+    // Check if assessment has a property assigned
+    if (!assessment.property_id) {
+      throw new AppError('Cannot add payment: This tax assessment does not have a property assigned. Please edit the assessment and add a property first.', 400);
+    }
+
     // Generate receipt number
     const { count } = await supabase
       .from('tax_payments')

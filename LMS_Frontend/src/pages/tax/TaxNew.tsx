@@ -141,15 +141,8 @@ export default function TaxNew() {
 
     try {
       // Validate required fields
-      if (!formData.property_id) {
-        toast({
-          title: 'Error',
-          description: 'Please select a property',
-          variant: 'destructive'
-        });
-        return;
-      }
-
+      // Property is optional - can be added later
+      
       if (!formData.base_assessment || parseFloat(formData.base_assessment) <= 0) {
         toast({
           title: 'Error',
@@ -171,7 +164,7 @@ export default function TaxNew() {
       }
 
       const payload = {
-        property_id: formData.property_id,
+        property_id: formData.property_id || null, // Convert empty string to null
         tax_year: formData.tax_year,
         occupancy_type: formData.occupancy_type,
         renter_name: formData.occupancy_type === 'RENTED' ? formData.renter_name : null,
@@ -241,12 +234,15 @@ export default function TaxNew() {
         {/* Property Selection */}
         <Card>
           <CardHeader>
-            <CardTitle>Property Selection</CardTitle>
+            <CardTitle>Property Selection (Optional)</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              You can create a tax assessment without a property and add it later. However, a property must be assigned before adding any payments.
+            </p>
             {!selectedProperty ? (
               <div className="space-y-2">
-                <Label>Search Property</Label>
+                <Label>Search Property (Optional)</Label>
                 <Popover open={open} onOpenChange={setOpen}>
                   <PopoverTrigger asChild>
                     <Button
