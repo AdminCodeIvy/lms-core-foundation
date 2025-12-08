@@ -4,7 +4,7 @@ import { MapPin, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { supabase } from '@/lib/supabase';
+import { lookupService } from '@/services/lookupService';
 import 'leaflet/dist/leaflet.css';
 
 interface MapPickerProps {
@@ -44,8 +44,12 @@ export const MapPicker = ({
   // Fetch districts on mount
   useEffect(() => {
     const fetchDistricts = async () => {
-      const { data } = await supabase.from('districts').select('*').eq('is_active', true);
-      if (data) setDistricts(data);
+      try {
+        const data = await lookupService.getDistricts();
+        if (data) setDistricts(data);
+      } catch (error) {
+        console.error('Error fetching districts:', error);
+      }
     };
     fetchDistricts();
   }, []);
@@ -57,12 +61,12 @@ export const MapPicker = ({
         setSubDistricts([]);
         return;
       }
-      const { data } = await supabase
-        .from('sub_districts')
-        .select('*')
-        .eq('district_id', districtId)
-        .eq('is_active', true);
-      if (data) setSubDistricts(data);
+      try {
+        const data = await lookupService.getSubDistricts(districtId);
+        if (data) setSubDistricts(data);
+      } catch (error) {
+        console.error('Error fetching sub-districts:', error);
+      }
     };
     fetchSubDistricts();
   }, [districtId]);

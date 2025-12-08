@@ -9,6 +9,8 @@ export interface TaxFilters {
   propertyId?: string;
   year?: number;
   search?: string;
+  arrearsOnly?: boolean;
+  district_id?: string;
 }
 
 export class TaxService {
@@ -20,6 +22,8 @@ export class TaxService {
       propertyId,
       year,
       search,
+      arrearsOnly = false,
+      district_id,
     } = filters;
 
     let query = supabase
@@ -27,7 +31,7 @@ export class TaxService {
       .select(
         `
         *,
-        properties(reference_id, parcel_number)
+        properties(reference_id, parcel_number, district_id)
       `,
         { count: 'exact' }
       );
@@ -46,7 +50,17 @@ export class TaxService {
     }
 
     if (search) {
-      query = query.or(`assessment_number.ilike.%${search}%`);
+      query = query.or(`reference_id.ilike.%${search}%`);
+    }
+
+    // Arrears only filter (overdue or partial with outstanding amount)
+    if (arrearsOnly) {
+      query = query.or('status.eq.OVERDUE,and(status.eq.PARTIAL,outstanding_amount.gt.0)');
+    }
+
+    // District filter (via properties)
+    if (district_id) {
+      query = query.eq('properties.district_id', district_id);
     }
 
     // Pagination
@@ -96,30 +110,29 @@ export class TaxService {
   }
 
   async createAssessment(assessmentData: any, userId: string) {
-    // Generate assessment number
+    // Generate reference ID
     const { count } = await supabase
       .from('tax_assessments')
       .select('*', { count: 'exact', head: true });
 
     const nextNumber = (count || 0) + 1;
-    const assessmentNumber = `TAX-${assessmentData.tax_year}-${String(nextNumber).padStart(5, '0')}`;
+    const referenceId = `TAX-${assessmentData.tax_year}-${String(nextNumber).padStart(5, '0')}`;
 
-    // Calculate total amount
-    const totalAmount = 
-      (assessmentData.land_value || 0) +
-      (assessmentData.building_value || 0) +
-      (assessmentData.improvement_value || 0);
+    // Calculate assessed amount (base_assessment - exemption_amount)
+    const baseAssessment = assessmentData.base_assessment || 0;
+    const exemptionAmount = assessmentData.exemption_amount || 0;
+    const assessedAmount = baseAssessment - exemptionAmount;
 
     // Create assessment
     const { data: assessment, error: assessmentError } = await supabase
       .from('tax_assessments')
       .insert({
         ...assessmentData,
-        assessment_number: assessmentNumber,
-        total_amount: totalAmount,
+        reference_id: referenceId,
+        assessed_amount: assessedAmount,
         paid_amount: 0,
-        balance: totalAmount,
-        status: 'PENDING',
+        outstanding_amount: assessedAmount,
+        status: 'NOT_ASSESSED',
         created_by: userId,
       })
       .select()
@@ -144,28 +157,26 @@ export class TaxService {
   }
 
   async updateAssessment(id: string, assessmentData: any, userId: string) {
-    // Recalculate total if values changed
+    // Recalculate assessed amount if base or exemption changed
     let updateData = { ...assessmentData };
     
-    if (assessmentData.land_value !== undefined || 
-        assessmentData.building_value !== undefined || 
-        assessmentData.improvement_value !== undefined) {
+    if (assessmentData.base_assessment !== undefined || 
+        assessmentData.exemption_amount !== undefined) {
       
       // Get current assessment
       const { data: current } = await supabase
         .from('tax_assessments')
-        .select('land_value, building_value, improvement_value, paid_amount')
+        .select('base_assessment, exemption_amount, paid_amount')
         .eq('id', id)
         .single();
 
       if (current) {
-        const totalAmount = 
-          (assessmentData.land_value ?? current.land_value) +
-          (assessmentData.building_value ?? current.building_value) +
-          (assessmentData.improvement_value ?? current.improvement_value);
+        const baseAssessment = assessmentData.base_assessment ?? current.base_assessment;
+        const exemptionAmount = assessmentData.exemption_amount ?? current.exemption_amount;
+        const assessedAmount = baseAssessment - exemptionAmount;
 
-        updateData.total_amount = totalAmount;
-        updateData.balance = totalAmount - (current.paid_amount || 0);
+        updateData.assessed_amount = assessedAmount;
+        updateData.outstanding_amount = assessedAmount - (current.paid_amount || 0);
       }
     }
 
@@ -275,14 +286,14 @@ export class TaxService {
 
     // Update assessment
     const newPaidAmount = (assessment.paid_amount || 0) + paymentData.amount;
-    const newBalance = assessment.total_amount - newPaidAmount;
-    const newStatus = newBalance <= 0 ? 'PAID' : 'PARTIAL';
+    const newOutstandingAmount = assessment.assessed_amount - newPaidAmount;
+    const newStatus = newOutstandingAmount <= 0 ? 'PAID' : 'PARTIAL';
 
     await supabase
       .from('tax_assessments')
       .update({
         paid_amount: newPaidAmount,
-        balance: newBalance,
+        outstanding_amount: newOutstandingAmount,
         status: newStatus,
       })
       .eq('id', paymentData.assessment_id);
@@ -296,7 +307,7 @@ export class TaxService {
       old_value: null,
       new_value: paymentData.amount.toString(),
       changed_by: userId,
-      metadata: { receipt_number: receiptNumber, assessment_id: paymentData.assessment_id },
+      metadata: { receipt_number: receiptNumber, assessment_id: paymentData.assessment_id } as any,
     });
 
     // Create audit log for assessment status change
@@ -309,7 +320,7 @@ export class TaxService {
         old_value: assessment.status,
         new_value: newStatus,
         changed_by: userId,
-        metadata: { payment_id: payment.id },
+        metadata: { payment_id: payment.id } as any,
       });
     }
 
@@ -330,12 +341,12 @@ export class TaxService {
     // Get total amount
     const { data: amountData } = await supabase
       .from('tax_assessments')
-      .select('total_amount, paid_amount, balance')
+      .select('assessed_amount, paid_amount, outstanding_amount')
       .eq('tax_year', currentYear);
 
-    const totalAmount = amountData?.reduce((sum, item) => sum + (item.total_amount || 0), 0) || 0;
+    const totalAmount = amountData?.reduce((sum, item) => sum + (item.assessed_amount || 0), 0) || 0;
     const totalPaid = amountData?.reduce((sum, item) => sum + (item.paid_amount || 0), 0) || 0;
-    const totalBalance = amountData?.reduce((sum, item) => sum + (item.balance || 0), 0) || 0;
+    const totalOutstanding = amountData?.reduce((sum, item) => sum + (item.outstanding_amount || 0), 0) || 0;
 
     // Get status breakdown
     const { data: statusData } = await supabase
@@ -353,7 +364,7 @@ export class TaxService {
       totalAssessments: totalAssessments || 0,
       totalAmount,
       totalPaid,
-      totalBalance,
+      totalOutstanding,
       collectionRate: totalAmount > 0 ? (totalPaid / totalAmount) * 100 : 0,
       statusBreakdown,
     };

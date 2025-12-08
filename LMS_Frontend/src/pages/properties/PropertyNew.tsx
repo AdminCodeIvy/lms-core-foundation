@@ -120,12 +120,7 @@ export default function PropertyNew() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation
-    if (!formData.customer_id) {
-      toast.error('Please select an owner');
-      return;
-    }
-
+    // Validation - owner is optional for draft
     if (!formData.district_id || !formData.size || !formData.north_length || 
         !formData.south_length || !formData.east_length || !formData.west_length) {
       toast.error('Please fill in all required fields');
@@ -135,6 +130,11 @@ export default function PropertyNew() {
     if (!formData.coordinates) {
       toast.error('Please select a location on the map');
       return;
+    }
+
+    // Show info if no owner selected
+    if (!formData.customer_id) {
+      toast.info('Property will be saved as draft. You can add an owner later before submitting.');
     }
 
     try {
@@ -220,7 +220,10 @@ export default function PropertyNew() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <Label>Owner *</Label>
+              <Label>Owner (Optional - can be added later)</Label>
+              <p className="text-sm text-muted-foreground">
+                You can save as draft without an owner, but an owner is required before submitting for approval.
+              </p>
               <Popover open={openCustomer} onOpenChange={setOpenCustomer}>
                 <PopoverTrigger asChild>
                   <Button

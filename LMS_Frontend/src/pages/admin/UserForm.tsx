@@ -7,9 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
-import { User, UserRole } from '@/lib/supabase';
+import { adminService, User } from '@/services/adminService';
 import { ArrowLeft } from 'lucide-react';
+
+type UserRole = 'ADMINISTRATOR' | 'APPROVER' | 'INPUTTER' | 'VIEWER';
 
 const UserForm = () => {
   const navigate = useNavigate();
@@ -38,13 +39,7 @@ const UserForm = () => {
   const fetchUser = async (id: string) => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error) throw error;
+      const data = await adminService.getUser(id);
       
       setEditingUser(data);
       setFormData({
@@ -52,7 +47,7 @@ const UserForm = () => {
         email: '',
         password: '',
         confirmPassword: '',
-        role: data.role,
+        role: data.role as UserRole,
         is_active: data.is_active,
       });
     } catch (error: any) {
@@ -135,64 +130,23 @@ const UserForm = () => {
       setLoading(true);
 
       if (editingUser) {
-        const { error } = await supabase
-          .from('users')
-          .update({
-            full_name: formData.full_name,
-            role: formData.role,
-            is_active: formData.is_active,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', editingUser.id);
-
-        if (error) throw error;
-
-        // Create audit log for user update
-        const { data: currentUser } = await supabase.auth.getUser();
-        if (currentUser?.user?.id) {
-          await supabase.from('audit_logs').insert({
-            entity_type: 'user',
-            entity_id: editingUser.id,
-            action: 'update',
-            field: null,
-            old_value: null,
-            new_value: `Updated user: ${formData.full_name}`,
-            changed_by: currentUser.user.id,
-          });
-        }
+        await adminService.updateUser(editingUser.id, {
+          full_name: formData.full_name,
+          role: formData.role,
+          is_active: formData.is_active,
+        });
 
         toast({
           title: 'Success',
           description: 'User updated successfully',
         });
       } else {
-        const { data: authData, error: authError } = await supabase.auth.signUp({
+        await adminService.createUser({
           email: formData.email,
           password: formData.password,
-          options: {
-            data: {
-              full_name: formData.full_name,
-              role: formData.role,
-            },
-          },
+          full_name: formData.full_name,
+          role: formData.role,
         });
-
-        if (authError) throw authError;
-
-        // The database trigger will automatically create the user profile
-        // Create audit log for user creation
-        const { data: currentUser } = await supabase.auth.getUser();
-        if (authData?.user && currentUser?.user?.id) {
-          await supabase.from('audit_logs').insert({
-            entity_type: 'user',
-            entity_id: authData.user.id,
-            action: 'create',
-            field: null,
-            old_value: null,
-            new_value: `Created user: ${formData.full_name} (${formData.email})`,
-            changed_by: currentUser.user.id,
-          });
-        }
 
         toast({
           title: 'Success',

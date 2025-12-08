@@ -9,6 +9,9 @@ export interface CustomerFilters {
   status?: string;
   search?: string;
   showArchived?: boolean;
+  district_id?: string;
+  updated_from?: string;
+  updated_to?: string;
 }
 
 export class CustomerService {
@@ -20,6 +23,9 @@ export class CustomerService {
       status,
       search,
       showArchived = false,
+      district_id,
+      updated_from,
+      updated_to,
     } = filters;
 
     let query = supabase
@@ -32,10 +38,10 @@ export class CustomerService {
         status,
         updated_at,
         customer_person(first_name, fourth_name),
-        customer_business(business_name),
-        customer_government(full_department_name),
-        customer_mosque_hospital(full_name),
-        customer_non_profit(full_non_profit_name),
+        customer_business(business_name, districts(name)),
+        customer_government(full_department_name, districts(name)),
+        customer_mosque_hospital(full_name, districts(name)),
+        customer_non_profit(full_non_profit_name, districts(name)),
         customer_contractor(full_contractor_name)
       `,
         { count: 'exact' }
@@ -54,6 +60,14 @@ export class CustomerService {
 
     if (search) {
       query = query.or(`reference_id.ilike.%${search}%`);
+    }
+
+    // Date range filter
+    if (updated_from) {
+      query = query.gte('updated_at', updated_from);
+    }
+    if (updated_to) {
+      query = query.lte('updated_at', updated_to);
     }
 
     // Pagination
@@ -299,10 +313,28 @@ export class CustomerService {
             person_data, business_data, government_data,
             mosque_hospital_data, non_profit_data, contractor_data } = customerData;
 
+    // Get current customer status
+    const { data: currentCustomer } = await supabase
+      .from('customers')
+      .select('status')
+      .eq('id', id)
+      .single();
+
+    // Prepare update data
+    const updateData: any = { updated_at: new Date().toISOString() };
+
+    // If currently APPROVED, move back to SUBMITTED for re-approval
+    if (currentCustomer?.status === 'APPROVED') {
+      updateData.status = 'SUBMITTED';
+      updateData.submitted_at = new Date().toISOString();
+      updateData.approved_by = null;
+      // Note: approved_at column may not exist in schema, so we don't set it
+    }
+
     // Update customer
     const { data: customer, error: customerError } = await supabase
       .from('customers')
-      .update({ updated_at: new Date().toISOString() })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
@@ -347,14 +379,21 @@ export class CustomerService {
     if (detailsError) throw new AppError(detailsError.message, 500);
 
     // Create activity log
+    const activityMetadata: any = {
+      customer_type: customer.customer_type,
+    };
+
+    // Add note if returned to SUBMITTED for re-approval
+    if (currentCustomer?.status === 'APPROVED' && customer.status === 'SUBMITTED') {
+      activityMetadata.note = 'Edited after approval - returned to SUBMITTED for re-approval';
+    }
+
     await supabase.from('activity_logs').insert({
       entity_type: 'CUSTOMER',
       entity_id: id,
       action: 'UPDATED',
       performed_by: userId,
-      metadata: {
-        customer_type: customer.customer_type,
-      },
+      metadata: activityMetadata,
     });
 
     // Create audit log

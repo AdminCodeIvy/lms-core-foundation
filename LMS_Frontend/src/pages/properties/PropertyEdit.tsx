@@ -3,16 +3,31 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { propertyService } from '@/services/propertyService';
 import { lookupService } from '@/services/lookupService';
+import { customerService } from '@/services/customerService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ArrowLeft } from 'lucide-react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { ArrowLeft, Check, ChevronsUpDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { MapPicker } from '@/components/property/MapPicker';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 export default function PropertyEdit() {
   const { id } = useParams<{ id: string }>();
@@ -23,8 +38,12 @@ export default function PropertyEdit() {
   const [districts, setDistricts] = useState<any[]>([]);
   const [subDistricts, setSubDistricts] = useState<any[]>([]);
   const [propertyTypes, setPropertyTypes] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [openCustomer, setOpenCustomer] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
   
   const [formData, setFormData] = useState({
+    customer_id: '',
     property_location: '',
     sub_location: '',
     district_id: '',
@@ -70,13 +89,21 @@ export default function PropertyEdit() {
 
   const fetchLookups = async () => {
     try {
-      const [districts, propertyTypes] = await Promise.all([
+      const [districts, propertyTypes, customers] = await Promise.all([
         lookupService.getDistricts(),
         lookupService.getPropertyTypes(),
+        customerService.getApprovedCustomers(),
       ]);
 
       setDistricts(districts);
       setPropertyTypes(propertyTypes);
+      
+      // Format customer names
+      const formattedCustomers = customers.map((customer: any) => ({
+        ...customer,
+        name: customer.display_name || customer.reference_id
+      }));
+      setCustomers(formattedCustomers);
     } catch (error: any) {
       console.error('Error fetching lookups:', error);
       toast.error('Failed to load form data');
@@ -125,6 +152,7 @@ export default function PropertyEdit() {
       }
 
       setFormData({
+        customer_id: property.customer_id || '',
         property_location: property.property_location || '',
         sub_location: property.sub_location || '',
         district_id: property.district_id || '',
@@ -164,6 +192,11 @@ export default function PropertyEdit() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!formData.customer_id) {
+      toast.error('Please select an owner');
+      return;
+    }
+    
     if (!formData.district_id || !formData.size || !formData.north_length || 
         !formData.south_length || !formData.east_length || !formData.west_length) {
       toast.error('Please fill in all required fields');
@@ -175,6 +208,7 @@ export default function PropertyEdit() {
 
       // Prepare update data
       const updateData = {
+        customer_id: formData.customer_id,
         property_location: formData.property_location || null,
         sub_location: formData.sub_location || null,
         district_id: formData.district_id,
@@ -209,6 +243,18 @@ export default function PropertyEdit() {
       // Update property via backend
       await propertyService.updateProperty(id!, updateData);
 
+      // Upload new images if any
+      if (selectedImages.length > 0) {
+        for (const image of selectedImages) {
+          try {
+            await propertyService.uploadPhoto(id!, image);
+          } catch (photoError) {
+            console.error('Error uploading photo:', photoError);
+            // Continue with other photos even if one fails
+          }
+        }
+      }
+
       toast.success('Property updated successfully');
       navigate(`/properties/${id}`);
     } catch (error: any) {
@@ -242,6 +288,66 @@ export default function PropertyEdit() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Ownership */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Ownership</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Label>Owner *</Label>
+              <Popover open={openCustomer} onOpenChange={setOpenCustomer}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={openCustomer}
+                    className="w-full justify-between"
+                  >
+                    <span className={cn(!formData.customer_id && "text-muted-foreground")}>
+                      {formData.customer_id
+                        ? customers.find((c) => c.id === formData.customer_id)?.name
+                        : "Select owner..."}
+                    </span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <Command>
+                    <CommandInput placeholder="Search customers..." />
+                    <CommandList>
+                      <CommandEmpty>No customer found.</CommandEmpty>
+                      <CommandGroup>
+                        {customers.map((customer) => (
+                          <CommandItem
+                            key={customer.id}
+                            value={`${customer.name} ${customer.reference_id}`}
+                            onSelect={() => {
+                              setFormData({ ...formData, customer_id: customer.id });
+                              setOpenCustomer(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                formData.customer_id === customer.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            <div>
+                              <div className="font-medium">{customer.name}</div>
+                              <div className="text-sm text-muted-foreground">{customer.reference_id}</div>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Basic Information */}
         <Card>
           <CardHeader>
@@ -335,6 +441,34 @@ export default function PropertyEdit() {
             </div>
 
             <div>
+              <Label>Has Built Area *</Label>
+              <RadioGroup value={formData.has_built_area.toString()} onValueChange={(value) => setFormData({ ...formData, has_built_area: value === 'true' })}>
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="true" id="built-area-yes" />
+                    <Label htmlFor="built-area-yes">Yes</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="false" id="built-area-no" />
+                    <Label htmlFor="built-area-no">No</Label>
+                  </div>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div>
+              <Label>Number of Floors</Label>
+              <Input
+                type="number"
+                min="1"
+                max="14"
+                value={formData.number_of_floors}
+                onChange={(e) => setFormData({ ...formData, number_of_floors: e.target.value })}
+                placeholder="1-14"
+              />
+            </div>
+
+            <div>
               <Label>Size (m²) *</Label>
               <Input
                 type="number"
@@ -343,6 +477,17 @@ export default function PropertyEdit() {
                 onChange={(e) => setFormData({ ...formData, size: e.target.value })}
                 placeholder="Enter size"
                 required
+              />
+            </div>
+
+            <div>
+              <Label>Parcel Area (m²)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={formData.parcel_area}
+                onChange={(e) => setFormData({ ...formData, parcel_area: e.target.value })}
+                placeholder="Enter parcel area"
               />
             </div>
 
@@ -360,6 +505,22 @@ export default function PropertyEdit() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div>
+              <Label>Property Wall *</Label>
+              <RadioGroup value={formData.has_property_wall.toString()} onValueChange={(value) => setFormData({ ...formData, has_property_wall: value === 'true' })}>
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="true" id="wall-yes" />
+                    <Label htmlFor="wall-yes">Yes</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="false" id="wall-no" />
+                    <Label htmlFor="wall-no">No</Label>
+                  </div>
+                </div>
+              </RadioGroup>
             </div>
           </CardContent>
         </Card>
@@ -385,6 +546,33 @@ export default function PropertyEdit() {
                 value={formData.road_name}
                 onChange={(e) => setFormData({ ...formData, road_name: e.target.value })}
                 placeholder="Enter road name"
+              />
+            </div>
+
+            <div>
+              <Label>Postal/Zip Code</Label>
+              <Input
+                value={formData.postal_zip_code}
+                onChange={(e) => setFormData({ ...formData, postal_zip_code: e.target.value })}
+                placeholder="Enter postal code"
+              />
+            </div>
+
+            <div>
+              <Label>Section</Label>
+              <Input
+                value={formData.section}
+                onChange={(e) => setFormData({ ...formData, section: e.target.value })}
+                placeholder="Enter section"
+              />
+            </div>
+
+            <div>
+              <Label>Block</Label>
+              <Input
+                value={formData.block}
+                onChange={(e) => setFormData({ ...formData, block: e.target.value })}
+                placeholder="Enter block"
               />
             </div>
           </CardContent>
@@ -525,6 +713,63 @@ export default function PropertyEdit() {
           districtId={formData.district_id}
           subDistrictId={formData.sub_district_id}
         />
+
+        {/* Property Images */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Add Property Images (Optional)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="photos">Upload New Images</Label>
+                <Input
+                  id="photos"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      const newFiles = Array.from(e.target.files);
+                      setSelectedImages(prev => [...prev, ...newFiles]);
+                    }
+                  }}
+                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  You can select multiple images at once. These will be added to existing photos.
+                </p>
+              </div>
+              {selectedImages.length > 0 && (
+                <div className="grid gap-2 md:grid-cols-3">
+                  {selectedImages.map((file, index) => (
+                    <div key={index} className="relative rounded-lg border p-2">
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-32 object-cover rounded"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6 p-0"
+                        onClick={() => {
+                          setSelectedImages(selectedImages.filter((_, i) => i !== index));
+                        }}
+                      >
+                        ×
+                      </Button>
+                      <p className="text-xs text-center mt-1 truncate">{file.name}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="text-sm text-muted-foreground">
+                Note: To view or delete existing photos, go to the property detail page.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Form Actions */}
         <div className="flex justify-end gap-4">

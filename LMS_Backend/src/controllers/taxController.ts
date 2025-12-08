@@ -16,6 +16,8 @@ export class TaxController {
         propertyId: req.query.propertyId as string,
         year: req.query.year ? parseInt(req.query.year as string) : undefined,
         search: req.query.search as string,
+        arrearsOnly: req.query.arrearsOnly === 'true',
+        district_id: req.query.district_id as string,
       };
 
       const result = await taxService.getAssessments(filters);

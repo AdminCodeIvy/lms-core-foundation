@@ -235,8 +235,23 @@ export class PropertyService {
   }
 
   async updateProperty(id: string, propertyData: any, userId: string) {
-    // Extract boundaries from propertyData
-    const { boundaries, ...propertyFields } = propertyData;
+    // Extract boundaries and customer_id from propertyData
+    const { boundaries, customer_id, ...propertyFields } = propertyData;
+
+    // Get current property status
+    const { data: currentProperty } = await supabase
+      .from('properties')
+      .select('status')
+      .eq('id', id)
+      .single();
+
+    // If currently APPROVED, move back to SUBMITTED for re-approval
+    if (currentProperty?.status === 'APPROVED') {
+      propertyFields.status = 'SUBMITTED';
+      propertyFields.approved_by = null;
+      // Note: submitted_at and approved_at columns may not exist in database yet
+      // Run ADD_WORKFLOW_COLUMNS_TO_PROPERTIES.sql to add them
+    }
 
     // Update property
     const { data: property, error: propertyError } = await supabase
@@ -251,30 +266,79 @@ export class PropertyService {
 
     if (propertyError) throw new AppError(propertyError.message, 500);
 
+    // Update property ownership if customer_id provided
+    if (customer_id) {
+      // First, set all current ownerships to not current
+      await supabase
+        .from('property_ownership')
+        .update({ is_current: false, end_date: new Date().toISOString().split('T')[0] })
+        .eq('property_id', id)
+        .eq('is_current', true);
+
+      // Then create new ownership record
+      const { error: ownershipError } = await supabase
+        .from('property_ownership')
+        .insert({
+          property_id: id,
+          customer_id: customer_id,
+          ownership_type: 'OWNER',
+          ownership_percentage: 100,
+          start_date: new Date().toISOString().split('T')[0],
+          is_current: true,
+        });
+
+      if (ownershipError) throw new AppError(ownershipError.message, 500);
+    }
+
     // Update boundaries if provided
     if (boundaries) {
-      const { error: boundariesError } = await supabase
+      // Check if boundaries already exist
+      const { data: existingBoundaries } = await supabase
         .from('property_boundaries')
-        .upsert(
-          {
+        .select('id')
+        .eq('property_id', id)
+        .single();
+
+      if (existingBoundaries) {
+        // Update existing boundaries
+        const { error: boundariesError } = await supabase
+          .from('property_boundaries')
+          .update({
+            ...boundaries,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('property_id', id);
+
+        if (boundariesError) throw new AppError(boundariesError.message, 500);
+      } else {
+        // Insert new boundaries
+        const { error: boundariesError } = await supabase
+          .from('property_boundaries')
+          .insert({
             property_id: id,
             ...boundaries,
-          },
-          { onConflict: 'property_id' }
-        );
+          });
 
-      if (boundariesError) throw new AppError(boundariesError.message, 500);
+        if (boundariesError) throw new AppError(boundariesError.message, 500);
+      }
     }
 
     // Create activity log
+    const activityMetadata: any = {
+      updated_fields: Object.keys(propertyFields),
+    };
+
+    // Add note if returned to SUBMITTED for re-approval
+    if (currentProperty?.status === 'APPROVED' && property.status === 'SUBMITTED') {
+      activityMetadata.note = 'Edited after approval - returned to SUBMITTED for re-approval';
+    }
+
     await supabase.from('activity_logs').insert({
       entity_type: 'PROPERTY',
       entity_id: id,
       action: 'UPDATED',
       performed_by: userId,
-      metadata: {
-        updated_fields: Object.keys(propertyFields),
-      },
+      metadata: activityMetadata,
     });
 
     // Create audit log
@@ -328,6 +392,18 @@ export class PropertyService {
   }
 
   async submitProperty(id: string, userId: string) {
+    // Check if property has an owner before submitting
+    const { data: ownership, error: ownershipCheckError } = await supabase
+      .from('property_ownership')
+      .select('customer_id')
+      .eq('property_id', id)
+      .eq('is_current', true)
+      .single();
+
+    if (ownershipCheckError || !ownership) {
+      throw new AppError('Cannot submit property without an owner. Please edit the property and add an owner first.', 400);
+    }
+
     const { data, error } = await supabase
       .from('properties')
       .update({ status: 'SUBMITTED' })

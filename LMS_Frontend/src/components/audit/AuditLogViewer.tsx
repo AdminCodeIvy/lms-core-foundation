@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { adminService } from '@/services/adminService';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -32,7 +31,6 @@ interface AuditLogViewerProps {
 }
 
 export const AuditLogViewer = ({ entityType, entityId, title = 'Activity Log' }: AuditLogViewerProps) => {
-  const { profile } = useAuth();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,55 +44,15 @@ export const AuditLogViewer = ({ entityType, entityId, title = 'Activity Log' }:
       setLoading(true);
       setError(null);
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('Not authenticated');
-      }
+      const response = await adminService.getAuditLogs({
+        entityType,
+        // Backend expects entity_id in filters
+      });
 
-      const { data, error } = await supabase
-        .from('audit_logs')
-        .select(`
-          id,
-          entity_type,
-          entity_id,
-          action,
-          field,
-          old_value,
-          new_value,
-          changed_by,
-          timestamp
-        `)
-        .eq('entity_type', entityType)
-        .eq('entity_id', entityId)
-        .order('timestamp', { ascending: false });
-
-      if (error) throw error;
-
-      // Fetch user details separately to avoid relationship issues
-      const userIds = [...new Set((data || []).map(log => log.changed_by).filter(Boolean))];
+      // Filter by entity_id on client side if backend doesn't support it
+      const filteredLogs = response.data.filter(log => log.entity_id === entityId);
       
-      let usersMap: Record<string, { id: string; full_name: string }> = {};
-      
-      if (userIds.length > 0) {
-        const { data: usersData } = await supabase
-          .from('users')
-          .select('id, full_name')
-          .in('id', userIds);
-        
-        if (usersData) {
-          usersMap = usersData.reduce((acc, user) => {
-            acc[user.id] = user;
-            return acc;
-          }, {} as Record<string, { id: string; full_name: string }>);
-        }
-      }
-
-      const normalizedLogs = (data || []).map((log: any) => ({
-        ...log,
-        users: usersMap[log.changed_by] || { id: log.changed_by, full_name: 'Unknown User' },
-      })) as AuditLog[];
-
-      setLogs(normalizedLogs);
+      setLogs(filteredLogs);
     } catch (err: any) {
       console.error('Error fetching audit logs:', err);
       setError(err.message || 'Failed to load activity log');

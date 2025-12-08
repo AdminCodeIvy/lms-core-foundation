@@ -16,6 +16,9 @@ export class CustomerController {
         status: req.query.status as string,
         search: req.query.search as string,
         showArchived: req.query.showArchived === 'true',
+        district_id: req.query.district_id as string,
+        updated_from: req.query.updated_from as string,
+        updated_to: req.query.updated_to as string,
       };
 
       const result = await customerService.getCustomers(filters);

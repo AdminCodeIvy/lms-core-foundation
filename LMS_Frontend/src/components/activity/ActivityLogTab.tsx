@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { adminService } from '@/services/adminService';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -46,13 +46,8 @@ export function ActivityLogTab({ customerId }: ActivityLogTabProps) {
   const fetchActivityLogs = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.functions.invoke('get-activity-logs', {
-        body: { customer_id: customerId },
-      });
-
-      if (error) throw error;
-
-      setLogs(data.data || []);
+      const response = await adminService.getActivityLogs('customer', customerId);
+      setLogs(response || []);
     } catch (error) {
       console.error('Error fetching activity logs:', error);
     } finally {

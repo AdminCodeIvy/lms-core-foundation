@@ -71,6 +71,15 @@ export default function PropertyDetail() {
   const handleSubmit = async () => {
     if (!property) return;
 
+    // Check if property has an owner
+    const hasOwner = ownership && ownership.length > 0 && ownership.some((o: any) => o.is_current);
+    
+    if (!hasOwner) {
+      toast.error('Cannot submit property without an owner. Please edit the property and add an owner first.');
+      setSubmitDialogOpen(false);
+      return;
+    }
+
     try {
       setSubmitting(true);
       await propertyService.submitProperty(property.id);

@@ -187,4 +187,26 @@ export const adminService = {
     const response = await apiClient.get<{ data: AuditLog[]; total: number }>('/admin/audit-logs', filters);
     return response;
   },
+
+  // User CRUD operations
+  async getUser(userId: string) {
+    const response = await apiClient.get<{ data: User }>(`/admin/users/${userId}`);
+    return response.data;
+  },
+
+  async createUser(data: { email: string; password: string; full_name: string; role: string }) {
+    const response = await apiClient.post<{ data: User }>('/admin/users', data);
+    return response.data;
+  },
+
+  async updateUser(userId: string, data: { full_name?: string; role?: string; is_active?: boolean }) {
+    const response = await apiClient.put<{ data: User }>(`/admin/users/${userId}`, data);
+    return response.data;
+  },
+
+  // Activity Logs (for specific entities)
+  async getActivityLogs(entityType: string, entityId: string) {
+    const response = await apiClient.get<{ data: any[] }>(`/activity-logs/${entityType}/${entityId}`);
+    return response.data;
+  },
 };
