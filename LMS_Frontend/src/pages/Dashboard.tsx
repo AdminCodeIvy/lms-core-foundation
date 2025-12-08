@@ -9,6 +9,7 @@ import { FileText, Clock, CheckCircle, XCircle, Users, Building, Settings, Recei
 const Dashboard = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const isViewer = profile?.role === 'VIEWER';
   const [stats, setStats] = useState({
     drafts_pending: 0,
     waiting_approval: 0,

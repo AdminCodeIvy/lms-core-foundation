@@ -57,7 +57,7 @@ const App = () => (
               <Route 
                 index 
                 element={
-                  <ProtectedRoute allowedRoles={['INPUTTER', 'APPROVER', 'ADMINISTRATOR']}>
+                  <ProtectedRoute allowedRoles={['INPUTTER', 'APPROVER', 'VIEWER', 'ADMINISTRATOR']}>
                     <Dashboard />
                   </ProtectedRoute>
                 } 
