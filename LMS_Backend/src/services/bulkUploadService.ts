@@ -1,3 +1,20 @@
+/**
+ * Bulk Upload Service
+ * 
+ * Handles bulk data import for customers, properties, and tax assessments.
+ * Provides validation, data transformation, and batch creation functionality.
+ * 
+ * Key Features:
+ * - Excel file parsing and validation
+ * - Automatic reference ID generation
+ * - Boundary data handling for properties
+ * - UUID validation and cleaning
+ * - Customer lookup by reference ID
+ * - Comprehensive error reporting
+ * 
+ * @module BulkUploadService
+ */
+
 import { supabase } from '../config/database';
 import { AppError } from '../middleware/errorHandler';
 
@@ -7,6 +24,13 @@ export interface BulkUploadData {
 }
 
 export class BulkUploadService {
+  /**
+   * Validates bulk upload data before committing to database
+   * 
+   * @param uploadData - The data to validate including entity type and records
+   * @param userId - ID of the user performing the upload
+   * @returns Validation results with valid/invalid record counts and error details
+   */
   async validateUpload(uploadData: BulkUploadData, userId: string) {
     const { entityType, data } = uploadData;
     const errors: any[] = [];
@@ -36,6 +60,14 @@ export class BulkUploadService {
     };
   }
 
+  /**
+   * Validates a single record based on entity type
+   * 
+   * @param entityType - Type of entity (customer, property, tax)
+   * @param record - The record data to validate
+   * @param index - Row index for error reporting
+   * @returns Array of validation error messages
+   */
   private validateRecord(entityType: string, record: any, index: number): string[] {
     const errors: string[] = [];
 
@@ -73,21 +105,44 @@ export class BulkUploadService {
         break;
 
       case 'property':
+        // Only district_id and size are truly required for a draft
         if (!record.district_id) errors.push('district_id is required');
-        if (!record.sub_district_id) errors.push('sub_district_id is required');
-        if (!record.property_type_id) errors.push('property_type_id is required');
+        if (!record.size) errors.push('size is required');
+        // Validate boundary data if provided (all or nothing)
+        const hasSomeBoundaries = record.north_length || record.south_length || record.east_length || record.west_length;
+        const hasAllBoundaries = record.north_length && record.south_length && record.east_length && record.west_length;
+        if (hasSomeBoundaries && !hasAllBoundaries) {
+          errors.push('If providing boundaries, all four sides (north, south, east, west) must be provided');
+        }
         break;
 
       case 'tax':
         if (!record.property_id) errors.push('property_id is required');
         if (!record.tax_year) errors.push('tax_year is required');
+        if (!record.base_assessment) errors.push('base_assessment is required');
         if (!record.assessed_amount) errors.push('assessed_amount is required');
+        if (!record.land_size) errors.push('land_size is required');
+        if (!record.assessment_date) errors.push('assessment_date is required');
+        if (!record.due_date) errors.push('due_date is required');
+        if (!record.occupancy_type) errors.push('occupancy_type is required');
+        if (!record.construction_status) errors.push('construction_status is required');
         break;
     }
 
     return errors;
   }
 
+  /**
+   * Commits validated bulk upload data to the database
+   * 
+   * Processes each record sequentially to avoid race conditions in reference ID generation.
+   * Creates activity logs and notifications for each successful import.
+   * 
+   * @param uploadData - The validated data to commit
+   * @param userId - ID of the user performing the upload
+   * @returns Results object with success/failure counts and error details
+   * @throws AppError if validation fails
+   */
   async commitUpload(uploadData: BulkUploadData, userId: string) {
     const { entityType, data } = uploadData;
 
@@ -266,7 +321,57 @@ export class BulkUploadService {
     }
   }
 
+  /**
+   * Creates a property record from bulk upload data
+   * 
+   * Handles:
+   * - Customer lookup by reference ID (optional for drafts)
+   * - Boundary data separation and insertion into property_boundaries table
+   * - Property ownership record creation
+   * - Coordinate conversion from lat/lng to PostGIS POINT format
+   * - UUID validation and placeholder text cleaning
+   * 
+   * @param data - Property data from Excel upload
+   * @param userId - ID of the user creating the property
+   * @returns Created property record
+   * @throws Error if required fields are missing or invalid
+   */
   private async createProperty(data: any, userId: string) {
+    // Helper function to check if a value is a valid UUID
+    const isValidUUID = (value: any): boolean => {
+      if (!value || typeof value !== 'string') return false;
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      return uuidRegex.test(value);
+    };
+
+    // Helper function to clean UUID fields (convert invalid/placeholder to null)
+    const cleanUUID = (value: any): string | null => {
+      if (!value) return null;
+      const strValue = String(value).trim();
+      // Check if it's a placeholder or invalid UUID
+      if (strValue.includes('PASTE') || strValue.includes('optional') || strValue.includes('UUID') || !isValidUUID(strValue)) {
+        return null;
+      }
+      return strValue;
+    };
+
+    // Look up customer by reference ID if provided (optional for draft)
+    let customerId = null;
+    if (data.customer_reference_id && !String(data.customer_reference_id).includes('optional')) {
+      const { data: customer, error: customerError } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('reference_id', data.customer_reference_id)
+        .single();
+
+      if (customerError || !customer) {
+        console.warn(`Customer with reference ID ${data.customer_reference_id} not found - creating property without customer`);
+        // Don't throw error - customer is optional for draft
+      } else {
+        customerId = customer.id;
+      }
+    }
+
     // Generate reference ID and parcel number
     const { count } = await supabase
       .from('properties')
@@ -276,10 +381,56 @@ export class BulkUploadService {
     const referenceId = `PROP-2025-${String(nextNumber).padStart(5, '0')}`;
     const parcelNumber = `PARCEL-2025-${String(nextNumber).padStart(5, '0')}`;
 
+    // Separate boundary data from property data
+    const boundaryData = {
+      north_length: data.north_length,
+      north_adjacent_type: data.north_type || data.north_adjacent_type,
+      south_length: data.south_length,
+      south_adjacent_type: data.south_type || data.south_adjacent_type,
+      east_length: data.east_length,
+      east_adjacent_type: data.east_type || data.east_adjacent_type,
+      west_length: data.west_length,
+      west_adjacent_type: data.west_type || data.west_adjacent_type,
+    };
+
+    // Prepare property data - remove fields that don't belong in properties table
+    const propertyData = { ...data };
+    delete propertyData.customer_reference_id;
+    delete propertyData.north_length;
+    delete propertyData.north_type;
+    delete propertyData.north_adjacent_type;
+    delete propertyData.south_length;
+    delete propertyData.south_type;
+    delete propertyData.south_adjacent_type;
+    delete propertyData.east_length;
+    delete propertyData.east_type;
+    delete propertyData.east_adjacent_type;
+    delete propertyData.west_length;
+    delete propertyData.west_type;
+    delete propertyData.west_adjacent_type;
+    
+    // Clean UUID fields - convert placeholders to null
+    propertyData.district_id = cleanUUID(propertyData.district_id);
+    propertyData.sub_district_id = cleanUUID(propertyData.sub_district_id);
+    propertyData.property_type_id = cleanUUID(propertyData.property_type_id);
+    
+    // Validate required district_id
+    if (!propertyData.district_id) {
+      throw new Error('district_id is required and must be a valid UUID');
+    }
+    
+    // Combine coordinates if latitude and longitude are provided
+    if (data.latitude && data.longitude) {
+      propertyData.coordinates = `POINT(${data.longitude} ${data.latitude})`;
+      delete propertyData.latitude;
+      delete propertyData.longitude;
+    }
+
+    // Insert property
     const { data: property, error } = await supabase
       .from('properties')
       .insert({
-        ...data,
+        ...propertyData,
         reference_id: referenceId,
         parcel_number: parcelNumber,
         status: 'DRAFT',
@@ -290,10 +441,59 @@ export class BulkUploadService {
 
     if (error) throw new Error(error.message);
 
+    // Create property ownership if customer was provided
+    if (customerId) {
+      const { error: ownershipError } = await supabase
+        .from('property_ownership')
+        .insert({
+          property_id: property.id,
+          customer_id: customerId,
+          ownership_type: 'OWNER',
+          ownership_percentage: 100,
+          start_date: new Date().toISOString().split('T')[0],
+          is_current: true,
+        });
+
+      if (ownershipError) {
+        console.error('Failed to create ownership:', ownershipError.message);
+        // Don't fail the whole operation - ownership can be added later
+      }
+    }
+
+    // Insert boundaries if all boundary data is provided
+    const hasBoundaries = boundaryData.north_length && boundaryData.south_length && 
+                          boundaryData.east_length && boundaryData.west_length;
+    
+    if (hasBoundaries) {
+      const { error: boundaryError } = await supabase
+        .from('property_boundaries')
+        .insert({
+          property_id: property.id,
+          ...boundaryData,
+        });
+
+      if (boundaryError) {
+        console.error('Failed to create boundaries:', boundaryError.message);
+        // Don't fail the whole operation - boundaries can be added later
+      }
+    }
+
     return property;
   }
 
   private async createTaxAssessment(data: any, userId: string) {
+    // Helper function to check if a value is a valid UUID
+    const isValidUUID = (value: any): boolean => {
+      if (!value || typeof value !== 'string') return false;
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      return uuidRegex.test(value);
+    };
+
+    // Validate property_id
+    if (!data.property_id || !isValidUUID(data.property_id)) {
+      throw new Error('property_id is required and must be a valid UUID. Please replace "PASTE_PROPERTY_UUID_HERE" with an actual property UUID from your system.');
+    }
+
     // Generate assessment number
     const { count } = await supabase
       .from('tax_assessments')

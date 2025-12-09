@@ -131,6 +131,49 @@ export default function BulkUpload() {
 
   const handleDownloadTemplate = async () => {
     try {
+      // Fetch data for templates
+      let districts: any[] = [];
+      let propertyTypes: any[] = [];
+      let properties: any[] = [];
+      
+      if (selectedType === 'PROPERTY') {
+        try {
+          const [districtsRes, typesRes] = await Promise.all([
+            fetch(`${import.meta.env.VITE_API_BASE_URL}/lookups/districts`, {
+              headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+            }),
+            fetch(`${import.meta.env.VITE_API_BASE_URL}/lookups/property-types`, {
+              headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+            })
+          ]);
+          
+          if (districtsRes.ok) {
+            const data = await districtsRes.json();
+            districts = data.data || [];
+          }
+          if (typesRes.ok) {
+            const data = await typesRes.json();
+            propertyTypes = data.data || [];
+          }
+        } catch (error) {
+          console.error('Failed to fetch lookups:', error);
+        }
+      } else if (selectedType === 'TAX_ASSESSMENT') {
+        try {
+          // Fetch approved properties for tax assessment
+          const propertiesRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/properties?status=APPROVED&limit=100`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+          });
+          
+          if (propertiesRes.ok) {
+            const data = await propertiesRes.json();
+            properties = data.data?.properties || [];
+          }
+        } catch (error) {
+          console.error('Failed to fetch properties:', error);
+        }
+      }
+      
       // For customer uploads, generate template client-side based on subtype
       if (selectedType === 'CUSTOMER') {
         if (!selectedCustomerType) {
@@ -372,24 +415,25 @@ export default function BulkUpload() {
       let filename = '';
 
       if (selectedType === 'PROPERTY') {
+        // Get first district and property type as examples
+        const exampleDistrict = districts[0];
+        const examplePropertyType = propertyTypes[0];
+        
         templateData = [
           {
-            // Ownership (Optional - can be added later)
-            'customer_reference_id': 'CUS-2025-00001',
-            
             // Basic Information (Required fields marked with *)
             'property_location': 'Main Street Area',
             'sub_location': 'Near Market',
-            'district_id': 'District UUID or Code',
-            'sub_district_id': 'Sub-district UUID',
-            'is_downtown': 'true | false',
-            'is_building': 'true | false',
-            'has_built_area': 'true | false',
+            'district_id': exampleDistrict?.id || '',
+            'sub_district_id': '',
+            'is_downtown': 'true',
+            'is_building': 'true',
+            'has_built_area': 'false',
             'number_of_floors': '2',
             'size': '500.50',
             'parcel_area': '600.00',
-            'property_type_id': 'Property Type UUID',
-            'has_property_wall': 'true | false',
+            'property_type_id': examplePropertyType?.id || '',
+            'has_property_wall': 'true',
             
             // Address Details
             'door_number': '123',
@@ -398,15 +442,15 @@ export default function BulkUpload() {
             'section': 'A',
             'block': '5',
             
-            // Boundaries (Required)
+            // Boundaries (Optional - provide all 4 or none)
             'north_length': '25.50',
-            'north_type': 'BUILDING | EMPTY_LAND | ROAD',
+            'north_type': 'BUILDING',
             'south_length': '25.50',
-            'south_type': 'BUILDING | EMPTY_LAND | ROAD',
+            'south_type': 'ROAD',
             'east_length': '20.00',
-            'east_type': 'BUILDING | EMPTY_LAND | ROAD',
+            'east_type': 'EMPTY_LAND',
             'west_length': '20.00',
-            'west_type': 'BUILDING | EMPTY_LAND | ROAD',
+            'west_type': 'BUILDING',
             
             // Location (Required)
             'latitude': '9.0192',
@@ -420,12 +464,16 @@ export default function BulkUpload() {
       } else if (selectedType === 'TAX_ASSESSMENT') {
         templateData = [
           {
-            'Property Reference ID': 'PROP-2025-00001',
-            'Tax Year': '2025',
-            'Land Size': '500',
-            'Assessed Amount': '10000',
-            'Due Date': '2025-12-31',
-            'Notes': 'Enter property reference ID from properties table'
+            'property_id': '',
+            'tax_year': '2025',
+            'base_assessment': '10000',
+            'exemption_amount': '0',
+            'assessed_amount': '10000',
+            'assessment_date': '2025-01-01',
+            'due_date': '2025-12-31',
+            'land_size': '500.50',
+            'occupancy_type': 'OWNER_OCCUPIED',
+            'construction_status': 'COMPLETED'
           }
         ];
         filename = 'tax-assessment-template.xlsx';
@@ -455,6 +503,152 @@ export default function BulkUpload() {
 
       // Add worksheet to workbook
       XLSX.utils.book_append_sheet(wb, ws, 'Template');
+
+      // Add reference sheets and instructions
+      if (selectedType === 'PROPERTY') {
+        // Districts reference sheet
+        if (districts.length > 0) {
+          const districtData = districts.map(d => ({
+            'District Name': d.name,
+            'District Code': d.code,
+            'District UUID': d.id,
+          }));
+          const wsDistricts = XLSX.utils.json_to_sheet(districtData);
+          XLSX.utils.book_append_sheet(wb, wsDistricts, 'Districts');
+        }
+        
+        // Property Types reference sheet
+        if (propertyTypes.length > 0) {
+          const typeData = propertyTypes.map(t => ({
+            'Property Type Name': t.name,
+            'Property Type Code': t.code,
+            'Property Type UUID': t.id,
+          }));
+          const wsTypes = XLSX.utils.json_to_sheet(typeData);
+          XLSX.utils.book_append_sheet(wb, wsTypes, 'Property Types');
+        }
+        
+        // Instructions sheet
+        const instructions = [
+          ['Property Bulk Upload Instructions'],
+          [''],
+          ['REQUIRED FIELDS:'],
+          ['- district_id: MUST copy UUID from "Districts" sheet (REQUIRED!)'],
+          ['- size: Property size in square meters (must be > 0)'],
+          [''],
+          ['OPTIONAL FIELDS (leave empty if not needed):'],
+          ['- customer_reference_id: Leave empty for draft (can add later)'],
+          ['- sub_district_id: Leave empty or copy UUID from system'],
+          ['- property_type_id: Leave empty or copy UUID from "Property Types" sheet'],
+          ['- Boundaries: Provide all 4 sides or leave all empty'],
+          [''],
+          ['HOW TO USE UUIDs:'],
+          ['1. Go to "Districts" sheet'],
+          ['2. Find your district (e.g., "Addis Ababa")'],
+          ['3. Copy the UUID from "District UUID" column'],
+          ['4. Paste into district_id field in Template sheet'],
+          ['5. Repeat for property_type_id using "Property Types" sheet'],
+          [''],
+          ['BOOLEAN FIELDS (use lowercase):'],
+          ['- is_downtown: true or false'],
+          ['- is_building: true or false'],
+          ['- has_built_area: true or false'],
+          ['- has_property_wall: true or false'],
+          [''],
+          ['BOUNDARY TYPES (use uppercase):'],
+          ['- north_type, south_type, east_type, west_type'],
+          ['- Valid values: BUILDING, EMPTY_LAND, ROAD'],
+          [''],
+          ['IMPORTANT TIPS:'],
+          ['1. DO NOT leave placeholder text in UUID fields'],
+          ['2. Either paste a valid UUID or leave the cell EMPTY'],
+          ['3. Properties will be created as DRAFT status'],
+          ['4. Customer can be added later before submission'],
+          ['5. Maximum 1,000 rows per upload'],
+          ['6. Save as .xlsx before uploading'],
+        ];
+        const wsInstructions = XLSX.utils.aoa_to_sheet(instructions);
+        XLSX.utils.book_append_sheet(wb, wsInstructions, 'Instructions');
+      } else if (selectedType === 'TAX_ASSESSMENT') {
+        // Add properties reference sheet
+        if (properties.length > 0) {
+          const propertyData = properties.map(p => ({
+            'Parcel Number': p.parcel_number,
+            'Reference ID': p.reference_id,
+            'Property UUID': p.id,
+            'District': p.district?.name || 'N/A',
+            'Size (sqm)': p.size || 'N/A',
+          }));
+          const wsProperties = XLSX.utils.json_to_sheet(propertyData);
+          XLSX.utils.book_append_sheet(wb, wsProperties, 'Properties');
+        } else {
+          // Add a note if no properties available
+          const noPropertiesNote = [
+            ['No Approved Properties Available'],
+            [''],
+            ['There are no approved properties in the system yet.'],
+            ['You need to:'],
+            ['1. Create properties in the system'],
+            ['2. Submit them for approval'],
+            ['3. Get them approved'],
+            ['4. Then you can create tax assessments for them'],
+            [''],
+            ['To get a property UUID:'],
+            ['1. Go to Properties page in the system'],
+            ['2. Click on an approved property'],
+            ['3. Copy the UUID from the browser URL'],
+            ['   Example: /properties/12345678-1234-1234-1234-123456789abc'],
+            ['   The UUID is: 12345678-1234-1234-1234-123456789abc'],
+          ];
+          const wsNoProperties = XLSX.utils.aoa_to_sheet(noPropertiesNote);
+          XLSX.utils.book_append_sheet(wb, wsNoProperties, 'Properties');
+        }
+        
+        // Instructions for tax assessment
+        const instructions = [
+          ['Tax Assessment Bulk Upload Instructions'],
+          [''],
+          ['REQUIRED FIELDS:'],
+          ['- property_id: UUID of the property (REQUIRED!)'],
+          ['- tax_year: Year of assessment (e.g., 2025)'],
+          ['- base_assessment: Base tax amount before exemptions (must be > 0)'],
+          ['- exemption_amount: Tax exemption amount (default: 0)'],
+          ['- assessed_amount: Final tax amount (base_assessment - exemption_amount)'],
+          ['- land_size: Property land size in square meters'],
+          ['- assessment_date: Date of assessment (format: YYYY-MM-DD)'],
+          ['- due_date: Payment due date (format: YYYY-MM-DD)'],
+          ['- occupancy_type: OWNER_OCCUPIED, RENTED, VACANT, or MIXED_USE'],
+          ['- construction_status: COMPLETED, UNDER_CONSTRUCTION, or PLANNED'],
+          [''],
+          ['CALCULATION:'],
+          ['- assessed_amount MUST equal (base_assessment - exemption_amount)'],
+          ['- Example: base_assessment=10000, exemption_amount=0, assessed_amount=10000'],
+          [''],
+          ['HOW TO GET PROPERTY UUID:'],
+          ['METHOD 1: Use the Properties reference sheet'],
+          ['1. Go to "Properties" sheet in this workbook'],
+          ['2. Find your property by Parcel Number or Reference ID'],
+          ['3. Copy the UUID from "Property UUID" column'],
+          ['4. Paste into property_id field in Template sheet'],
+          [''],
+          ['METHOD 2: From the system'],
+          ['1. Go to Properties page in the system'],
+          ['2. Click on the property you want to assess'],
+          ['3. Copy the UUID from the URL or property details'],
+          ['4. Paste into property_id field'],
+          [''],
+          ['IMPORTANT:'],
+          ['1. Property must exist in the system before creating assessment'],
+          ['2. Property must be APPROVED status'],
+          ['3. One assessment per property per year'],
+          ['4. Tax year must be current year or future'],
+          ['5. due_date must be after assessment_date'],
+          ['6. Maximum 1,000 rows per upload'],
+          ['7. Save as .xlsx before uploading'],
+        ];
+        const wsInstructions = XLSX.utils.aoa_to_sheet(instructions);
+        XLSX.utils.book_append_sheet(wb, wsInstructions, 'Instructions');
+      }
 
       // Generate and download
       XLSX.writeFile(wb, filename);
@@ -609,22 +803,26 @@ export default function BulkUpload() {
                 messages.push('latitude and longitude are required');
                 status = 'error';
               }
-              // Optional: customer_reference_id (can be added later)
-              if (!row['customer_reference_id']) {
-                messages.push('Warning: No customer assigned - property will be draft only');
-                if (status === 'valid') status = 'warning';
-              }
+              // Note: customer_reference_id is optional - can be added later before submission
             } else if (selectedType === 'TAX_ASSESSMENT') {
-              if (!row['Property Reference ID']) {
-                messages.push('Property Reference ID is required');
+              if (!row['property_id']) {
+                messages.push('property_id is required');
                 status = 'error';
               }
-              if (!row['Tax Year']) {
-                messages.push('Tax Year is required');
+              if (!row['tax_year']) {
+                messages.push('tax_year is required');
                 status = 'error';
               }
-              if (!row['Assessed Amount']) {
-                messages.push('Assessed Amount is required');
+              if (!row['base_assessment']) {
+                messages.push('base_assessment is required');
+                status = 'error';
+              }
+              if (!row['assessed_amount']) {
+                messages.push('assessed_amount is required');
+                status = 'error';
+              }
+              if (!row['land_size']) {
+                messages.push('land_size is required');
                 status = 'error';
               }
             } else if (selectedType === 'TAX_PAYMENT') {
@@ -691,7 +889,9 @@ export default function BulkUpload() {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
         },
         body: JSON.stringify({
-          entityType: selectedType.toLowerCase().replace('_', ''),
+          entityType: selectedType === 'TAX_ASSESSMENT' || selectedType === 'TAX_PAYMENT' 
+            ? 'tax' 
+            : selectedType.toLowerCase(),
           data: validRows.map(r => r.data),
         }),
       });
