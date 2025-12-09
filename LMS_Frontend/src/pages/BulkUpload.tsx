@@ -374,14 +374,46 @@ export default function BulkUpload() {
       if (selectedType === 'PROPERTY') {
         templateData = [
           {
-            'Customer Reference ID': 'CUS-2025-00001',
-            'Parcel Number': 'PARCEL-001',
-            'District Code': 'ADD | DRD | HRG | JJG',
-            'Sub District': 'Sub-district name',
-            'Property Type': 'Residential | Commercial | etc',
-            'Latitude': '9.0192',
-            'Longitude': '38.7525',
-            'Notes': 'All fields required'
+            // Ownership (Optional - can be added later)
+            'customer_reference_id': 'CUS-2025-00001',
+            
+            // Basic Information (Required fields marked with *)
+            'property_location': 'Main Street Area',
+            'sub_location': 'Near Market',
+            'district_id': 'District UUID or Code',
+            'sub_district_id': 'Sub-district UUID',
+            'is_downtown': 'true | false',
+            'is_building': 'true | false',
+            'has_built_area': 'true | false',
+            'number_of_floors': '2',
+            'size': '500.50',
+            'parcel_area': '600.00',
+            'property_type_id': 'Property Type UUID',
+            'has_property_wall': 'true | false',
+            
+            // Address Details
+            'door_number': '123',
+            'road_name': 'Main Road',
+            'postal_zip_code': '12345',
+            'section': 'A',
+            'block': '5',
+            
+            // Boundaries (Required)
+            'north_length': '25.50',
+            'north_type': 'BUILDING | EMPTY_LAND | ROAD',
+            'south_length': '25.50',
+            'south_type': 'BUILDING | EMPTY_LAND | ROAD',
+            'east_length': '20.00',
+            'east_type': 'BUILDING | EMPTY_LAND | ROAD',
+            'west_length': '20.00',
+            'west_type': 'BUILDING | EMPTY_LAND | ROAD',
+            
+            // Location (Required)
+            'latitude': '9.0192',
+            'longitude': '38.7525',
+            
+            // Optional
+            'map_url': 'https://maps.google.com/...'
           }
         ];
         filename = 'property-template.xlsx';
@@ -548,17 +580,39 @@ export default function BulkUpload() {
                 }
               }
             } else if (selectedType === 'PROPERTY') {
-              if (!row['Customer Reference ID']) {
-                messages.push('Customer Reference ID is required');
+              // Required fields validation
+              if (!row['district_id']) {
+                messages.push('district_id is required');
                 status = 'error';
               }
-              if (!row['Parcel Number']) {
-                messages.push('Parcel Number is required');
+              if (!row['size']) {
+                messages.push('size is required');
                 status = 'error';
               }
-              if (!row['District Code']) {
-                messages.push('District Code is required');
+              if (!row['north_length']) {
+                messages.push('north_length is required');
                 status = 'error';
+              }
+              if (!row['south_length']) {
+                messages.push('south_length is required');
+                status = 'error';
+              }
+              if (!row['east_length']) {
+                messages.push('east_length is required');
+                status = 'error';
+              }
+              if (!row['west_length']) {
+                messages.push('west_length is required');
+                status = 'error';
+              }
+              if (!row['latitude'] || !row['longitude']) {
+                messages.push('latitude and longitude are required');
+                status = 'error';
+              }
+              // Optional: customer_reference_id (can be added later)
+              if (!row['customer_reference_id']) {
+                messages.push('Warning: No customer assigned - property will be draft only');
+                if (status === 'valid') status = 'warning';
               }
             } else if (selectedType === 'TAX_ASSESSMENT') {
               if (!row['Property Reference ID']) {

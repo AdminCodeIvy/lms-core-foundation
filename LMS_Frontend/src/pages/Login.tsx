@@ -101,13 +101,26 @@ const Login = () => {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const from = (location.state as any)?.from?.pathname || '/';
+  // Determine redirect path based on user role
+  const getRedirectPath = (userRole?: string) => {
+    const requestedPath = (location.state as any)?.from?.pathname;
+    
+    // If user is VIEWER and no specific path was requested, go to properties
+    if (userRole === 'VIEWER' && (!requestedPath || requestedPath === '/')) {
+      return '/properties';
+    }
+    
+    // Otherwise use requested path or default to dashboard
+    return requestedPath || '/';
+  };
 
   useEffect(() => {
-    if (!hasSubmitted && user && !authLoading) {
-      navigate(from, { replace: true });
+    // Only redirect if user is logged in and we're not in the middle of loading
+    if (user && !authLoading) {
+      const redirectPath = getRedirectPath(user.role);
+      navigate(redirectPath, { replace: true });
     }
-  }, [user, authLoading, navigate, from, hasSubmitted]);
+  }, [user, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,7 +168,8 @@ const Login = () => {
         description: 'You have successfully logged in.',
       });
 
-      navigate(from, { replace: true });
+      // Navigation will be handled by the useEffect hook
+      // which watches for user state changes
     } catch (error: any) {
       toast({
         variant: 'destructive',
