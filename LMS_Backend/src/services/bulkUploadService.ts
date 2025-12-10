@@ -821,6 +821,58 @@ export class BulkUploadService {
         typeData = mappedData;
       }
 
+      // Map Excel column names to database field names for BUSINESS type
+      if (customerType === 'BUSINESS') {
+        // Helper function to get value with flexible column names
+        const getValue = (data: any, ...possibleKeys: string[]) => {
+          for (const key of possibleKeys) {
+            if (data[key] !== undefined && data[key] !== null && data[key] !== '') {
+              return data[key];
+            }
+          }
+          // Try case-insensitive and trimmed matches
+          const dataKeys = Object.keys(data);
+          for (const possibleKey of possibleKeys) {
+            for (const dataKey of dataKeys) {
+              if (dataKey.trim().toLowerCase() === possibleKey.toLowerCase()) {
+                if (data[dataKey] !== undefined && data[dataKey] !== null && data[dataKey] !== '') {
+                  return data[dataKey];
+                }
+              }
+            }
+          }
+          return null;
+        };
+
+        // Map Excel columns to database fields for BUSINESS
+        const mappedData = {
+          customer_id: customer.id,
+          pr_id: getValue(data, 'pr_id', 'PR-ID', 'pr-id', 'PR_ID'),
+          business_name: getValue(data, 'business_name', 'Business Name', 'Full Business Name', 'business-name', 'Business_Name'),
+          business_license_number: getValue(data, 'business_license_number', 'Business License Number', 'License Number', 'Commercial License Number', 'business-license-number', 'Business_License_Number'),
+          business_address: getValue(data, 'business_address', 'Business Address', 'Address', 'business-address', 'Business_Address'),
+          rental_name: getValue(data, 'rental_name', 'Rental Name', 'rental-name', 'Rental_Name'),
+          mobile_number_1: getValue(data, 'mobile_number_1', 'Mobile Number 1', 'Contact Number', 'Phone 1', 'mobile-number-1', 'Mobile_Number_1'),
+          mobile_number_2: getValue(data, 'mobile_number_2', 'Mobile Number 2', 'Contact Number 2', 'Phone 2', 'mobile-number-2', 'Mobile_Number_2'),
+          email: getValue(data, 'email', 'Email', 'E-mail', 'e_mail'),
+          size: getValue(data, 'size', 'Size'),
+          floor: getValue(data, 'floor', 'Floor'),
+          file_number: getValue(data, 'file_number', 'File Number', 'file-number', 'File_Number'),
+          
+          // Optional fields
+          business_registration_number: getValue(data, 'business_registration_number', 'Registration Number', 'Reg Number', 'business-registration-number', 'Business_Registration_Number'),
+          contact_name: getValue(data, 'contact_name', 'Contact Name', 'contact-name', 'Contact_Name'),
+          carrier_network: getValue(data, 'carrier_network', 'Carrier Network', 'Carrier', 'carrier-network', 'Carrier_Network'),
+          street: getValue(data, 'street', 'Street'),
+          district_id: getValue(data, 'district_id', 'District ID', 'District', 'district-id', 'District_ID'),
+          section: getValue(data, 'section', 'Section'),
+          block: getValue(data, 'block', 'Block'),
+        };
+
+        // Use mapped data instead of original data
+        typeData = mappedData;
+      }
+
       // Handle PERSON type data transformation and validation
       if (customerType === 'PERSON') {
         // If new fields are missing but old fields exist, construct them
@@ -863,6 +915,31 @@ export class BulkUploadService {
         typeData.carrier_mobile_2 = typeData.carrier_mobile_2 || null;
         typeData.emergency_contact_name = typeData.emergency_contact_name || null;
         typeData.emergency_contact_number = typeData.emergency_contact_number || null;
+      }
+
+      // Handle BUSINESS type data transformation and validation
+      if (customerType === 'BUSINESS') {
+        // All fields are optional for business customers, just set defaults for empty values
+        typeData.pr_id = typeData.pr_id || null;
+        typeData.business_name = typeData.business_name || null;
+        typeData.business_license_number = typeData.business_license_number || null;
+        typeData.business_address = typeData.business_address || null;
+        typeData.rental_name = typeData.rental_name || null;
+        typeData.mobile_number_1 = typeData.mobile_number_1 || null;
+        typeData.mobile_number_2 = typeData.mobile_number_2 || null;
+        typeData.email = typeData.email || null;
+        typeData.size = typeData.size || null;
+        typeData.floor = typeData.floor || null;
+        typeData.file_number = typeData.file_number || null;
+        
+        // Optional fields
+        typeData.business_registration_number = typeData.business_registration_number || null;
+        typeData.contact_name = typeData.contact_name || null;
+        typeData.carrier_network = typeData.carrier_network || null;
+        typeData.street = typeData.street || null;
+        typeData.district_id = typeData.district_id || null;
+        typeData.section = typeData.section || null;
+        typeData.block = typeData.block || null;
       }
 
       // Handle RENTAL type data transformation and validation
@@ -1152,52 +1229,147 @@ export class BulkUploadService {
     return assessment;
   }
 
-  async generateTemplate(entityType: 'customer' | 'property' | 'tax') {
+  async generateTemplate(entityType: 'customer' | 'property' | 'tax', customerType?: 'PERSON' | 'BUSINESS' | 'RENTAL') {
     const templates = {
       customer: {
-        headers: [
-          'customer_type',
-          'pr_id',
-          'full_name',
-          'mothers_name',
-          'date_of_birth',
-          'place_of_birth',
-          'gender',
-          'nationality',
-          'mobile_number_1',
-          'email',
-          'id_type',
-          'carrier_mobile_1',
-          'mobile_number_2',
-          'carrier_mobile_2',
-          'emergency_contact_name',
-          'emergency_contact_number',
-          'id_number',
-          'place_of_issue',
-          'issue_date',
-          'expiry_date',
-        ],
-        example: {
-          customer_type: 'PERSON',
-          pr_id: 'PR-2025-001',
-          full_name: 'John Doe Smith',
-          mothers_name: 'Jane Smith',
-          date_of_birth: '1990-01-01',
-          place_of_birth: 'Mogadishu',
-          gender: 'MALE',
-          nationality: 'Somalia',
-          mobile_number_1: '+252612345678',
-          email: 'john@example.com',
-          id_type: 'National ID Card',
-          carrier_mobile_1: 'Hormuud',
-          mobile_number_2: '+252612345679',
-          carrier_mobile_2: 'Hormuud',
-          emergency_contact_name: 'Jane Doe',
-          emergency_contact_number: '+252612345680',
-          id_number: '123456789',
-          place_of_issue: 'Mogadishu',
-          issue_date: '2020-01-01',
-          expiry_date: '2030-01-01',
+        // PERSON customer template
+        person: {
+          headers: [
+            'customer_type',
+            'pr_id',
+            'full_name',
+            'mothers_name',
+            'date_of_birth',
+            'place_of_birth',
+            'gender',
+            'nationality',
+            'mobile_number_1',
+            'email',
+            'id_type',
+            'carrier_mobile_1',
+            'mobile_number_2',
+            'carrier_mobile_2',
+            'emergency_contact_name',
+            'emergency_contact_number',
+            'id_number',
+            'place_of_issue',
+            'issue_date',
+            'expiry_date',
+          ],
+          example: {
+            customer_type: 'PERSON',
+            pr_id: 'PR-2025-001',
+            full_name: 'John Doe Smith',
+            mothers_name: 'Jane Smith',
+            date_of_birth: '1990-01-01',
+            place_of_birth: 'Mogadishu',
+            gender: 'MALE',
+            nationality: 'Somalia',
+            mobile_number_1: '+252-612-345-678',
+            email: 'john@example.com',
+            id_type: 'National ID Card',
+            carrier_mobile_1: 'Hormuud',
+            mobile_number_2: '+252-612-345-679',
+            carrier_mobile_2: 'Hormuud',
+            emergency_contact_name: 'Jane Doe',
+            emergency_contact_number: '+252-612-345-680',
+            id_number: '123456789',
+            place_of_issue: 'Mogadishu',
+            issue_date: '2020-01-01',
+            expiry_date: '2030-01-01',
+          },
+        },
+        // BUSINESS customer template
+        business: {
+          headers: [
+            'customer_type',
+            'pr_id',
+            'business_name',
+            'business_license_number',
+            'business_address',
+            'rental_name',
+            'mobile_number_1',
+            'mobile_number_2',
+            'email',
+            'size',
+            'floor',
+            'file_number',
+            'business_registration_number',
+            'contact_name',
+            'carrier_network',
+            'street',
+            'district_id',
+            'section',
+            'block',
+          ],
+          example: {
+            customer_type: 'BUSINESS',
+            pr_id: 'PR-BUS-001',
+            business_name: 'ABC Trading Company',
+            business_license_number: 'BL-2025-001',
+            business_address: '123 Business Street, Mogadishu',
+            rental_name: 'ABC Rental Services',
+            mobile_number_1: '+252-612-345-678',
+            mobile_number_2: '+252-612-345-679',
+            email: 'info@abctrading.com',
+            size: '500 sqm',
+            floor: '2nd Floor',
+            file_number: 'FILE-2025-001',
+            business_registration_number: 'REG-2025-001',
+            contact_name: 'Ahmed Hassan',
+            carrier_network: 'Hormuud',
+            street: 'Business Street',
+            district_id: 'JJG',
+            section: 'Section A',
+            block: 'Block 1',
+          },
+        },
+        // RENTAL customer template
+        rental: {
+          headers: [
+            'customer_type',
+            'pr_id',
+            'rental_name',
+            'rental_mothers_name',
+            'date_of_birth',
+            'place_of_birth',
+            'gender',
+            'nationality',
+            'mobile_number_1',
+            'mobile_number_2',
+            'email',
+            'id_type',
+            'id_number',
+            'place_of_issue',
+            'issue_date',
+            'expiry_date',
+            'carrier_mobile_1',
+            'carrier_mobile_2',
+            'emergency_contact_name',
+            'emergency_contact_number',
+          ],
+          example: {
+            customer_type: 'RENTAL',
+            pr_id: 'PR-RNT-001',
+            rental_name: 'Mohamed Ali Hassan',
+            rental_mothers_name: 'Fatima Ahmed',
+            date_of_birth: '1985-05-15',
+            place_of_birth: 'Hargeisa',
+            gender: 'MALE',
+            nationality: 'Somalia',
+            mobile_number_1: '+252-612-345-678',
+            mobile_number_2: '+252-612-345-679',
+            email: 'mohamed@example.com',
+            id_type: 'National ID Card',
+            id_number: 'RNT123456',
+            place_of_issue: 'Hargeisa',
+            issue_date: '2020-01-01',
+            expiry_date: '2030-01-01',
+            carrier_mobile_1: 'Hormuud',
+            carrier_mobile_2: 'Telesom',
+            emergency_contact_name: 'Ali Hassan',
+            emergency_contact_number: '+252-612-345-680',
+          },
         },
       },
       property: {
@@ -1242,6 +1414,12 @@ export class BulkUploadService {
       },
     };
 
+    if (entityType === 'customer') {
+      // Return specific customer type template or default to person
+      const type = customerType?.toLowerCase() || 'person';
+      return templates.customer[type as keyof typeof templates.customer] || templates.customer.person;
+    }
+    
     return templates[entityType];
   }
 }

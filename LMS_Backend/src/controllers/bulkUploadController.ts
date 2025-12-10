@@ -30,13 +30,23 @@ export class BulkUploadController {
   async generateTemplate(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { entityType } = req.params;
+      const { customerType } = req.query;
       
       if (entityType !== 'customer' && entityType !== 'property' && entityType !== 'tax') {
         ResponseHandler.badRequest(res, 'Invalid entity type. Must be "customer", "property", or "tax"');
         return;
       }
 
-      const template = await bulkUploadService.generateTemplate(entityType);
+      // Validate customer type if provided
+      if (entityType === 'customer' && customerType && !['PERSON', 'BUSINESS', 'RENTAL'].includes(customerType as string)) {
+        ResponseHandler.badRequest(res, 'Invalid customer type. Must be "PERSON", "BUSINESS", or "RENTAL"');
+        return;
+      }
+
+      const template = await bulkUploadService.generateTemplate(
+        entityType, 
+        customerType as 'PERSON' | 'BUSINESS' | 'RENTAL'
+      );
       ResponseHandler.success(res, template, 'Template generated');
     } catch (error) {
       next(error);

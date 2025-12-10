@@ -270,34 +270,46 @@ export default function BulkUpload() {
           case 'BUSINESS':
             filename = 'customer_business_template.xlsx';
             headers = [
+              'customer_type',
+              'pr_id',
               'business_name',
-              'business_registration_number',
               'business_license_number',
               'business_address',
-              'contact_name',
+              'rental_name',
               'mobile_number_1',
               'mobile_number_2',
-              'carrier_network',
               'email',
+              'size',
+              'floor',
+              'file_number',
+              'business_registration_number',
+              'contact_name',
+              'carrier_network',
               'street',
               'district_id',
               'section',
               'block',
             ];
             sampleRow = {
+              customer_type: 'BUSINESS',
+              pr_id: 'PR-BUS-001',
               business_name: 'ABC Trading Company',
-              business_registration_number: 'BR123456',
-              business_license_number: 'BL789012',
-              business_address: '123 Main Street, Jigjiga',
-              contact_name: 'Ahmed Mohamed',
-              mobile_number_1: '+251912345678',
-              mobile_number_2: '+251923456789',
-              carrier_network: 'Ethio Telecom',
+              business_license_number: 'BL-2025-001',
+              business_address: '123 Business Street, Mogadishu',
+              rental_name: 'ABC Rental Services',
+              mobile_number_1: '+252-612-345-678',
+              mobile_number_2: '+252-612-345-679',
               email: 'info@abctrading.com',
-              street: 'Main Street',
+              size: '500 sqm',
+              floor: '2nd Floor',
+              file_number: 'FILE-2025-001',
+              business_registration_number: 'REG-2025-001',
+              contact_name: 'Ahmed Hassan',
+              carrier_network: 'Hormuud',
+              street: 'Business Street',
               district_id: 'JJG',
-              section: 'A',
-              block: '12',
+              section: 'Section A',
+              block: 'Block 1',
             };
             break;
           case 'GOVERNMENT':
@@ -860,13 +872,19 @@ export default function BulkUpload() {
                   status = 'error';
                 }
               } else if (selectedCustomerType === 'BUSINESS') {
-                if (!row['business_name']) {
-                  messages.push('Business name is required');
-                  status = 'error';
+                // All business fields are optional - no validation errors
+                // Just check for basic format if values are provided
+                if (row['email'] && row['email'].toString().trim() && !row['email'].toString().includes('@')) {
+                  messages.push('Email format is invalid');
+                  status = 'warning';
                 }
-                if (!row['mobile_number_1']) {
-                  messages.push('Mobile number 1 is required');
-                  status = 'error';
+                if (row['mobile_number_1'] && row['mobile_number_1'].toString().trim() && !row['mobile_number_1'].toString().match(/^\+\d{1,3}-?\d{3,4}-?\d{3,4}-?\d{3,4}$/)) {
+                  messages.push('Mobile number 1 format should be +XXX-XXX-XXX-XXX');
+                  status = 'warning';
+                }
+                if (row['mobile_number_2'] && row['mobile_number_2'].toString().trim() && !row['mobile_number_2'].toString().match(/^\+\d{1,3}-?\d{3,4}-?\d{3,4}-?\d{3,4}$/)) {
+                  messages.push('Mobile number 2 format should be +XXX-XXX-XXX-XXX');
+                  status = 'warning';
                 }
               } else if (selectedCustomerType === 'GOVERNMENT') {
                 if (!row['full_department_name']) {
