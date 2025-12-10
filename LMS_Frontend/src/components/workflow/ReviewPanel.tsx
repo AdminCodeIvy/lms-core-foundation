@@ -146,10 +146,14 @@ export const ReviewPanel = ({
                       <h3 className="font-semibold">Personal Information</h3>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                      <InfoItem label="First Name" value={customer.person_data.first_name} />
-                      <InfoItem label="Father Name" value={customer.person_data.father_name} />
-                      <InfoItem label="Grandfather Name" value={customer.person_data.grandfather_name} />
-                      <InfoItem label="Fourth Name" value={customer.person_data.fourth_name} />
+                      <InfoItem 
+                        label="Full Name" 
+                        value={customer.person_data.full_name || `${customer.person_data.first_name} ${customer.person_data.father_name} ${customer.person_data.grandfather_name}${customer.person_data.fourth_name ? ' ' + customer.person_data.fourth_name : ''}`.trim()} 
+                      />
+                      <InfoItem 
+                        label="Mother's Name" 
+                        value={customer.person_data.mothers_name || customer.person_data.fourth_name || 'N/A'} 
+                      />
                       <InfoItem 
                         label="Date of Birth" 
                         value={format(new Date(customer.person_data.date_of_birth), 'MMM dd, yyyy')} 

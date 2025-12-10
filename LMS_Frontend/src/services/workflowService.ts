@@ -14,7 +14,7 @@ export const workflowService = {
   },
 
   async getReviewItem(entityType: 'customer' | 'property', entityId: string) {
-    const response = await apiClient.get<any>(`/workflow/review-queue/${entityType}/${entityId}`);
+    const response = await apiClient.get<any>(`/workflow/review/${entityType}/${entityId}`);
     return response.data;
   },
 

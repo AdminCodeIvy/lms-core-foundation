@@ -305,6 +305,7 @@ const CustomerList = () => {
               <SelectItem value="MOSQUE_HOSPITAL">Mosque/Hospital</SelectItem>
               <SelectItem value="NON_PROFIT">Non-Profit</SelectItem>
               <SelectItem value="CONTRACTOR">Contractor</SelectItem>
+              <SelectItem value="RENTAL">Rental</SelectItem>
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={(value) => { setStatusFilter(value); setPage(1); }}>

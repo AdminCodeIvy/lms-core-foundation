@@ -644,7 +644,7 @@ export default function PropertyDetail() {
                     <div key={owner.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div>
                         <p className="font-medium">
-                          {owner.customer.person?.first_name} {owner.customer.person?.last_name || owner.customer.business?.business_name}
+                          {owner.customer.person?.full_name || `${owner.customer.person?.first_name} ${owner.customer.person?.father_name}`.trim() || owner.customer.business?.business_name}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {owner.customer.reference_id}

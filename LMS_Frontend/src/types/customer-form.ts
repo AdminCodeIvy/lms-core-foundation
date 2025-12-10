@@ -1,4 +1,4 @@
-export type CustomerType = 'PERSON' | 'BUSINESS' | 'GOVERNMENT' | 'MOSQUE_HOSPITAL' | 'NON_PROFIT' | 'CONTRACTOR';
+export type CustomerType = 'PERSON' | 'BUSINESS' | 'GOVERNMENT' | 'MOSQUE_HOSPITAL' | 'NON_PROFIT' | 'CONTRACTOR' | 'RENTAL';
 
 export interface CustomerTypeOption {
   type: CustomerType;

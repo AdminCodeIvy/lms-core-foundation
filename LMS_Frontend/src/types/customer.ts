@@ -6,7 +6,8 @@ export type CustomerType =
   | 'GOVERNMENT' 
   | 'MOSQUE_HOSPITAL' 
   | 'NON_PROFIT' 
-  | 'CONTRACTOR';
+  | 'CONTRACTOR'
+  | 'RENTAL';
 
 export type CustomerStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'ARCHIVED';
 
@@ -136,6 +137,29 @@ export interface CustomerContractor {
   email: string;
 }
 
+export interface CustomerRental {
+  customer_id: string;
+  pr_id: string;
+  rental_name: string;
+  rental_mothers_name: string;
+  date_of_birth: string;
+  place_of_birth: string;
+  gender: 'MALE' | 'FEMALE';
+  nationality: string;
+  mobile_number_1: string;
+  mobile_number_2: string;
+  email: string;
+  id_type: string;
+  id_number: string | null;
+  place_of_issue: string | null;
+  issue_date: string | null;
+  expiry_date: string | null;
+  carrier_mobile_1: string | null;
+  carrier_mobile_2: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_number: string | null;
+}
+
 export interface CustomerWithDetails extends Customer {
   person_data?: CustomerPerson;
   business_data?: CustomerBusiness;
@@ -143,6 +167,7 @@ export interface CustomerWithDetails extends Customer {
   mosque_hospital_data?: CustomerMosqueHospital;
   non_profit_data?: CustomerNonProfit;
   contractor_data?: CustomerContractor;
+  rental_data?: CustomerRental;
   created_by_user?: {
     full_name: string;
   };

@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import * as XLSX from 'xlsx';
 
 type UploadType = 'CUSTOMER' | 'PROPERTY' | 'TAX_ASSESSMENT' | 'TAX_PAYMENT';
-type CustomerSubType = 'PERSON' | 'BUSINESS' | 'GOVERNMENT' | 'MOSQUE_HOSPITAL' | 'NON_PROFIT' | 'CONTRACTOR';
+type CustomerSubType = 'PERSON' | 'BUSINESS' | 'GOVERNMENT' | 'MOSQUE_HOSPITAL' | 'NON_PROFIT' | 'CONTRACTOR' | 'RENTAL';
 
 interface ValidationRow {
   rowNumber: number;
@@ -50,6 +50,51 @@ const uploadTypes = [
     description: 'Upload tax payment records',
     icon: DollarSign,
     color: 'bg-orange-500',
+  },
+];
+
+const customerSubTypes = [
+  {
+    type: 'PERSON' as CustomerSubType,
+    title: 'Person / Individual',
+    description: 'Individual property owner or stakeholder',
+    icon: Users,
+  },
+  {
+    type: 'BUSINESS' as CustomerSubType,
+    title: 'Business / Commercial',
+    description: 'Commercial business or company',
+    icon: Users,
+  },
+  {
+    type: 'GOVERNMENT' as CustomerSubType,
+    title: 'Government Property',
+    description: 'Government ministry or department',
+    icon: Users,
+  },
+  {
+    type: 'MOSQUE_HOSPITAL' as CustomerSubType,
+    title: 'Mosque / Hospital',
+    description: 'Public property - religious or healthcare',
+    icon: Users,
+  },
+  {
+    type: 'NON_PROFIT' as CustomerSubType,
+    title: 'Non-Profit',
+    description: 'NGO or non-profit organization',
+    icon: Users,
+  },
+  {
+    type: 'CONTRACTOR' as CustomerSubType,
+    title: 'Contractor',
+    description: 'Construction service provider',
+    icon: Users,
+  },
+  {
+    type: 'RENTAL' as CustomerSubType,
+    title: 'Rental Customer',
+    description: 'Property rental customer or tenant',
+    icon: Home,
   },
 ];
 
@@ -115,19 +160,10 @@ export default function BulkUpload() {
     }
   };
 
-  const handleCustomerTypeSelect = (subType: CustomerSubType) => {
-    setSelectedCustomerType(subType);
+  const handleCustomerTypeSelect = (customerType: CustomerSubType) => {
+    setSelectedCustomerType(customerType);
     setStep(3); // Go to template download
   };
-
-  const customerSubTypes = [
-    { type: 'PERSON' as CustomerSubType, title: 'Person', description: 'Individual customers', icon: Users },
-    { type: 'BUSINESS' as CustomerSubType, title: 'Business', description: 'Business entities and companies', icon: Users },
-    { type: 'GOVERNMENT' as CustomerSubType, title: 'Government', description: 'Government departments and agencies', icon: Users },
-    { type: 'MOSQUE_HOSPITAL' as CustomerSubType, title: 'Mosque/Hospital', description: 'Religious and healthcare facilities', icon: Users },
-    { type: 'NON_PROFIT' as CustomerSubType, title: 'Non-Profit', description: 'Non-profit organizations', icon: Users },
-    { type: 'CONTRACTOR' as CustomerSubType, title: 'Contractor', description: 'Contractors and service providers', icon: Users },
-  ];
 
   const handleDownloadTemplate = async () => {
     try {
@@ -189,44 +225,42 @@ export default function BulkUpload() {
           case 'PERSON':
             filename = 'customer_person_template.xlsx';
             headers = [
-              'first_name',
-              'father_name',
-              'grandfather_name',
-              'fourth_name',
+              'pr_id',
+              'full_name',
+              'mothers_name',
               'date_of_birth',
               'place_of_birth',
               'gender',
               'nationality',
               'mobile_number_1',
+              'email',
+              'id_type',
               'carrier_mobile_1',
               'mobile_number_2',
               'carrier_mobile_2',
               'emergency_contact_name',
               'emergency_contact_number',
-              'email',
-              'id_type',
               'id_number',
               'place_of_issue',
               'issue_date',
               'expiry_date',
             ];
             sampleRow = {
-              first_name: 'Ahmed',
-              father_name: 'Mohamed',
-              grandfather_name: 'Ali',
-              fourth_name: 'Hassan',
+              pr_id: 'PR-001',
+              full_name: 'Ahmed Mohamed Ali',
+              mothers_name: 'Fatima Hassan',
               date_of_birth: '1990-05-15',
               place_of_birth: 'Jigjiga',
               gender: 'MALE',
               nationality: 'Ethiopia',
               mobile_number_1: '+251912345678',
+              email: 'ahmed.mohamed@example.com',
+              id_type: 'National ID Card',
               carrier_mobile_1: 'Ethio Telecom',
               mobile_number_2: '+251923456789',
               carrier_mobile_2: 'Safaricom',
               emergency_contact_name: 'Fatima Ahmed',
               emergency_contact_number: '+251987654321',
-              email: 'ahmed.mohamed@example.com',
-              id_type: 'National ID Card',
               id_number: 'ID123456',
               place_of_issue: 'Ethiopia',
               issue_date: '2015-01-01',
@@ -380,6 +414,51 @@ export default function BulkUpload() {
               mobile_number_2: '',
               carrier_mobile_2: '',
               email: 'ahmed@construction.com',
+            };
+            break;
+          case 'RENTAL':
+            filename = 'customer_rental_template.xlsx';
+            headers = [
+              'pr_id',
+              'rental_name',
+              'rental_mothers_name',
+              'date_of_birth',
+              'place_of_birth',
+              'gender',
+              'nationality',
+              'mobile_number_1',
+              'mobile_number_2',
+              'email',
+              'id_type',
+              'carrier_mobile_1',
+              'carrier_mobile_2',
+              'emergency_contact_name',
+              'emergency_contact_number',
+              'id_number',
+              'place_of_issue',
+              'issue_date',
+              'expiry_date',
+            ];
+            sampleRow = {
+              pr_id: 'PR-RENTAL-001',
+              rental_name: 'Sara Ahmed Mohamed',
+              rental_mothers_name: 'Amina Hassan',
+              date_of_birth: '1992-03-20',
+              place_of_birth: 'Jigjiga',
+              gender: 'FEMALE',
+              nationality: 'Ethiopia',
+              mobile_number_1: '+251916789012',
+              mobile_number_2: '+251927890123',
+              email: 'sara.ahmed@example.com',
+              id_type: 'National ID Card',
+              carrier_mobile_1: 'Ethio Telecom',
+              carrier_mobile_2: 'Safaricom',
+              emergency_contact_name: 'Ahmed Mohamed',
+              emergency_contact_number: '+251918901234',
+              id_number: 'RID789012',
+              place_of_issue: 'Ethiopia',
+              issue_date: '2018-01-01',
+              expiry_date: '2033-01-01',
             };
             break;
         }
@@ -715,16 +794,69 @@ export default function BulkUpload() {
             if (selectedType === 'CUSTOMER') {
               // Validate based on customer sub-type
               if (selectedCustomerType === 'PERSON') {
-                if (!row['first_name']) {
-                  messages.push('First name is required');
+                // Helper function to get value from row with flexible column names
+                const getValue = (row: any, ...possibleKeys: string[]) => {
+                  // First try exact matches
+                  for (const key of possibleKeys) {
+                    if (row[key] !== undefined && row[key] !== null && row[key].toString().trim() !== '') {
+                      return row[key];
+                    }
+                  }
+                  
+                  // Then try fuzzy matches (trimmed keys)
+                  const rowKeys = Object.keys(row);
+                  for (const possibleKey of possibleKeys) {
+                    for (const rowKey of rowKeys) {
+                      if (rowKey.trim().toLowerCase() === possibleKey.toLowerCase()) {
+                        if (row[rowKey] !== undefined && row[rowKey] !== null && row[rowKey].toString().trim() !== '') {
+                          return row[rowKey];
+                        }
+                      }
+                    }
+                  }
+                  
+                  return null;
+                };
+
+                // Validate 10 required fields for PERSON with flexible column names
+                if (!getValue(row, 'pr_id', 'PR-ID', 'pr-id', 'PR_ID')) {
+                  messages.push('PR-ID is required (column: pr_id, PR-ID, or PR_ID)');
                   status = 'error';
                 }
-                if (!row['father_name']) {
-                  messages.push('Father name is required');
+                if (!getValue(row, 'full_name', 'Full Name', 'Full Name ', ' Full Name', 'full-name', 'Full_Name', 'fullname', 'name', 'Name')) {
+                  messages.push('Full Name is required (column: full_name, Full Name, or Name)');
                   status = 'error';
                 }
-                if (!row['mobile_number_1']) {
-                  messages.push('Mobile number 1 is required');
+                if (!getValue(row, 'mothers_name', 'Mothers Name', 'mothers-name', 'Mothers_Name', 'Mother Name', 'mother_name')) {
+                  messages.push('Mothers Name is required (column: mothers_name, Mothers Name, or Mother Name)');
+                  status = 'error';
+                }
+                if (!getValue(row, 'date_of_birth', 'Date of Birth', 'Date of brith', 'date-of-birth', 'Date_of_Birth', 'DOB', 'dob')) {
+                  messages.push('Date of Birth is required (column: date_of_birth, Date of Birth, Date of brith, or DOB)');
+                  status = 'error';
+                }
+                if (!getValue(row, 'place_of_birth', 'Place of Birth', 'place-of-birth', 'Place_of_Birth', 'POB', 'pob')) {
+                  messages.push('Place of Birth is required (column: place_of_birth, Place of Birth, or POB)');
+                  status = 'error';
+                }
+                if (!getValue(row, 'gender', 'Gender')) {
+                  messages.push('Gender is required (column: gender or Gender)');
+                  status = 'error';
+                }
+                if (!getValue(row, 'nationality', 'Nationality')) {
+                  messages.push('Nationality is required (column: nationality or Nationality)');
+                  status = 'error';
+                }
+                if (!getValue(row, 'mobile_number_1', 'Mobile Number 1', 'mobile-number-1', 'Mobile_Number_1', 'phone1', 'Phone 1')) {
+                  messages.push('Mobile Number 1 is required (column: mobile_number_1, Mobile Number 1, or Phone 1)');
+                  status = 'error';
+                }
+                if (!getValue(row, 'email', 'Email', 'E-mail', 'e_mail')) {
+                  messages.push('Email is required (column: email or Email)');
+                  status = 'error';
+                }
+                if (!getValue(row, 'id_type', 'ID Type', 'id-type', 'ID_Type', 'Type of ID')) {
+                  messages.push('ID Type is required (column: id_type, ID Type, or Type of ID)');
                   status = 'error';
                 }
               } else if (selectedCustomerType === 'BUSINESS') {
@@ -770,6 +902,52 @@ export default function BulkUpload() {
                 }
                 if (!row['mobile_number_1']) {
                   messages.push('Mobile number 1 is required');
+                  status = 'error';
+                }
+              } else if (selectedCustomerType === 'RENTAL') {
+                // Validate 11 required fields for RENTAL
+                if (!row['pr_id']) {
+                  messages.push('PR-ID is required');
+                  status = 'error';
+                }
+                if (!row['rental_name']) {
+                  messages.push('Rental name is required');
+                  status = 'error';
+                }
+                if (!row['rental_mothers_name']) {
+                  messages.push('Rental mother\'s name is required');
+                  status = 'error';
+                }
+                if (!row['date_of_birth']) {
+                  messages.push('Date of birth is required');
+                  status = 'error';
+                }
+                if (!row['place_of_birth']) {
+                  messages.push('Place of birth is required');
+                  status = 'error';
+                }
+                if (!row['gender']) {
+                  messages.push('Gender is required');
+                  status = 'error';
+                }
+                if (!row['nationality']) {
+                  messages.push('Nationality is required');
+                  status = 'error';
+                }
+                if (!row['mobile_number_1']) {
+                  messages.push('Mobile number 1 is required');
+                  status = 'error';
+                }
+                if (!row['mobile_number_2']) {
+                  messages.push('Mobile number 2 is required');
+                  status = 'error';
+                }
+                if (!row['email']) {
+                  messages.push('Email is required');
+                  status = 'error';
+                }
+                if (!row['id_type']) {
+                  messages.push('ID type is required');
                   status = 'error';
                 }
               }
@@ -892,7 +1070,7 @@ export default function BulkUpload() {
           entityType: selectedType === 'TAX_ASSESSMENT' || selectedType === 'TAX_PAYMENT' 
             ? 'tax' 
             : selectedType.toLowerCase(),
-          data: validRows.map(r => r.data),
+          validData: validRows.map(r => r.data), // Send as validData for backend
         }),
       });
 

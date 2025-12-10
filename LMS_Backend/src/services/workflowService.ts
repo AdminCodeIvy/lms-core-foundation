@@ -33,7 +33,7 @@ export class WorkflowService {
           created_by,
           created_at,
           submitted_at,
-          customer_person(first_name, fourth_name),
+          customer_person(first_name, fourth_name, full_name, pr_id),
           customer_business(business_name),
           customer_government(full_department_name)
         `
@@ -50,9 +50,14 @@ export class WorkflowService {
                 ? customer.customer_person[0] 
                 : customer.customer_person;
               if (person) {
-                name = person.fourth_name 
-                  ? `${person.first_name} ${person.fourth_name}` 
-                  : person.first_name;
+                // Use new full_name field if available, otherwise construct from old fields
+                if (person.full_name) {
+                  name = person.full_name;
+                } else {
+                  name = person.fourth_name 
+                    ? `${person.first_name} ${person.fourth_name}` 
+                    : person.first_name;
+                }
               }
               break;
             case 'BUSINESS':

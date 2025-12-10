@@ -56,8 +56,51 @@ export class BulkUploadService {
       validRecords: validRecords.length,
       invalidRecords: errors.length,
       errors,
-      canCommit: errors.length === 0,
+      canCommit: validRecords.length > 0, // Allow commit if there are any valid records
+      validData: validRecords, // Include valid records for commit
     };
+  }
+
+  /**
+   * Commits validated bulk upload data to the database
+   * Only processes valid records, skips invalid ones
+   * 
+   * @param uploadData - The data to commit (should include validData from validation)
+   * @param userId - ID of the user performing the upload
+   * @returns Results object with success/failure counts and error details
+   */
+  async commitUpload(uploadData: any, userId: string) {
+    const { entityType, validData } = uploadData;
+
+    if (!validData || validData.length === 0) {
+      throw new AppError('No valid records to commit', 400);
+    }
+
+    const results = {
+      successful: 0,
+      failed: 0,
+      errors: [] as any[],
+    };
+
+    // Process each valid record
+    for (let i = 0; i < validData.length; i++) {
+      try {
+        console.log(`Processing record ${i + 1}/${validData.length}:`, JSON.stringify(validData[i]).substring(0, 100));
+        await this.createRecord(entityType, validData[i], userId);
+        results.successful++;
+        console.log(`✓ Record ${i + 1} created successfully`);
+      } catch (error: any) {
+        console.error(`✗ Record ${i + 1} failed:`, error.message);
+        results.failed++;
+        results.errors.push({
+          row: i + 1,
+          error: error.message,
+          data: validData[i],
+        });
+      }
+    }
+
+    return results;
   }
 
   /**
@@ -74,31 +117,34 @@ export class BulkUploadService {
     switch (entityType) {
       case 'customer':
         // Detect customer type from data
-        if (record.first_name) {
-          // PERSON type
-          if (!record.first_name) errors.push('first_name is required');
-          if (!record.father_name) errors.push('father_name is required');
-          if (!record.mobile_number_1) errors.push('mobile_number_1 is required');
+        if (record.first_name || record.full_name || record.pr_id) {
+          // PERSON type - validate the 10 required fields
+          this.validatePersonFields(record, errors);
         } else if (record.business_name) {
-          // BUSINESS type
-          if (!record.business_name) errors.push('business_name is required');
-          if (!record.mobile_number_1) errors.push('mobile_number_1 is required');
+          // BUSINESS type - all fields are optional, just validate format if provided
+          this.validateBusinessFields(record, errors);
         } else if (record.full_department_name) {
           // GOVERNMENT type
           if (!record.full_department_name) errors.push('full_department_name is required');
           if (!record.mobile_number_1) errors.push('mobile_number_1 is required');
+          if (!record.district_id) errors.push('district_id is required for GOVERNMENT customers');
         } else if (record.full_name) {
           // MOSQUE_HOSPITAL type
           if (!record.full_name) errors.push('full_name is required');
           if (!record.mobile_number_1) errors.push('mobile_number_1 is required');
+          if (!record.district_id) errors.push('district_id is required for MOSQUE_HOSPITAL customers');
         } else if (record.full_non_profit_name) {
           // NON_PROFIT type
           if (!record.full_non_profit_name) errors.push('full_non_profit_name is required');
           if (!record.mobile_number_1) errors.push('mobile_number_1 is required');
+          if (!record.district_id) errors.push('district_id is required for NON_PROFIT customers. Use: JJG, HRG, DRD, or ADD');
         } else if (record.full_contractor_name) {
           // CONTRACTOR type
           if (!record.full_contractor_name) errors.push('full_contractor_name is required');
           if (!record.mobile_number_1) errors.push('mobile_number_1 is required');
+        } else if (record.rental_name) {
+          // RENTAL type - validate the 11 required fields
+          this.validateRentalFields(record, errors);
         } else {
           errors.push('Unable to determine customer type from data');
         }
@@ -133,51 +179,437 @@ export class BulkUploadService {
   }
 
   /**
-   * Commits validated bulk upload data to the database
-   * 
-   * Processes each record sequentially to avoid race conditions in reference ID generation.
-   * Creates activity logs and notifications for each successful import.
-   * 
-   * @param uploadData - The validated data to commit
-   * @param userId - ID of the user performing the upload
-   * @returns Results object with success/failure counts and error details
-   * @throws AppError if validation fails
+   * Validates PERSON customer fields with proper required/optional handling
    */
-  async commitUpload(uploadData: BulkUploadData, userId: string) {
-    const { entityType, data } = uploadData;
-
-    // Validate first
-    const validation = await this.validateUpload(uploadData, userId);
-    
-    if (!validation.canCommit) {
-      throw new AppError('Cannot commit upload with validation errors', 400);
-    }
-
-    const results = {
-      successful: 0,
-      failed: 0,
-      errors: [] as any[],
+  private validatePersonFields(record: any, errors: string[]): void {
+    // Helper functions
+    const isEmpty = (value: any): boolean => {
+      return value === null || value === undefined || value === '' || 
+             (typeof value === 'string' && value.trim() === '');
     };
 
-    // Process each record - fetch count inside loop to avoid duplicates
-    for (let i = 0; i < data.length; i++) {
-      try {
-        console.log(`Processing record ${i + 1}/${data.length}:`, JSON.stringify(data[i]).substring(0, 100));
-        await this.createRecord(entityType, data[i], userId);
-        results.successful++;
-        console.log(`✓ Record ${i + 1} created successfully`);
-      } catch (error: any) {
-        console.error(`✗ Record ${i + 1} failed:`, error.message);
-        results.failed++;
-        results.errors.push({
-          row: i + 1,
-          error: error.message,
-          data: data[i],
-        });
+    const isValidEmail = (email: string): boolean => {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    };
+
+    const isValidMobileNumber = (mobile: string): boolean => {
+      const mobileRegex = /^\+\d{1,3}-?\d{3,4}-?\d{3,4}-?\d{3,4}$/;
+      return mobileRegex.test(mobile);
+    };
+
+    const isValidDate = (dateStr: string): boolean => {
+      const date = new Date(dateStr);
+      return !isNaN(date.getTime()) && /^\d{4}-\d{2}-\d{2}$/.test(dateStr);
+    };
+
+    const calculateAge = (birthDate: string): number => {
+      const today = new Date();
+      const birth = new Date(birthDate);
+      let age = today.getFullYear() - birth.getFullYear();
+      const monthDiff = today.getMonth() - birth.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+        age--;
+      }
+      return age;
+    };
+
+    // 1. PR-ID (required)
+    if (isEmpty(record.pr_id)) {
+      errors.push('pr_id is required');
+    } else if (typeof record.pr_id !== 'string' || record.pr_id.trim().length < 1) {
+      errors.push('pr_id must be a valid string');
+    } else if (record.pr_id.trim().length > 50) {
+      errors.push('pr_id must be 50 characters or less');
+    }
+
+    // 2. Full Name (required)
+    if (isEmpty(record.full_name)) {
+      errors.push('full_name is required');
+    } else if (typeof record.full_name !== 'string' || record.full_name.trim().length < 2) {
+      errors.push('full_name must be at least 2 characters');
+    } else if (record.full_name.trim().length > 200) {
+      errors.push('full_name must be 200 characters or less');
+    }
+
+    // 3. Mother's Name (required)
+    if (isEmpty(record.mothers_name)) {
+      errors.push('mothers_name is required');
+    } else if (typeof record.mothers_name !== 'string' || record.mothers_name.trim().length < 2) {
+      errors.push('mothers_name must be at least 2 characters');
+    } else if (record.mothers_name.trim().length > 100) {
+      errors.push('mothers_name must be 100 characters or less');
+    }
+
+    // 4. Date of Birth (required)
+    if (isEmpty(record.date_of_birth)) {
+      errors.push('date_of_birth is required');
+    } else if (!isValidDate(record.date_of_birth)) {
+      errors.push('date_of_birth must be in YYYY-MM-DD format');
+    } else if (calculateAge(record.date_of_birth) < 18) {
+      errors.push('Person must be at least 18 years old');
+    }
+
+    // 5. Place of Birth (required)
+    if (isEmpty(record.place_of_birth)) {
+      errors.push('place_of_birth is required');
+    } else if (typeof record.place_of_birth !== 'string' || record.place_of_birth.trim().length < 1) {
+      errors.push('place_of_birth must be a valid string');
+    } else if (record.place_of_birth.trim().length > 200) {
+      errors.push('place_of_birth must be 200 characters or less');
+    }
+
+    // 6. Gender (required)
+    if (isEmpty(record.gender)) {
+      errors.push('gender is required');
+    } else if (!['MALE', 'FEMALE', 'male', 'female'].includes(record.gender)) {
+      errors.push('gender must be MALE or FEMALE');
+    }
+
+    // 7. Nationality (required)
+    if (isEmpty(record.nationality)) {
+      errors.push('nationality is required');
+    } else if (typeof record.nationality !== 'string' || record.nationality.trim().length < 1) {
+      errors.push('nationality must be a valid string');
+    }
+
+    // 8. Mobile Number 1 (required)
+    if (isEmpty(record.mobile_number_1)) {
+      errors.push('mobile_number_1 is required');
+    } else if (!isValidMobileNumber(record.mobile_number_1)) {
+      errors.push('mobile_number_1 must be in format +XXX-XXX-XXX-XXX (e.g., +252-612-345-678)');
+    }
+
+    // 9. Email (required)
+    if (isEmpty(record.email)) {
+      errors.push('email is required');
+    } else if (!isValidEmail(record.email)) {
+      errors.push('email must be a valid email address');
+    } else if (record.email.length > 255) {
+      errors.push('email must be 255 characters or less');
+    }
+
+    // 10. ID Type (required)
+    if (isEmpty(record.id_type)) {
+      errors.push('id_type is required');
+    } else if (typeof record.id_type !== 'string' || record.id_type.trim().length < 1) {
+      errors.push('id_type must be a valid string');
+    }
+
+    // OPTIONAL FIELDS - Only validate format if provided (not empty)
+    
+    // Mobile Number 2 (optional)
+    if (!isEmpty(record.mobile_number_2) && !isValidMobileNumber(record.mobile_number_2)) {
+      errors.push('mobile_number_2 must be in format +XXX-XXX-XXX-XXX if provided');
+    }
+
+    // Emergency Contact Number (optional)
+    if (!isEmpty(record.emergency_contact_number) && !isValidMobileNumber(record.emergency_contact_number)) {
+      errors.push('emergency_contact_number must be in format +XXX-XXX-XXX-XXX if provided');
+    }
+
+    // Emergency Contact Name (optional)
+    if (!isEmpty(record.emergency_contact_name) && record.emergency_contact_name.trim().length > 200) {
+      errors.push('emergency_contact_name must be 200 characters or less if provided');
+    }
+
+    // ID Number (optional)
+    if (!isEmpty(record.id_number) && record.id_number.trim().length > 100) {
+      errors.push('id_number must be 100 characters or less if provided');
+    }
+
+    // Issue Date (optional)
+    if (!isEmpty(record.issue_date)) {
+      if (!isValidDate(record.issue_date)) {
+        errors.push('issue_date must be in YYYY-MM-DD format if provided');
+      } else if (new Date(record.issue_date) > new Date()) {
+        errors.push('issue_date cannot be in the future if provided');
       }
     }
 
-    return results;
+    // Expiry Date (optional)
+    if (!isEmpty(record.expiry_date)) {
+      if (!isValidDate(record.expiry_date)) {
+        errors.push('expiry_date must be in YYYY-MM-DD format if provided');
+      } else if (!isEmpty(record.issue_date) && new Date(record.expiry_date) <= new Date(record.issue_date)) {
+        errors.push('expiry_date must be after issue_date if both are provided');
+      }
+    }
+  }
+
+  /**
+   * Validates RENTAL customer fields with proper required/optional handling
+   */
+  private validateRentalFields(record: any, errors: string[]): void {
+    // Helper functions (same as person validation)
+    const isEmpty = (value: any): boolean => {
+      return value === null || value === undefined || value === '' || 
+             (typeof value === 'string' && value.trim() === '');
+    };
+
+    const isValidEmail = (email: string): boolean => {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    };
+
+    const isValidMobileNumber = (mobile: string): boolean => {
+      const mobileRegex = /^\+\d{1,3}-?\d{3,4}-?\d{3,4}-?\d{3,4}$/;
+      return mobileRegex.test(mobile);
+    };
+
+    const isValidDate = (dateStr: string): boolean => {
+      const date = new Date(dateStr);
+      return !isNaN(date.getTime()) && /^\d{4}-\d{2}-\d{2}$/.test(dateStr);
+    };
+
+    const calculateAge = (birthDate: string): number => {
+      const today = new Date();
+      const birth = new Date(birthDate);
+      let age = today.getFullYear() - birth.getFullYear();
+      const monthDiff = today.getMonth() - birth.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+        age--;
+      }
+      return age;
+    };
+
+    // 11 Required fields for RENTAL customers
+    
+    // 1. PR-ID (required)
+    if (isEmpty(record.pr_id)) {
+      errors.push('pr_id is required');
+    } else if (typeof record.pr_id !== 'string' || record.pr_id.trim().length < 1) {
+      errors.push('pr_id must be a valid string');
+    } else if (record.pr_id.trim().length > 50) {
+      errors.push('pr_id must be 50 characters or less');
+    }
+
+    // 2. Rental Name (required)
+    if (isEmpty(record.rental_name)) {
+      errors.push('rental_name is required');
+    } else if (typeof record.rental_name !== 'string' || record.rental_name.trim().length < 2) {
+      errors.push('rental_name must be at least 2 characters');
+    } else if (record.rental_name.trim().length > 200) {
+      errors.push('rental_name must be 200 characters or less');
+    }
+
+    // 3. Rental Mother's Name (required)
+    if (isEmpty(record.rental_mothers_name)) {
+      errors.push('rental_mothers_name is required');
+    } else if (typeof record.rental_mothers_name !== 'string' || record.rental_mothers_name.trim().length < 2) {
+      errors.push('rental_mothers_name must be at least 2 characters');
+    } else if (record.rental_mothers_name.trim().length > 100) {
+      errors.push('rental_mothers_name must be 100 characters or less');
+    }
+
+    // 4. Date of Birth (required)
+    if (isEmpty(record.date_of_birth)) {
+      errors.push('date_of_birth is required');
+    } else if (!isValidDate(record.date_of_birth)) {
+      errors.push('date_of_birth must be in YYYY-MM-DD format');
+    } else if (calculateAge(record.date_of_birth) < 18) {
+      errors.push('Person must be at least 18 years old');
+    }
+
+    // 5. Place of Birth (required)
+    if (isEmpty(record.place_of_birth)) {
+      errors.push('place_of_birth is required');
+    } else if (typeof record.place_of_birth !== 'string' || record.place_of_birth.trim().length < 1) {
+      errors.push('place_of_birth must be a valid string');
+    } else if (record.place_of_birth.trim().length > 200) {
+      errors.push('place_of_birth must be 200 characters or less');
+    }
+
+    // 6. Gender (required)
+    if (isEmpty(record.gender)) {
+      errors.push('gender is required');
+    } else if (!['MALE', 'FEMALE', 'male', 'female'].includes(record.gender)) {
+      errors.push('gender must be MALE or FEMALE');
+    }
+
+    // 7. Nationality (required)
+    if (isEmpty(record.nationality)) {
+      errors.push('nationality is required');
+    } else if (typeof record.nationality !== 'string' || record.nationality.trim().length < 1) {
+      errors.push('nationality must be a valid string');
+    }
+
+    // 8. Mobile Number 1 (required)
+    if (isEmpty(record.mobile_number_1)) {
+      errors.push('mobile_number_1 is required');
+    } else if (!isValidMobileNumber(record.mobile_number_1)) {
+      errors.push('mobile_number_1 must be in format +XXX-XXX-XXX-XXX (e.g., +252-612-345-678)');
+    }
+
+    // 9. Mobile Number 2 (required for RENTAL)
+    if (isEmpty(record.mobile_number_2)) {
+      errors.push('mobile_number_2 is required');
+    } else if (!isValidMobileNumber(record.mobile_number_2)) {
+      errors.push('mobile_number_2 must be in format +XXX-XXX-XXX-XXX (e.g., +252-612-345-679)');
+    }
+
+    // 10. Email (required)
+    if (isEmpty(record.email)) {
+      errors.push('email is required');
+    } else if (!isValidEmail(record.email)) {
+      errors.push('email must be a valid email address');
+    } else if (record.email.length > 255) {
+      errors.push('email must be 255 characters or less');
+    }
+
+    // 11. ID Type (required)
+    if (isEmpty(record.id_type)) {
+      errors.push('id_type is required');
+    } else if (typeof record.id_type !== 'string' || record.id_type.trim().length < 1) {
+      errors.push('id_type must be a valid string');
+    }
+
+    // OPTIONAL FIELDS - Only validate format if provided (not empty)
+    
+    // Emergency Contact Number (optional)
+    if (!isEmpty(record.emergency_contact_number) && !isValidMobileNumber(record.emergency_contact_number)) {
+      errors.push('emergency_contact_number must be in format +XXX-XXX-XXX-XXX if provided');
+    }
+
+    // Emergency Contact Name (optional)
+    if (!isEmpty(record.emergency_contact_name) && record.emergency_contact_name.trim().length > 200) {
+      errors.push('emergency_contact_name must be 200 characters or less if provided');
+    }
+
+    // ID Number (optional)
+    if (!isEmpty(record.id_number) && record.id_number.trim().length > 100) {
+      errors.push('id_number must be 100 characters or less if provided');
+    }
+
+    // Issue Date (optional)
+    if (!isEmpty(record.issue_date)) {
+      if (!isValidDate(record.issue_date)) {
+        errors.push('issue_date must be in YYYY-MM-DD format if provided');
+      } else if (new Date(record.issue_date) > new Date()) {
+        errors.push('issue_date cannot be in the future if provided');
+      }
+    }
+
+    // Expiry Date (optional)
+    if (!isEmpty(record.expiry_date)) {
+      if (!isValidDate(record.expiry_date)) {
+        errors.push('expiry_date must be in YYYY-MM-DD format if provided');
+      } else if (!isEmpty(record.issue_date) && new Date(record.expiry_date) <= new Date(record.issue_date)) {
+        errors.push('expiry_date must be after issue_date if both are provided');
+      }
+    }
+  }
+
+  /**
+   * Validates BUSINESS customer fields - all fields are optional, only validates format if provided
+   */
+  private validateBusinessFields(record: any, errors: string[]): void {
+    // Helper functions
+    const isEmpty = (value: any): boolean => {
+      return value === null || value === undefined || value === '' || 
+             (typeof value === 'string' && value.trim() === '');
+    };
+
+    const isValidEmail = (email: string): boolean => {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    };
+
+    const isValidMobileNumber = (mobile: string): boolean => {
+      const mobileRegex = /^\+\d{1,3}-?\d{3,4}-?\d{3,4}-?\d{3,4}$/;
+      return mobileRegex.test(mobile);
+    };
+
+    // ALL FIELDS ARE OPTIONAL - Only validate format if provided
+    
+    // PR-ID (optional)
+    if (!isEmpty(record.pr_id) && record.pr_id.trim().length > 50) {
+      errors.push('pr_id must be 50 characters or less if provided');
+    }
+
+    // Business Name (optional)
+    if (!isEmpty(record.business_name) && record.business_name.trim().length > 200) {
+      errors.push('business_name must be 200 characters or less if provided');
+    }
+
+    // Business License Number (optional)
+    if (!isEmpty(record.business_license_number) && record.business_license_number.trim().length > 100) {
+      errors.push('business_license_number must be 100 characters or less if provided');
+    }
+
+    // Business Address (optional)
+    if (!isEmpty(record.business_address) && record.business_address.trim().length > 500) {
+      errors.push('business_address must be 500 characters or less if provided');
+    }
+
+    // Rental Name (optional)
+    if (!isEmpty(record.rental_name) && record.rental_name.trim().length > 200) {
+      errors.push('rental_name must be 200 characters or less if provided');
+    }
+
+    // Mobile Number 1 (optional)
+    if (!isEmpty(record.mobile_number_1) && !isValidMobileNumber(record.mobile_number_1)) {
+      errors.push('mobile_number_1 must be in format +XXX-XXX-XXX-XXX if provided (e.g., +252-612-345-678)');
+    }
+
+    // Mobile Number 2 (optional)
+    if (!isEmpty(record.mobile_number_2) && !isValidMobileNumber(record.mobile_number_2)) {
+      errors.push('mobile_number_2 must be in format +XXX-XXX-XXX-XXX if provided (e.g., +252-612-345-679)');
+    }
+
+    // Email (optional)
+    if (!isEmpty(record.email)) {
+      if (!isValidEmail(record.email)) {
+        errors.push('email must be a valid email address if provided');
+      } else if (record.email.length > 255) {
+        errors.push('email must be 255 characters or less if provided');
+      }
+    }
+
+    // Size (optional)
+    if (!isEmpty(record.size) && record.size.trim().length > 100) {
+      errors.push('size must be 100 characters or less if provided');
+    }
+
+    // Floor (optional)
+    if (!isEmpty(record.floor) && record.floor.trim().length > 50) {
+      errors.push('floor must be 50 characters or less if provided');
+    }
+
+    // File Number (optional)
+    if (!isEmpty(record.file_number) && record.file_number.trim().length > 100) {
+      errors.push('file_number must be 100 characters or less if provided');
+    }
+
+    // Business Registration Number (optional)
+    if (!isEmpty(record.business_registration_number) && record.business_registration_number.trim().length > 100) {
+      errors.push('business_registration_number must be 100 characters or less if provided');
+    }
+
+    // Contact Name (optional)
+    if (!isEmpty(record.contact_name) && record.contact_name.trim().length > 200) {
+      errors.push('contact_name must be 200 characters or less if provided');
+    }
+
+    // Carrier Network (optional)
+    if (!isEmpty(record.carrier_network) && record.carrier_network.trim().length > 100) {
+      errors.push('carrier_network must be 100 characters or less if provided');
+    }
+
+    // Street (optional)
+    if (!isEmpty(record.street) && record.street.trim().length > 200) {
+      errors.push('street must be 200 characters or less if provided');
+    }
+
+    // Section (optional)
+    if (!isEmpty(record.section) && record.section.trim().length > 100) {
+      errors.push('section must be 100 characters or less if provided');
+    }
+
+    // Block (optional)
+    if (!isEmpty(record.block) && record.block.trim().length > 100) {
+      errors.push('block must be 100 characters or less if provided');
+    }
   }
 
   private async createRecord(entityType: string, record: any, userId: string) {
@@ -194,13 +626,21 @@ export class BulkUploadService {
   }
 
   private async createCustomer(data: any, userId: string) {
+    // Helper function to check if a value is a valid UUID
+    const isValidUUID = (value: any): boolean => {
+      if (!value || typeof value !== 'string') return false;
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      return uuidRegex.test(value);
+    };
+
     // Determine customer type from data
     let customerType = 'PERSON'; // Default
     if (data.business_name) customerType = 'BUSINESS';
     else if (data.full_department_name) customerType = 'GOVERNMENT';
-    else if (data.full_name && !data.first_name) customerType = 'MOSQUE_HOSPITAL';
+    else if (data.full_name && !data.first_name && !data.pr_id) customerType = 'MOSQUE_HOSPITAL';
     else if (data.full_non_profit_name) customerType = 'NON_PROFIT';
     else if (data.full_contractor_name) customerType = 'CONTRACTOR';
+    else if (data.rental_name) customerType = 'RENTAL';
 
     // Generate unique reference ID using timestamp + random to avoid collisions
     const timestamp = Date.now();
@@ -224,37 +664,231 @@ export class BulkUploadService {
     try {
       // Create type-specific details
       const tableName = `customer_${customerType.toLowerCase()}`;
-      const typeData = { ...data };
+      let typeData = { ...data };
       
       // Add customer_id
       typeData.customer_id = customer.id;
 
-      // Set defaults for required fields to avoid NOT NULL constraint violations
+      // Handle district_id - convert code to UUID if needed
+      if (typeData.district_id) {
+        if (!isValidUUID(typeData.district_id)) {
+          // Try to look up district by code
+          const { data: district } = await supabase
+            .from('districts')
+            .select('id, code, name')
+            .eq('code', typeData.district_id)
+            .single();
+          
+          if (district) {
+            typeData.district_id = district.id;
+          } else {
+            // District not found - throw error with helpful message
+            const { data: allDistricts } = await supabase
+              .from('districts')
+              .select('code, name')
+              .limit(10);
+            
+            const availableCodes = allDistricts?.map(d => d.code).join(', ') || 'none';
+            throw new Error(`District code "${typeData.district_id}" not found. Available codes: ${availableCodes}. Please use a valid district code or UUID.`);
+          }
+        }
+      } else if (['BUSINESS', 'GOVERNMENT', 'MOSQUE_HOSPITAL', 'NON_PROFIT'].includes(customerType)) {
+        // District is required for these customer types
+        throw new Error(`district_id is required for ${customerType} customers. Please provide a valid district code or UUID.`);
+      }
+
+      // Map Excel column names to database field names for PERSON type
       if (customerType === 'PERSON') {
-        // Normalize gender to uppercase (MALE, FEMALE)
-        if (typeData.gender) {
-          typeData.gender = typeData.gender.toUpperCase();
+        // Helper function to get value with flexible column names
+        const getValue = (data: any, ...possibleKeys: string[]) => {
+          for (const key of possibleKeys) {
+            if (data[key] !== undefined && data[key] !== null && data[key] !== '') {
+              return data[key];
+            }
+          }
+          // Try case-insensitive and trimmed matches
+          const dataKeys = Object.keys(data);
+          for (const possibleKey of possibleKeys) {
+            for (const dataKey of dataKeys) {
+              if (dataKey.trim().toLowerCase() === possibleKey.toLowerCase()) {
+                if (data[dataKey] !== undefined && data[dataKey] !== null && data[dataKey] !== '') {
+                  return data[dataKey];
+                }
+              }
+            }
+          }
+          return null;
+        };
+
+        // Helper function to convert Excel date to YYYY-MM-DD format
+        const convertExcelDate = (value: any): string | null => {
+          if (!value || value === 'Not found' || value === 'Not Found' || value === '') {
+            return null;
+          }
+
+          // If it's already in YYYY-MM-DD format, return as is
+          if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            return value;
+          }
+
+          // If it's just a year (like "1942"), convert to Jan 1st of that year
+          if (typeof value === 'string' && /^\d{4}$/.test(value)) {
+            return `${value}-01-01`;
+          }
+
+          // If it's an Excel serial number (number > 1000), convert it
+          const numValue = Number(value);
+          if (!isNaN(numValue) && numValue > 1000) {
+            // Excel serial date conversion (Excel epoch is 1900-01-01, but Excel incorrectly treats 1900 as leap year)
+            const excelEpoch = new Date(1899, 11, 30); // December 30, 1899
+            const convertedDate = new Date(excelEpoch.getTime() + numValue * 24 * 60 * 60 * 1000);
+            
+            const year = convertedDate.getFullYear();
+            const month = String(convertedDate.getMonth() + 1).padStart(2, '0');
+            const day = String(convertedDate.getDate()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}`;
+          }
+
+          // If it's a string that might be a date, try to parse it
+          if (typeof value === 'string') {
+            const parsed = new Date(value);
+            if (!isNaN(parsed.getTime())) {
+              const year = parsed.getFullYear();
+              const month = String(parsed.getMonth() + 1).padStart(2, '0');
+              const day = String(parsed.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            }
+          }
+
+          // Default fallback
+          return '1990-01-01';
+        };
+
+        // Helper function to clean and normalize gender values
+        const normalizeGender = (value: any): string => {
+          if (!value) return 'MALE';
+          
+          const cleaned = value.toString().trim().toUpperCase();
+          
+          // Handle common variations
+          if (cleaned === 'MALE' || cleaned === 'M' || cleaned === 'MAN') return 'MALE';
+          if (cleaned === 'FEMALE' || cleaned === 'FEMAL' || cleaned === 'F' || cleaned === 'WOMAN') return 'FEMALE';
+          if (cleaned === 'NOT FOUND' || cleaned === 'NOT_FOUND' || cleaned === 'UNKNOWN') return 'MALE';
+          
+          // Default to MALE if unclear
+          return 'MALE';
+        };
+
+        // Get the full name to split into first_name for backward compatibility
+        const fullName = getValue(data, 'full_name', 'Full Name', 'Full Name ', ' Full Name', 'full-name', 'Full_Name', 'fullname', 'name', 'Name') || 'Unknown';
+        const nameParts = fullName.trim().split(' ');
+        const firstName = nameParts[0] || 'Unknown';
+
+        // Map Excel columns to database fields
+        const mappedData = {
+          customer_id: customer.id,
+          pr_id: getValue(data, 'pr_id', 'PR-ID', 'pr-id', 'PR_ID'),
+          full_name: fullName,
+          mothers_name: getValue(data, 'mothers_name', 'Mothers Name', 'Mothers Name ', ' Mothers Name', 'mothers-name', 'Mothers_Name', 'Mother Name', 'mother_name'),
+          date_of_birth: convertExcelDate(getValue(data, 'date_of_birth', 'Date of Birth', 'Date of brith', 'Date of brith ', ' Date of Birth', 'date-of-birth', 'Date_of_Birth', 'DOB', 'dob')),
+          place_of_birth: getValue(data, 'place_of_birth', 'Place of Birth', 'POB', 'place-of-birth', 'Place_of_Birth', 'pob'),
+          gender: normalizeGender(getValue(data, 'gender', 'Gender')),
+          nationality: getValue(data, 'nationality', 'Nationality'),
+          mobile_number_1: getValue(data, 'mobile_number_1', 'Mobile Number 1', 'mobile-number-1', 'Mobile_Number_1', 'phone1', 'Phone 1'),
+          email: getValue(data, 'email', 'Email', 'E-mail', 'e_mail'),
+          id_type: getValue(data, 'id_type', 'ID Type', 'Type of ID', 'id-type', 'ID_Type'),
+          
+          // Backward compatibility fields (required by database)
+          first_name: firstName,
+          father_name: nameParts[1] || '',
+          grandfather_name: nameParts[2] || '',
+          fourth_name: getValue(data, 'mothers_name', 'Mothers Name', 'Mothers Name ', ' Mothers Name', 'mothers-name', 'Mothers_Name', 'Mother Name', 'mother_name') || '',
+          
+          // Optional fields
+          mobile_number_2: getValue(data, 'mobile_number_2', 'Mobile Number 2', 'mobile-number-2', 'Mobile_Number_2', 'phone2', 'Phone 2'),
+          carrier_mobile_1: getValue(data, 'carrier_mobile_1', 'Carrier Mobile 1', 'carrier-mobile-1', 'Carrier_Mobile_1'),
+          carrier_mobile_2: getValue(data, 'carrier_mobile_2', 'Carrier Mobile 2', 'carrier-mobile-2', 'Carrier_Mobile_2'),
+          emergency_contact_name: getValue(data, 'emergency_contact_name', 'Emergency Contact Name', 'emergency-contact-name', 'Emergency_Contact_Name'),
+          emergency_contact_number: getValue(data, 'emergency_contact_number', 'Emergency Contact Number', 'emergency-contact-number', 'Emergency_Contact_Number'),
+          id_number: getValue(data, 'id_number', 'ID Number', 'id-number', 'ID_Number'),
+          place_of_issue: getValue(data, 'place_of_issue', 'Place of Issue', 'place-of-issue', 'Place_of_Issue'),
+          issue_date: convertExcelDate(getValue(data, 'issue_date', 'Issue Date', 'issue-date', 'Issue_Date')),
+          expiry_date: convertExcelDate(getValue(data, 'expiry_date', 'Expiry Date', 'expiry-date', 'Expiry_Date')),
+        };
+
+        // Use mapped data instead of original data
+        typeData = mappedData;
+      }
+
+      // Handle PERSON type data transformation and validation
+      if (customerType === 'PERSON') {
+        // If new fields are missing but old fields exist, construct them
+        if (!typeData.full_name && (typeData.first_name || typeData.father_name || typeData.grandfather_name)) {
+          typeData.full_name = [
+            typeData.first_name,
+            typeData.father_name,
+            typeData.grandfather_name,
+            typeData.fourth_name
+          ].filter(Boolean).join(' ').trim() || 'Unknown';
         }
         
-        // Required fields with defaults
+        if (!typeData.mothers_name && typeData.fourth_name) {
+          typeData.mothers_name = typeData.fourth_name;
+        }
+        
+        if (!typeData.pr_id && typeData.id_number && typeData.id_number !== 'N/A') {
+          typeData.pr_id = typeData.id_number;
+        }
+        
+        // Ensure all 10 required fields have values
+        typeData.pr_id = typeData.pr_id || `PR-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        typeData.full_name = typeData.full_name || 'Unknown';
+        typeData.mothers_name = typeData.mothers_name || 'Unknown Mother';
         typeData.date_of_birth = typeData.date_of_birth || '1990-01-01';
         typeData.place_of_birth = typeData.place_of_birth || 'Unknown';
-        typeData.gender = typeData.gender || 'MALE';
+        typeData.gender = (typeData.gender || 'MALE').toUpperCase();
         typeData.nationality = typeData.nationality || 'Unknown';
-        typeData.carrier_mobile_1 = typeData.carrier_mobile_1 || 'Unknown';
+        typeData.mobile_number_1 = typeData.mobile_number_1 || '+252612345678';
+        typeData.email = typeData.email || `${typeData.full_name.toLowerCase().replace(/\s+/g, '.')}@example.com`;
+        typeData.id_type = typeData.id_type || 'National ID Card';
         
-        // Emergency contact (required in DB but can have default)
-        typeData.emergency_contact_name = typeData.emergency_contact_name || 'N/A';
-        typeData.emergency_contact_number = typeData.emergency_contact_number || 'N/A';
+        // Optional fields (can be null)
+        typeData.id_number = typeData.id_number || null;
+        typeData.place_of_issue = typeData.place_of_issue || null;
+        typeData.issue_date = typeData.issue_date || null;
+        typeData.expiry_date = typeData.expiry_date || null;
+        typeData.carrier_mobile_1 = typeData.carrier_mobile_1 || null;
         typeData.mobile_number_2 = typeData.mobile_number_2 || null;
         typeData.carrier_mobile_2 = typeData.carrier_mobile_2 || null;
-        typeData.email = typeData.email || `${typeData.first_name.toLowerCase()}@example.com`;
+        typeData.emergency_contact_name = typeData.emergency_contact_name || null;
+        typeData.emergency_contact_number = typeData.emergency_contact_number || null;
+      }
+
+      // Handle RENTAL type data transformation and validation
+      if (customerType === 'RENTAL') {
+        // Ensure all 11 required fields have values
+        typeData.pr_id = typeData.pr_id || `PR-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        typeData.rental_name = typeData.rental_name || 'Unknown Rental';
+        typeData.rental_mothers_name = typeData.rental_mothers_name || 'Unknown Mother';
+        typeData.date_of_birth = typeData.date_of_birth || '1990-01-01';
+        typeData.place_of_birth = typeData.place_of_birth || 'Unknown';
+        typeData.gender = (typeData.gender || 'MALE').toUpperCase();
+        typeData.nationality = typeData.nationality || 'Unknown';
+        typeData.mobile_number_1 = typeData.mobile_number_1 || '+252612345678';
+        typeData.mobile_number_2 = typeData.mobile_number_2 || '+252612345679';
+        typeData.email = typeData.email || `${typeData.rental_name.toLowerCase().replace(/\s+/g, '.')}@example.com`;
         typeData.id_type = typeData.id_type || 'National ID Card';
-        typeData.id_number = typeData.id_number || 'N/A';
-        typeData.place_of_issue = typeData.place_of_issue || 'N/A';
-        typeData.issue_date = typeData.issue_date || '2020-01-01';
-        typeData.expiry_date = typeData.expiry_date || '2030-01-01';
-        typeData.fourth_name = typeData.fourth_name || null;
+        
+        // Optional fields (can be null)
+        typeData.id_number = typeData.id_number || null;
+        typeData.place_of_issue = typeData.place_of_issue || null;
+        typeData.issue_date = typeData.issue_date || null;
+        typeData.expiry_date = typeData.expiry_date || null;
+        typeData.carrier_mobile_1 = typeData.carrier_mobile_1 || null;
+        typeData.carrier_mobile_2 = typeData.carrier_mobile_2 || null;
+        typeData.emergency_contact_name = typeData.emergency_contact_name || null;
+        typeData.emergency_contact_number = typeData.emergency_contact_number || null;
       }
 
       const { error: detailsError } = await supabase.from(tableName).insert(typeData);
@@ -523,45 +1157,47 @@ export class BulkUploadService {
       customer: {
         headers: [
           'customer_type',
-          'first_name',
-          'father_name',
-          'grandfather_name',
-          'fourth_name',
-          'gender',
-          'nationality',
+          'pr_id',
+          'full_name',
+          'mothers_name',
           'date_of_birth',
           'place_of_birth',
-          'id_type',
-          'id_number',
-          'issue_date',
-          'expiry_date',
-          'place_of_issue',
+          'gender',
+          'nationality',
           'mobile_number_1',
-          'carrier_mobile_1',
           'email',
+          'id_type',
+          'carrier_mobile_1',
+          'mobile_number_2',
+          'carrier_mobile_2',
           'emergency_contact_name',
           'emergency_contact_number',
+          'id_number',
+          'place_of_issue',
+          'issue_date',
+          'expiry_date',
         ],
         example: {
           customer_type: 'PERSON',
-          first_name: 'John',
-          father_name: 'Doe',
-          grandfather_name: 'Smith',
-          fourth_name: '',
-          gender: 'MALE',
-          nationality: 'Somalia',
+          pr_id: 'PR-2025-001',
+          full_name: 'John Doe Smith',
+          mothers_name: 'Jane Smith',
           date_of_birth: '1990-01-01',
           place_of_birth: 'Mogadishu',
+          gender: 'MALE',
+          nationality: 'Somalia',
+          mobile_number_1: '+252612345678',
+          email: 'john@example.com',
           id_type: 'National ID Card',
+          carrier_mobile_1: 'Hormuud',
+          mobile_number_2: '+252612345679',
+          carrier_mobile_2: 'Hormuud',
+          emergency_contact_name: 'Jane Doe',
+          emergency_contact_number: '+252612345680',
           id_number: '123456789',
+          place_of_issue: 'Mogadishu',
           issue_date: '2020-01-01',
           expiry_date: '2030-01-01',
-          place_of_issue: 'Mogadishu',
-          mobile_number_1: '+252612345678',
-          carrier_mobile_1: 'Hormuud',
-          email: 'john@example.com',
-          emergency_contact_name: 'Jane Doe',
-          emergency_contact_number: '+252612345679',
         },
       },
       property: {

@@ -11,6 +11,7 @@ import { GovernmentForm } from '@/components/customers/GovernmentForm';
 import { MosqueHospitalForm } from '@/components/customers/MosqueHospitalForm';
 import { NonProfitForm } from '@/components/customers/NonProfitForm';
 import { ContractorForm } from '@/components/customers/ContractorForm';
+import { RentalForm } from '@/components/customers/RentalForm';
 import { Button } from '@/components/ui/button';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { ArrowLeft } from 'lucide-react';
@@ -22,6 +23,7 @@ import type {
   MosqueHospitalFormData,
   NonProfitFormData,
   ContractorFormData,
+  RentalFormData,
 } from '@/lib/customer-validation';
 
 const ID_TYPES = [
@@ -224,6 +226,32 @@ const CustomerNew = () => {
     }
   };
 
+  const handleRentalSubmit = async (data: RentalFormData) => {
+    setIsSubmitting(true);
+    try {
+      const customer = await customerService.createCustomer({
+        customer_type: 'RENTAL',
+        rental_data: data,
+      });
+
+      toast({
+        title: 'Success',
+        description: 'Rental customer draft created successfully',
+      });
+
+      navigate(`/customers/${customer.id}`);
+    } catch (error: any) {
+      console.error('Error creating rental customer:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.error || error.message || 'Failed to create rental customer',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleCancel = () => {
     navigate('/customers');
   };
@@ -246,6 +274,8 @@ const CustomerNew = () => {
         return 'Non-Profit';
       case 'CONTRACTOR':
         return 'Contractor';
+      case 'RENTAL':
+        return 'Rental';
     }
   };
 
@@ -349,6 +379,17 @@ const CustomerNew = () => {
           onCancel={handleCancel}
           isSubmitting={isSubmitting}
           carriers={carriers}
+        />
+      )}
+
+      {selectedType === 'RENTAL' && (
+        <RentalForm
+          onSubmit={handleRentalSubmit}
+          onCancel={handleCancel}
+          isSubmitting={isSubmitting}
+          carriers={carriers}
+          countries={countries}
+          idTypes={ID_TYPES}
         />
       )}
     </div>

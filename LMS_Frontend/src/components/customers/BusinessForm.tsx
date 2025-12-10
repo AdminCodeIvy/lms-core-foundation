@@ -27,15 +27,21 @@ export const BusinessForm = ({
   const form = useForm<BusinessFormData>({
     resolver: zodResolver(businessSchema),
     defaultValues: defaultValues || {
+      pr_id: '',
       business_name: '',
-      business_registration_number: '',
       business_license_number: '',
       business_address: '',
-      contact_name: '',
+      rental_name: '',
       mobile_number_1: '',
       mobile_number_2: '',
-      carrier_network: '',
       email: '',
+      size: '',
+      floor: '',
+      file_number: '',
+      // Optional fields
+      business_registration_number: '',
+      contact_name: '',
+      carrier_network: '',
       street: '',
       district_id: '',
       section: '',
@@ -53,12 +59,12 @@ export const BusinessForm = ({
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="business_name"
+              name="pr_id"
               render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel>Business Name <span className="text-destructive">*</span></FormLabel>
+                <FormItem>
+                  <FormLabel>PR-ID</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter business name" />
+                    <Input {...field} placeholder="Enter PR-ID (optional)" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -67,12 +73,12 @@ export const BusinessForm = ({
 
             <FormField
               control={form.control}
-              name="business_registration_number"
+              name="business_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Registration Number <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>Full Business Name</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter registration number" />
+                    <Input {...field} placeholder="Enter full business name (optional)" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -84,9 +90,9 @@ export const BusinessForm = ({
               name="business_license_number"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>License Number <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>Business / Commercial License Number</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter license number" />
+                    <Input {...field} placeholder="Enter license number (optional)" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -97,10 +103,66 @@ export const BusinessForm = ({
               control={form.control}
               name="business_address"
               render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel>Business Address <span className="text-destructive">*</span></FormLabel>
+                <FormItem>
+                  <FormLabel>Business Address</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter business address" />
+                    <Input {...field} placeholder="Enter business address (optional)" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="rental_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Rental Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter rental name (optional)" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="size"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Size</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter size (optional)" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="floor"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Floor</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter floor (optional)" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="file_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>File Number</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter file number (optional)" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -116,26 +178,12 @@ export const BusinessForm = ({
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="contact_name"
-              render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel>Contact Name <span className="text-destructive">*</span></FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Enter contact name" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name="mobile_number_1"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mobile Number 1 <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>Contact Number</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="+251-912-345-678" />
+                    <Input {...field} placeholder="+252-612-345-678 (optional)" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -147,9 +195,58 @@ export const BusinessForm = ({
               name="mobile_number_2"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mobile Number 2</FormLabel>
+                  <FormLabel>Contact Number 2</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="+251-912-345-678 (optional)" />
+                    <Input {...field} placeholder="+252-612-345-679 (optional)" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="email" placeholder="email@example.com (optional)" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Additional Information</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="business_registration_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Registration Number</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter registration number (optional)" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="contact_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Contact Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter contact name (optional)" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -161,11 +258,11 @@ export const BusinessForm = ({
               name="carrier_network"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Carrier Network <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>Carrier Network</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select carrier" />
+                        <SelectValue placeholder="Select carrier (optional)" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -183,33 +280,12 @@ export const BusinessForm = ({
 
             <FormField
               control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email <span className="text-destructive">*</span></FormLabel>
-                  <FormControl>
-                    <Input {...field} type="email" placeholder="email@example.com" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Address</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
               name="street"
               render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel>Street <span className="text-destructive">*</span></FormLabel>
+                <FormItem>
+                  <FormLabel>Street</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter street" />
+                    <Input {...field} placeholder="Enter street (optional)" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -221,11 +297,11 @@ export const BusinessForm = ({
               name="district_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>District <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>District</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select district" />
+                        <SelectValue placeholder="Select district (optional)" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>

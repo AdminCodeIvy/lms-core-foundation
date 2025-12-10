@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { User, Building2, Landmark, Hospital, Heart, HardHat } from 'lucide-react';
+import { User, Building2, Landmark, Hospital, Heart, HardHat, Home } from 'lucide-react';
 import type { CustomerType } from '@/types/customer-form';
 
 interface CustomerTypeOption {
@@ -48,6 +48,12 @@ const customerTypes: CustomerTypeOption[] = [
     title: 'Contractor',
     description: 'Construction service provider',
     icon: HardHat,
+  },
+  {
+    type: 'RENTAL',
+    title: 'Rental Customer',
+    description: 'Property rental customer or tenant',
+    icon: Home,
   },
 ];
 

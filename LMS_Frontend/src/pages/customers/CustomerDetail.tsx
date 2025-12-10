@@ -324,7 +324,12 @@ const CustomerDetail = () => {
                   <InfoItem
                     icon={User}
                     label="Full Name"
-                    value={`${customer.person_data.first_name} ${customer.person_data.father_name} ${customer.person_data.grandfather_name}${customer.person_data.fourth_name ? ' ' + customer.person_data.fourth_name : ''}`}
+                    value={customer.person_data.full_name || `${customer.person_data.first_name} ${customer.person_data.father_name} ${customer.person_data.grandfather_name}${customer.person_data.fourth_name ? ' ' + customer.person_data.fourth_name : ''}`.trim()}
+                  />
+                  <InfoItem
+                    icon={User}
+                    label="Mother's Name"
+                    value={customer.person_data.mothers_name || customer.person_data.fourth_name || 'N/A'}
                   />
                   <InfoItem
                     icon={Calendar}
@@ -674,6 +679,74 @@ const CustomerDetail = () => {
                     <InfoItem icon={Phone} label="Mobile Number 2" value={`${customer.contractor_data.mobile_number_2} (${customer.contractor_data.carrier_mobile_2})`} />
                   )}
                   <InfoItem icon={Mail} label="Email" value={customer.contractor_data.email} />
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {/* Rental Type */}
+          {customer.customer_type === 'RENTAL' && customer.rental_data && (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    Rental Customer Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-0">
+                  <InfoItem icon={IdCard} label="Reference ID" value={customer.reference_id} />
+                  <InfoItem icon={IdCard} label="PR-ID" value={customer.rental_data.pr_id} />
+                  <InfoItem icon={User} label="Rental Name" value={customer.rental_data.rental_name} />
+                  <InfoItem icon={User} label="Mother's Name" value={customer.rental_data.rental_mothers_name} />
+                  <InfoItem icon={Calendar} label="Date of Birth" value={format(new Date(customer.rental_data.date_of_birth), 'MMM dd, yyyy')} />
+                  <InfoItem icon={MapPin} label="Place of Birth" value={customer.rental_data.place_of_birth} />
+                  <InfoItem icon={User} label="Gender" value={customer.rental_data.gender} />
+                  <InfoItem icon={MapPin} label="Nationality" value={customer.rental_data.nationality} />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Phone className="h-5 w-5" />
+                    Contact Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-0">
+                  <InfoItem icon={Phone} label="Mobile Number 1" value={customer.rental_data.carrier_mobile_1 ? `${customer.rental_data.mobile_number_1} (${customer.rental_data.carrier_mobile_1})` : customer.rental_data.mobile_number_1} />
+                  <InfoItem icon={Phone} label="Mobile Number 2" value={customer.rental_data.carrier_mobile_2 ? `${customer.rental_data.mobile_number_2} (${customer.rental_data.carrier_mobile_2})` : customer.rental_data.mobile_number_2} />
+                  <InfoItem icon={Mail} label="Email" value={customer.rental_data.email} />
+                  {customer.rental_data.emergency_contact_name && (
+                    <InfoItem icon={User} label="Emergency Contact" value={customer.rental_data.emergency_contact_name} />
+                  )}
+                  {customer.rental_data.emergency_contact_number && (
+                    <InfoItem icon={Phone} label="Emergency Number" value={customer.rental_data.emergency_contact_number} />
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <IdCard className="h-5 w-5" />
+                    ID Document Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-0">
+                  <InfoItem icon={IdCard} label="ID Type" value={customer.rental_data.id_type} />
+                  {customer.rental_data.id_number && (
+                    <InfoItem icon={IdCard} label="ID Number" value={customer.rental_data.id_number} />
+                  )}
+                  {customer.rental_data.place_of_issue && (
+                    <InfoItem icon={MapPin} label="Place of Issue" value={customer.rental_data.place_of_issue} />
+                  )}
+                  {customer.rental_data.issue_date && (
+                    <InfoItem icon={Calendar} label="Issue Date" value={format(new Date(customer.rental_data.issue_date), 'MMM dd, yyyy')} />
+                  )}
+                  {customer.rental_data.expiry_date && (
+                    <InfoItem icon={Calendar} label="Expiry Date" value={format(new Date(customer.rental_data.expiry_date), 'MMM dd, yyyy')} />
+                  )}
                 </CardContent>
               </Card>
             </>

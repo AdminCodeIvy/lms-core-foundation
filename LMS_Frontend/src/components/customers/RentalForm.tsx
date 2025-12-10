@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { personSchema, type PersonFormData } from '@/lib/customer-validation';
+import { rentalSchema, type RentalFormData } from '@/lib/customer-validation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -12,43 +12,41 @@ import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
-interface PersonFormProps {
-  defaultValues?: Partial<PersonFormData>;
-  onSubmit: (data: PersonFormData) => Promise<void>;
+interface RentalFormProps {
+  defaultValues?: Partial<RentalFormData>;
+  onSubmit: (data: RentalFormData) => Promise<void>;
   onCancel: () => void;
   isSubmitting: boolean;
-  districts: { id: string; name: string }[];
   carriers: { id: string; name: string }[];
   countries: { id: string; name: string }[];
   idTypes: string[];
 }
 
-export const PersonForm = ({
+export const RentalForm = ({
   defaultValues,
   onSubmit,
   onCancel,
   isSubmitting,
-  districts,
   carriers,
   countries,
   idTypes,
-}: PersonFormProps) => {
-  const form = useForm<PersonFormData>({
-    resolver: zodResolver(personSchema),
+}: RentalFormProps) => {
+  const form = useForm<RentalFormData>({
+    resolver: zodResolver(rentalSchema),
     defaultValues: defaultValues || {
       pr_id: '',
-      full_name: '',
-      mothers_name: '',
+      rental_name: '',
+      rental_mothers_name: '',
       place_of_birth: '',
       nationality: '',
       mobile_number_1: '',
-      carrier_mobile_1: '',
       mobile_number_2: '',
+      email: '',
+      id_type: '',
+      carrier_mobile_1: '',
       carrier_mobile_2: '',
       emergency_contact_name: '',
       emergency_contact_number: '',
-      email: '',
-      id_type: '',
       id_number: '',
       place_of_issue: '',
     },
@@ -57,10 +55,10 @@ export const PersonForm = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Personal Information */}
+        {/* Required Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Personal Information</CardTitle>
+            <CardTitle>Required Information</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
@@ -79,12 +77,12 @@ export const PersonForm = ({
 
             <FormField
               control={form.control}
-              name="full_name"
+              name="rental_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Name <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>Rental Name <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter full name" />
+                    <Input {...field} placeholder="Enter full rental name" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -93,12 +91,12 @@ export const PersonForm = ({
 
             <FormField
               control={form.control}
-              name="mothers_name"
+              name="rental_mothers_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mother's Name <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>Rental Mother's Name <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter mother's name" />
+                    <Input {...field} placeholder="Enter rental mother's name" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -147,7 +145,7 @@ export const PersonForm = ({
               name="place_of_birth"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>POB (Place of Birth) <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>Place of Birth <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="Enter place of birth" />
                   </FormControl>
@@ -219,6 +217,20 @@ export const PersonForm = ({
 
             <FormField
               control={form.control}
+              name="mobile_number_2"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Mobile Number 2 <span className="text-destructive">*</span></FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="+251-912-345-679" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
@@ -258,10 +270,10 @@ export const PersonForm = ({
           </CardContent>
         </Card>
 
-        {/* Additional Contact Information (Optional) */}
+        {/* Optional Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Additional Contact Information</CardTitle>
+            <CardTitle>Optional Information</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
@@ -284,20 +296,6 @@ export const PersonForm = ({
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="mobile_number_2"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Mobile Number 2</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="+251-912-345-678 (optional)" />
-                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -346,24 +344,16 @@ export const PersonForm = ({
               control={form.control}
               name="emergency_contact_number"
               render={({ field }) => (
-                <FormItem className="md:col-span-2">
+                <FormItem>
                   <FormLabel>Emergency Contact Number</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="+251-912-345-678 (optional)" />
+                    <Input {...field} placeholder="+251-912-345-680 (optional)" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-          </CardContent>
-        </Card>
 
-        {/* ID Document Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>ID Document Information</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="id_number"

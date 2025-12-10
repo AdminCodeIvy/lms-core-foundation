@@ -37,7 +37,7 @@ export class CustomerService {
         customer_type,
         status,
         updated_at,
-        customer_person(first_name, fourth_name),
+        customer_person(first_name, fourth_name, full_name, pr_id, mothers_name),
         customer_business(business_name, districts(name)),
         customer_government(full_department_name, districts(name)),
         customer_mosque_hospital(full_name, districts(name)),
@@ -88,10 +88,15 @@ export class CustomerService {
           const personData = customer.customer_person;
           const person = Array.isArray(personData) ? personData[0] : personData;
           if (person) {
-            name =
-              person.fourth_name && person.fourth_name.trim()
-                ? `${person.first_name} ${person.fourth_name}`.trim()
-                : person.first_name;
+            // Use new full_name field if available, otherwise construct from old fields
+            if (person.full_name) {
+              name = person.full_name;
+            } else {
+              name =
+                person.fourth_name && person.fourth_name.trim()
+                  ? `${person.first_name} ${person.fourth_name}`.trim()
+                  : person.first_name;
+            }
           }
           break;
         }
@@ -118,6 +123,11 @@ export class CustomerService {
         case 'CONTRACTOR':
           if (customer.customer_contractor && customer.customer_contractor.length > 0) {
             name = customer.customer_contractor[0].full_contractor_name;
+          }
+          break;
+        case 'RENTAL':
+          if (customer.customer_rental && customer.customer_rental.length > 0) {
+            name = customer.customer_rental[0].rental_name;
           }
           break;
       }
@@ -155,6 +165,7 @@ export class CustomerService {
         customer_mosque_hospital(*),
         customer_non_profit(*),
         customer_contractor(*),
+        customer_rental(*),
         created_by_user:users!customers_created_by_fkey(full_name),
         approved_by_user:users!customers_approved_by_fkey(full_name)
       `
@@ -212,9 +223,9 @@ export class CustomerService {
   async createCustomer(customerData: any, userId: string) {
     const { customer_type, 
             customer_person, customer_business, customer_government, 
-            customer_mosque_hospital, customer_non_profit, customer_contractor,
+            customer_mosque_hospital, customer_non_profit, customer_contractor, customer_rental,
             person_data, business_data, government_data,
-            mosque_hospital_data, non_profit_data, contractor_data } = customerData;
+            mosque_hospital_data, non_profit_data, contractor_data, rental_data } = customerData;
 
     // Generate reference ID
     const { data: refId, error: refError } = await supabase.rpc(
@@ -259,12 +270,17 @@ export class CustomerService {
       case 'CONTRACTOR':
         details = customer_contractor || contractor_data;
         break;
+      case 'RENTAL':
+        details = customer_rental || rental_data;
+        break;
     }
 
     if (!details) {
       await supabase.from('customers').delete().eq('id', customer.id);
       throw new AppError(`Missing details for customer type: ${customer_type}`, 400);
     }
+
+    // PR-ID can be duplicated - no uniqueness check needed
 
     // Create customer type-specific details
     const tableName = `customer_${customer_type.toLowerCase()}`;
@@ -309,9 +325,9 @@ export class CustomerService {
   async updateCustomer(id: string, customerData: any, userId: string) {
     const { customer_type, 
             customer_person, customer_business, customer_government, 
-            customer_mosque_hospital, customer_non_profit, customer_contractor,
+            customer_mosque_hospital, customer_non_profit, customer_contractor, customer_rental,
             person_data, business_data, government_data,
-            mosque_hospital_data, non_profit_data, contractor_data } = customerData;
+            mosque_hospital_data, non_profit_data, contractor_data, rental_data } = customerData;
 
     // Get current customer status
     const { data: currentCustomer } = await supabase
@@ -363,11 +379,16 @@ export class CustomerService {
       case 'CONTRACTOR':
         details = customer_contractor || contractor_data;
         break;
+      case 'RENTAL':
+        details = customer_rental || rental_data;
+        break;
     }
 
     if (!details) {
       throw new AppError(`Missing details for customer type: ${customer_type}`, 400);
     }
+
+    // PR-ID can be duplicated - no uniqueness check needed
 
     // Update customer type-specific details
     const tableName = `customer_${customer_type.toLowerCase()}`;
@@ -433,7 +454,7 @@ export class CustomerService {
     // First, get the customer to check if it has details
     const { data: customer, error: fetchError } = await supabase
       .from('customers')
-      .select('*, customer_person(*), customer_business(*), customer_government(*), customer_mosque_hospital(*), customer_non_profit(*), customer_contractor(*)')
+      .select('*, customer_person(*), customer_business(*), customer_government(*), customer_mosque_hospital(*), customer_non_profit(*), customer_contractor(*), customer_rental(*)')
       .eq('id', id)
       .single();
 
@@ -460,6 +481,9 @@ export class CustomerService {
         break;
       case 'CONTRACTOR':
         hasDetails = customer.customer_contractor && (Array.isArray(customer.customer_contractor) ? customer.customer_contractor.length > 0 : !!customer.customer_contractor);
+        break;
+      case 'RENTAL':
+        hasDetails = customer.customer_rental && (Array.isArray(customer.customer_rental) ? customer.customer_rental.length > 0 : !!customer.customer_rental);
         break;
     }
 

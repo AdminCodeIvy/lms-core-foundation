@@ -354,10 +354,14 @@ const CustomerReviewContent = ({
               <CardTitle>Basic Information</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-6 md:grid-cols-2">
-              <InfoItem label="First Name" value={customer.person_data.first_name} />
-              <InfoItem label="Father Name" value={customer.person_data.father_name} />
-              <InfoItem label="Grandfather Name" value={customer.person_data.grandfather_name} />
-              <InfoItem label="Fourth Name" value={customer.person_data.fourth_name} />
+              <InfoItem 
+                label="Full Name" 
+                value={customer.person_data.full_name || `${customer.person_data.first_name} ${customer.person_data.father_name} ${customer.person_data.grandfather_name}${customer.person_data.fourth_name ? ' ' + customer.person_data.fourth_name : ''}`.trim()} 
+              />
+              <InfoItem 
+                label="Mother's Name" 
+                value={customer.person_data.mothers_name || customer.person_data.fourth_name || 'N/A'} 
+              />
               <InfoItem label="Gender" value={customer.person_data.gender} />
               <InfoItem label="Place of Birth" value={customer.person_data.place_of_birth} />
               <InfoItem label="Nationality" value={customer.person_data.nationality} />
@@ -761,7 +765,7 @@ const PropertyReviewContent = ({
                         owner.customer?.customer_non_profit?.[0]?.full_non_profit_name ||
                         owner.customer?.customer_contractor?.[0]?.full_contractor_name ||
                         (owner.customer?.customer_person?.[0] 
-                          ? `${owner.customer.customer_person[0].first_name} ${owner.customer.customer_person[0].fourth_name}`.trim()
+                          ? (owner.customer.customer_person[0].full_name || `${owner.customer.customer_person[0].first_name} ${owner.customer.customer_person[0].fourth_name}`.trim())
                           : 'N/A')
                       }
                     />
