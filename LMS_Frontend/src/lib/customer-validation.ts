@@ -71,16 +71,24 @@ export const businessSchema = z.object({
 });
 
 export const governmentSchema = z.object({
-  full_department_name: z.string().trim().min(3, "Department name must be at least 3 characters").max(200),
-  department_address: z.string().trim().min(1, "Department address is required").max(500),
-  contact_name: z.string().trim().min(1, "Contact name is required").max(200),
-  mobile_number_1: z.string().trim().regex(mobileNumberRegex, "Invalid mobile number format"),
-  carrier_mobile_1: z.string().min(1, "Carrier is required"),
+  // Required fields (3 most important fields)
+  pr_id: z.string().trim().min(1, "PR-ID is required").max(50),
+  full_department_name: z.string().trim().min(3, "Full Government / Department Name must be at least 3 characters").max(200),
+  contact_name: z.string().trim().min(1, "Contact Name is required").max(200),
+  
+  // Optional fields (all others)
+  department_address: z.string().trim().max(500).optional().or(z.literal("")),
+  mobile_number_1: z.string().trim().regex(mobileNumberRegex, "Invalid mobile number format").optional().or(z.literal("")),
   mobile_number_2: z.string().trim().regex(mobileNumberRegex, "Invalid mobile number format").optional().or(z.literal("")),
+  email: z.string().trim().email("Invalid email format").max(255).optional().or(z.literal("")),
+  file_number: z.string().trim().max(100).optional().or(z.literal("")),
+  size: z.string().trim().max(100).optional().or(z.literal("")),
+  
+  // Legacy optional fields (for backward compatibility)
+  carrier_mobile_1: z.string().optional().or(z.literal("")),
   carrier_mobile_2: z.string().optional().or(z.literal("")),
-  email: z.string().trim().email("Invalid email format").max(255),
-  street: z.string().trim().min(1, "Street is required").max(200),
-  district_id: z.string().min(1, "District is required"),
+  street: z.string().trim().max(200).optional().or(z.literal("")),
+  district_id: z.string().optional().or(z.literal("")),
   section: z.string().trim().max(100).optional().or(z.literal("")),
   block: z.string().trim().max(100).optional().or(z.literal("")),
 });

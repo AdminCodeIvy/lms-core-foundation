@@ -27,14 +27,18 @@ export const GovernmentForm = ({
   const form = useForm<GovernmentFormData>({
     resolver: zodResolver(governmentSchema),
     defaultValues: defaultValues || {
+      pr_id: '',
       full_department_name: '',
-      department_address: '',
       contact_name: '',
+      department_address: '',
       mobile_number_1: '',
-      carrier_mobile_1: '',
       mobile_number_2: '',
-      carrier_mobile_2: '',
       email: '',
+      file_number: '',
+      size: '',
+      // Legacy fields
+      carrier_mobile_1: '',
+      carrier_mobile_2: '',
       street: '',
       district_id: '',
       section: '',
@@ -47,17 +51,31 @@ export const GovernmentForm = ({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Department Information</CardTitle>
+            <CardTitle>Government / Department Information</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-4">
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="pr_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>PR-ID <span className="text-destructive">*</span></FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter PR-ID" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="full_department_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Department Name <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>Full Government / Department Name <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter full department name" />
+                    <Input {...field} placeholder="Enter full government/department name" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -68,10 +86,52 @@ export const GovernmentForm = ({
               control={form.control}
               name="department_address"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Department Address <span className="text-destructive">*</span></FormLabel>
+                <FormItem className="md:col-span-2">
+                  <FormLabel>Department Address</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter department address" />
+                    <Input {...field} placeholder="Enter department address (optional)" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="contact_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Contact Name <span className="text-destructive">*</span></FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter contact person name" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="file_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>File Number</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter file number (optional)" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="size"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Size</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter size (optional)" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -87,52 +147,13 @@ export const GovernmentForm = ({
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="contact_name"
-              render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel>Contact Name <span className="text-destructive">*</span></FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Enter contact name" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name="mobile_number_1"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mobile Number 1 <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>Contact Number</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="+251-912-345-678" />
+                    <Input {...field} placeholder="+252-612-345-678 (optional)" />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="carrier_mobile_1"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Carrier Mobile 1 <span className="text-destructive">*</span></FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select carrier" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {carriers.map((carrier) => (
-                        <SelectItem key={carrier.id} value={carrier.name}>
-                          {carrier.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -143,9 +164,9 @@ export const GovernmentForm = ({
               name="mobile_number_2"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mobile Number 2</FormLabel>
+                  <FormLabel>Contact Number 2</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="+251-912-345-678 (optional)" />
+                    <Input {...field} placeholder="+252-612-345-679 (optional)" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -154,10 +175,31 @@ export const GovernmentForm = ({
 
             <FormField
               control={form.control}
-              name="carrier_mobile_2"
+              name="email"
+              render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="email" placeholder="email@example.com (optional)" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Additional Information (Optional)</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="carrier_mobile_1"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Carrier Mobile 2</FormLabel>
+                  <FormLabel>Carrier Network 1</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -179,33 +221,37 @@ export const GovernmentForm = ({
 
             <FormField
               control={form.control}
-              name="email"
+              name="carrier_mobile_2"
               render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel>Email <span className="text-destructive">*</span></FormLabel>
-                  <FormControl>
-                    <Input {...field} type="email" placeholder="email@example.com" />
-                  </FormControl>
+                <FormItem>
+                  <FormLabel>Carrier Network 2</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select carrier (optional)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {carriers.map((carrier) => (
+                        <SelectItem key={carrier.id} value={carrier.name}>
+                          {carrier.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Address</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="street"
               render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel>Street <span className="text-destructive">*</span></FormLabel>
+                <FormItem>
+                  <FormLabel>Street</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter street" />
+                    <Input {...field} placeholder="Enter street (optional)" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -217,11 +263,11 @@ export const GovernmentForm = ({
               name="district_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>District <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>District</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select district" />
+                        <SelectValue placeholder="Select district (optional)" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
