@@ -1,4 +1,11 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
+
+// Extend the AxiosRequestConfig to include _retry property
+declare module 'axios' {
+  interface InternalAxiosRequestConfig {
+    _retry?: boolean;
+  }
+}
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1';
 
@@ -27,15 +34,42 @@ class ApiClient {
       }
     );
 
-    // Response interceptor to handle errors
+    // Response interceptor to handle errors and token refresh
     this.client.interceptors.response.use(
       (response) => response.data,
-      (error: AxiosError<any>) => {
-        if (error.response?.status === 401) {
-          // Token expired or invalid
+      async (error: AxiosError<any>) => {
+        const originalRequest = error.config as InternalAxiosRequestConfig;
+        
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+          
+          try {
+            // Try to refresh the token
+            const refreshToken = localStorage.getItem('refresh_token');
+            if (refreshToken) {
+              const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+                refreshToken
+              });
+              
+              if (response.data?.success && response.data?.data?.token) {
+                const newToken = response.data.data.token;
+                localStorage.setItem('auth_token', newToken);
+                
+                // Retry the original request with new token
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                return this.client(originalRequest);
+              }
+            }
+          } catch (refreshError) {
+            console.error('Token refresh failed:', refreshError);
+          }
+          
+          // If refresh fails, redirect to login
           localStorage.removeItem('auth_token');
           localStorage.removeItem('refresh_token');
+          localStorage.removeItem('user');
           window.location.href = '/login';
+          return Promise.reject(error);
         }
         
         const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'An error occurred';
