@@ -315,32 +315,38 @@ export default function BulkUpload() {
           case 'GOVERNMENT':
             filename = 'customer_government_template.xlsx';
             headers = [
-              'full_department_name',
-              'department_address',
-              'contact_name',
-              'mobile_number_1',
-              'carrier_mobile_1',
-              'mobile_number_2',
-              'carrier_mobile_2',
-              'email',
-              'street',
-              'district_id',
-              'section',
-              'block',
+              'PR-ID',
+              'Full Government / Department Name',
+              'Contact Name',
+              'Department Address',
+              'Contact Number',
+              'Contact Number 2',
+              'Email',
+              'File Number',
+              'Size',
+              'Carrier Network 1',
+              'Carrier Network 2',
+              'Street',
+              'District',
+              'Section',
+              'Block',
             ];
             sampleRow = {
-              full_department_name: 'Ministry of Finance',
-              department_address: '456 Government Road, Jigjiga',
-              contact_name: 'Director General',
-              mobile_number_1: '+251911234567',
-              carrier_mobile_1: 'Ethio Telecom',
-              mobile_number_2: '',
-              carrier_mobile_2: '',
-              email: 'contact@mof.gov.et',
-              street: 'Government Road',
-              district_id: 'JJG',
-              section: 'B',
-              block: '5',
+              'PR-ID': 'PR-GOV-001',
+              'Full Government / Department Name': 'Ministry of Finance',
+              'Contact Name': 'Ahmed Hassan Director',
+              'Department Address': '123 Government Street, Mogadishu',
+              'Contact Number': '+252-612-345-678',
+              'Contact Number 2': '+252-612-345-679',
+              'Email': 'contact@mof.gov.so',
+              'File Number': 'GOV-FILE-001',
+              'Size': '1000 sqm',
+              'Carrier Network 1': 'Hormuud',
+              'Carrier Network 2': 'Telesom',
+              'Street': 'Government Street',
+              'District': 'JJG',
+              'Section': 'Section A',
+              'Block': 'Block 1',
             };
             break;
           case 'MOSQUE_HOSPITAL':
@@ -887,13 +893,32 @@ export default function BulkUpload() {
                   status = 'warning';
                 }
               } else if (selectedCustomerType === 'GOVERNMENT') {
-                if (!row['full_department_name']) {
-                  messages.push('Full department name is required');
+                // Only 3 required fields for GOVERNMENT customers
+                if (!row['pr_id']) {
+                  messages.push('PR-ID is required');
                   status = 'error';
                 }
-                if (!row['mobile_number_1']) {
-                  messages.push('Mobile number 1 is required');
+                if (!row['full_department_name']) {
+                  messages.push('Full Government / Department Name is required');
                   status = 'error';
+                }
+                if (!row['contact_name']) {
+                  messages.push('Contact Name is required');
+                  status = 'error';
+                }
+                
+                // Optional format validation
+                if (row['email'] && row['email'].toString().trim() && !row['email'].toString().includes('@')) {
+                  messages.push('Email format is invalid');
+                  status = 'warning';
+                }
+                if (row['mobile_number_1'] && row['mobile_number_1'].toString().trim() && !row['mobile_number_1'].toString().match(/^\+\d{1,3}-?\d{3,4}-?\d{3,4}-?\d{3,4}$/)) {
+                  messages.push('Mobile number 1 format should be +XXX-XXX-XXX-XXX');
+                  status = 'warning';
+                }
+                if (row['mobile_number_2'] && row['mobile_number_2'].toString().trim() && !row['mobile_number_2'].toString().match(/^\+\d{1,3}-?\d{3,4}-?\d{3,4}-?\d{3,4}$/)) {
+                  messages.push('Mobile number 2 format should be +XXX-XXX-XXX-XXX');
+                  status = 'warning';
                 }
               } else if (selectedCustomerType === 'MOSQUE_HOSPITAL') {
                 if (!row['full_name']) {

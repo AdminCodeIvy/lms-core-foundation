@@ -124,10 +124,8 @@ export class BulkUploadService {
           // BUSINESS type - all fields are optional, just validate format if provided
           this.validateBusinessFields(record, errors);
         } else if (record.full_department_name) {
-          // GOVERNMENT type
-          if (!record.full_department_name) errors.push('full_department_name is required');
-          if (!record.mobile_number_1) errors.push('mobile_number_1 is required');
-          if (!record.district_id) errors.push('district_id is required for GOVERNMENT customers');
+          // GOVERNMENT type - validate the 3 required fields
+          this.validateGovernmentFields(record, errors);
         } else if (record.full_name) {
           // MOSQUE_HOSPITAL type
           if (!record.full_name) errors.push('full_name is required');
@@ -612,6 +610,137 @@ export class BulkUploadService {
     }
   }
 
+  /**
+   * Validates GOVERNMENT customer fields - only 3 required fields, rest optional
+   */
+  private validateGovernmentFields(record: any, errors: string[]): void {
+    // Helper functions
+    const isEmpty = (value: any): boolean => {
+      return value === null || value === undefined || value === '' || 
+             (typeof value === 'string' && value.trim() === '');
+    };
+
+    const isValidEmail = (email: string): boolean => {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    };
+
+    const isValidMobileNumber = (mobile: string): boolean => {
+      const mobileRegex = /^\+\d{1,3}-?\d{3,4}-?\d{3,4}-?\d{3,4}$/;
+      return mobileRegex.test(mobile);
+    };
+
+    // Helper function to get value with flexible column names (supports both old and new headers)
+    const getValue = (data: any, ...possibleKeys: string[]) => {
+      for (const key of possibleKeys) {
+        if (data[key] !== undefined && data[key] !== null && data[key] !== '') {
+          return data[key];
+        }
+      }
+      return null;
+    };
+
+    // 3 Required fields for GOVERNMENT customers
+    
+    // 1. PR-ID (required) - check both new and old field names
+    const prId = getValue(record, 'PR-ID', 'pr_id', 'PR-ID', 'pr-id', 'PR_ID');
+    if (isEmpty(prId)) {
+      errors.push('PR-ID is required for GOVERNMENT customers');
+    } else if (typeof prId !== 'string' || prId.trim().length < 1) {
+      errors.push('PR-ID must be a valid string');
+    } else if (prId.trim().length > 50) {
+      errors.push('PR-ID must be 50 characters or less');
+    }
+
+    // 2. Full Department Name (required) - check both new and old field names
+    const fullDeptName = getValue(record, 'Full Government / Department Name', 'full_department_name', 'Full Department Name', 'Department Name');
+    if (isEmpty(fullDeptName)) {
+      errors.push('Full Government / Department Name is required for GOVERNMENT customers');
+    } else if (typeof fullDeptName !== 'string' || fullDeptName.trim().length < 3) {
+      errors.push('Full Government / Department Name must be at least 3 characters');
+    } else if (fullDeptName.trim().length > 200) {
+      errors.push('Full Government / Department Name must be 200 characters or less');
+    }
+
+    // 3. Contact Name (required) - check both new and old field names
+    const contactName = getValue(record, 'Contact Name', 'contact_name', 'contact-name', 'Contact_Name');
+    if (isEmpty(contactName)) {
+      errors.push('Contact Name is required for GOVERNMENT customers');
+    } else if (typeof contactName !== 'string' || contactName.trim().length < 1) {
+      errors.push('Contact Name must be a valid string');
+    } else if (contactName.trim().length > 200) {
+      errors.push('Contact Name must be 200 characters or less');
+    }
+
+    // ALL OTHER FIELDS ARE OPTIONAL - Only validate format if provided
+    
+    // Department Address (optional)
+    const deptAddress = getValue(record, 'Department Address', 'department_address', 'Address');
+    if (!isEmpty(deptAddress) && deptAddress.trim().length > 500) {
+      errors.push('Department Address must be 500 characters or less if provided');
+    }
+
+    // Contact Number (optional)
+    const contactNumber = getValue(record, 'Contact Number', 'mobile_number_1', 'Mobile Number 1', 'Phone 1');
+    if (!isEmpty(contactNumber) && !isValidMobileNumber(contactNumber)) {
+      errors.push('Contact Number must be in format +XXX-XXX-XXX-XXX if provided (e.g., +252-612-345-678)');
+    }
+
+    // Contact Number 2 (optional)
+    const contactNumber2 = getValue(record, 'Contact Number 2', 'mobile_number_2', 'Mobile Number 2', 'Phone 2');
+    if (!isEmpty(contactNumber2) && !isValidMobileNumber(contactNumber2)) {
+      errors.push('Contact Number 2 must be in format +XXX-XXX-XXX-XXX if provided (e.g., +252-612-345-679)');
+    }
+
+    // Email (optional)
+    const email = getValue(record, 'Email', 'email', 'E-mail', 'e_mail');
+    if (!isEmpty(email)) {
+      if (!isValidEmail(email)) {
+        errors.push('Email must be a valid email address if provided');
+      } else if (email.length > 255) {
+        errors.push('Email must be 255 characters or less if provided');
+      }
+    }
+
+    // File Number (optional)
+    const fileNumber = getValue(record, 'File Number', 'file_number', 'file-number', 'File_Number');
+    if (!isEmpty(fileNumber) && fileNumber.trim().length > 100) {
+      errors.push('File Number must be 100 characters or less if provided');
+    }
+
+    // Size (optional)
+    const size = getValue(record, 'Size', 'size');
+    if (!isEmpty(size) && size.trim().length > 100) {
+      errors.push('Size must be 100 characters or less if provided');
+    }
+
+    // Legacy optional fields
+    const carrierNetwork1 = getValue(record, 'Carrier Network 1', 'carrier_mobile_1', 'Carrier Mobile 1', 'Carrier 1');
+    if (!isEmpty(carrierNetwork1) && carrierNetwork1.trim().length > 100) {
+      errors.push('Carrier Network 1 must be 100 characters or less if provided');
+    }
+
+    const carrierNetwork2 = getValue(record, 'Carrier Network 2', 'carrier_mobile_2', 'Carrier Mobile 2', 'Carrier 2');
+    if (!isEmpty(carrierNetwork2) && carrierNetwork2.trim().length > 100) {
+      errors.push('Carrier Network 2 must be 100 characters or less if provided');
+    }
+
+    const street = getValue(record, 'Street', 'street');
+    if (!isEmpty(street) && street.trim().length > 200) {
+      errors.push('Street must be 200 characters or less if provided');
+    }
+
+    const section = getValue(record, 'Section', 'section');
+    if (!isEmpty(section) && section.trim().length > 100) {
+      errors.push('Section must be 100 characters or less if provided');
+    }
+
+    const block = getValue(record, 'Block', 'block');
+    if (!isEmpty(block) && block.trim().length > 100) {
+      errors.push('Block must be 100 characters or less if provided');
+    }
+  }
+
   private async createRecord(entityType: string, record: any, userId: string) {
     switch (entityType) {
       case 'customer':
@@ -633,10 +762,15 @@ export class BulkUploadService {
       return uuidRegex.test(value);
     };
 
+    // Helper function to check if any of the possible field names exist
+    const hasAnyField = (data: any, ...fieldNames: string[]): boolean => {
+      return fieldNames.some(field => data[field] !== undefined && data[field] !== null && data[field] !== '');
+    };
+
     // Determine customer type from data
     let customerType = 'PERSON'; // Default
     if (data.business_name) customerType = 'BUSINESS';
-    else if (data.full_department_name) customerType = 'GOVERNMENT';
+    else if (hasAnyField(data, 'Full Government / Department Name', 'full_department_name', 'Full Department Name', 'Department Name')) customerType = 'GOVERNMENT';
     else if (data.full_name && !data.first_name && !data.pr_id) customerType = 'MOSQUE_HOSPITAL';
     else if (data.full_non_profit_name) customerType = 'NON_PROFIT';
     else if (data.full_contractor_name) customerType = 'CONTRACTOR';
@@ -873,6 +1007,55 @@ export class BulkUploadService {
         typeData = mappedData;
       }
 
+      // Map Excel column names to database field names for GOVERNMENT type
+      if (customerType === 'GOVERNMENT') {
+        // Helper function to get value with flexible column names
+        const getValue = (data: any, ...possibleKeys: string[]) => {
+          for (const key of possibleKeys) {
+            if (data[key] !== undefined && data[key] !== null && data[key] !== '') {
+              return data[key];
+            }
+          }
+          // Try case-insensitive and trimmed matches
+          const dataKeys = Object.keys(data);
+          for (const possibleKey of possibleKeys) {
+            for (const dataKey of dataKeys) {
+              if (dataKey.trim().toLowerCase() === possibleKey.toLowerCase()) {
+                if (data[dataKey] !== undefined && data[dataKey] !== null && data[dataKey] !== '') {
+                  return data[dataKey];
+                }
+              }
+            }
+          }
+          return null;
+        };
+
+        // Map Excel columns to database fields for GOVERNMENT
+        const mappedData = {
+          customer_id: customer.id,
+          pr_id: getValue(data, 'PR-ID', 'pr_id', 'PR-ID', 'pr-id', 'PR_ID'),
+          full_department_name: getValue(data, 'Full Government / Department Name', 'full_department_name', 'Full Department Name', 'Department Name', 'full-department-name', 'Full_Department_Name'),
+          contact_name: getValue(data, 'Contact Name', 'contact_name', 'contact-name', 'Contact_Name'),
+          department_address: getValue(data, 'Department Address', 'department_address', 'Address', 'department-address', 'Department_Address'),
+          mobile_number_1: getValue(data, 'Contact Number', 'mobile_number_1', 'Mobile Number 1', 'Phone 1', 'mobile-number-1', 'Mobile_Number_1'),
+          mobile_number_2: getValue(data, 'Contact Number 2', 'mobile_number_2', 'Mobile Number 2', 'Phone 2', 'mobile-number-2', 'Mobile_Number_2'),
+          email: getValue(data, 'Email', 'email', 'E-mail', 'e_mail'),
+          file_number: getValue(data, 'File Number', 'file_number', 'file-number', 'File_Number'),
+          size: getValue(data, 'Size', 'size'),
+          
+          // Legacy optional fields
+          carrier_mobile_1: getValue(data, 'Carrier Network 1', 'carrier_mobile_1', 'Carrier Mobile 1', 'Carrier 1', 'carrier-mobile-1', 'Carrier_Mobile_1'),
+          carrier_mobile_2: getValue(data, 'Carrier Network 2', 'carrier_mobile_2', 'Carrier Mobile 2', 'Carrier 2', 'carrier-mobile-2', 'Carrier_Mobile_2'),
+          street: getValue(data, 'Street', 'street'),
+          district_id: getValue(data, 'District', 'district_id', 'District ID', 'district-id', 'District_ID'),
+          section: getValue(data, 'Section', 'section'),
+          block: getValue(data, 'Block', 'block'),
+        };
+
+        // Use mapped data instead of original data
+        typeData = mappedData;
+      }
+
       // Handle PERSON type data transformation and validation
       if (customerType === 'PERSON') {
         // If new fields are missing but old fields exist, construct them
@@ -936,6 +1119,30 @@ export class BulkUploadService {
         typeData.business_registration_number = typeData.business_registration_number || null;
         typeData.contact_name = typeData.contact_name || null;
         typeData.carrier_network = typeData.carrier_network || null;
+        typeData.street = typeData.street || null;
+        typeData.district_id = typeData.district_id || null;
+        typeData.section = typeData.section || null;
+        typeData.block = typeData.block || null;
+      }
+
+      // Handle GOVERNMENT type data transformation and validation
+      if (customerType === 'GOVERNMENT') {
+        // Ensure the 3 required fields have values, set defaults if empty
+        typeData.pr_id = typeData.pr_id || `PR-GOV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        typeData.full_department_name = typeData.full_department_name || 'Government Department';
+        typeData.contact_name = typeData.contact_name || 'Contact Person';
+        
+        // All other fields are optional (can be null)
+        typeData.department_address = typeData.department_address || null;
+        typeData.mobile_number_1 = typeData.mobile_number_1 || null;
+        typeData.mobile_number_2 = typeData.mobile_number_2 || null;
+        typeData.email = typeData.email || null;
+        typeData.file_number = typeData.file_number || null;
+        typeData.size = typeData.size || null;
+        
+        // Legacy optional fields
+        typeData.carrier_mobile_1 = typeData.carrier_mobile_1 || null;
+        typeData.carrier_mobile_2 = typeData.carrier_mobile_2 || null;
         typeData.street = typeData.street || null;
         typeData.district_id = typeData.district_id || null;
         typeData.section = typeData.section || null;
@@ -1369,6 +1576,43 @@ export class BulkUploadService {
             carrier_mobile_2: 'Telesom',
             emergency_contact_name: 'Ali Hassan',
             emergency_contact_number: '+252-612-345-680',
+          },
+        },
+        // GOVERNMENT customer template
+        government: {
+          headers: [
+            'PR-ID',
+            'Full Government / Department Name',
+            'Contact Name',
+            'Department Address',
+            'Contact Number',
+            'Contact Number 2',
+            'Email',
+            'File Number',
+            'Size',
+            'Carrier Network 1',
+            'Carrier Network 2',
+            'Street',
+            'District',
+            'Section',
+            'Block',
+          ],
+          example: {
+            'PR-ID': 'PR-GOV-001',
+            'Full Government / Department Name': 'Ministry of Finance',
+            'Contact Name': 'Ahmed Hassan Director',
+            'Department Address': '123 Government Street, Mogadishu',
+            'Contact Number': '+252-612-345-678',
+            'Contact Number 2': '+252-612-345-679',
+            'Email': 'contact@mof.gov.so',
+            'File Number': 'GOV-FILE-001',
+            'Size': '1000 sqm',
+            'Carrier Network 1': 'Hormuud',
+            'Carrier Network 2': 'Telesom',
+            'Street': 'Government Street',
+            'District': 'JJG',
+            'Section': 'Section A',
+            'Block': 'Block 1',
           },
         },
       },
