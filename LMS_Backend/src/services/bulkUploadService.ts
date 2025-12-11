@@ -126,20 +126,15 @@ export class BulkUploadService {
         } else if (record.full_department_name) {
           // GOVERNMENT type - validate the 3 required fields
           this.validateGovernmentFields(record, errors);
-        } else if (record.full_name) {
-          // MOSQUE_HOSPITAL type
-          if (!record.full_name) errors.push('full_name is required');
-          if (!record.mobile_number_1) errors.push('mobile_number_1 is required');
-          if (!record.district_id) errors.push('district_id is required for MOSQUE_HOSPITAL customers');
-        } else if (record.full_non_profit_name) {
-          // NON_PROFIT type
-          if (!record.full_non_profit_name) errors.push('full_non_profit_name is required');
-          if (!record.mobile_number_1) errors.push('mobile_number_1 is required');
-          if (!record.district_id) errors.push('district_id is required for NON_PROFIT customers. Use: JJG, HRG, DRD, or ADD');
-        } else if (record.full_contractor_name) {
-          // CONTRACTOR type
-          if (!record.full_contractor_name) errors.push('full_contractor_name is required');
-          if (!record.mobile_number_1) errors.push('mobile_number_1 is required');
+        } else if (record.full_name || record.full_mosque_hospital_name || record['Full Mosque or Hospital Name']) {
+          // MOSQUE_HOSPITAL type - validate the 5 required fields
+          this.validateMosqueHospitalFields(record, errors);
+        } else if (record.full_non_profit_name || record.ngo_name || record['NGO Name']) {
+          // NON_PROFIT type - validate the 5 required fields
+          this.validateNonProfitFields(record, errors);
+        } else if (record.pr_id && (record.size || record.floor || record.file_number || record.address) && !record.full_name && !record.ngo_name && !record.business_name) {
+          // RESIDENTIAL type - validate the 1 required field
+          this.validateResidentialFields(record, errors);
         } else if (record.rental_name) {
           // RENTAL type - validate the 11 required fields
           this.validateRentalFields(record, errors);
@@ -741,6 +736,333 @@ export class BulkUploadService {
     }
   }
 
+  /**
+   * Validates MOSQUE_HOSPITAL customer fields - 5 required fields, rest optional
+   */
+  private validateMosqueHospitalFields(record: any, errors: string[]): void {
+    // Helper functions
+    const isEmpty = (value: any): boolean => {
+      return value === null || value === undefined || value === '' || 
+             (typeof value === 'string' && value.trim() === '');
+    };
+
+    const isValidEmail = (email: string): boolean => {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    };
+
+    const isValidMobileNumber = (mobile: string): boolean => {
+      const mobileRegex = /^\+\d{1,3}-?\d{3,4}-?\d{3,4}-?\d{3,4}$/;
+      return mobileRegex.test(mobile);
+    };
+
+    // Helper function to get value with flexible column names (supports both old and new headers)
+    const getValue = (data: any, ...possibleKeys: string[]) => {
+      for (const key of possibleKeys) {
+        if (data[key] !== undefined && data[key] !== null && data[key] !== '') {
+          return data[key];
+        }
+      }
+      return null;
+    };
+
+    // 5 Required fields for MOSQUE_HOSPITAL customers
+    
+    // 1. PR-ID (required) - check both new and old field names
+    const prId = getValue(record, 'PR-ID', 'pr_id', 'PR-ID', 'pr-id', 'PR_ID');
+    if (isEmpty(prId)) {
+      errors.push('PR-ID is required for MOSQUE_HOSPITAL customers');
+    } else if (typeof prId !== 'string' || prId.trim().length < 1) {
+      errors.push('PR-ID must be a valid string');
+    } else if (prId.trim().length > 50) {
+      errors.push('PR-ID must be 50 characters or less');
+    }
+
+    // 2. Full Mosque or Hospital Name (required) - check both new and old field names
+    const fullName = getValue(record, 'Full Mosque or Hospital Name', 'full_mosque_hospital_name', 'full_name', 'Full Name');
+    if (isEmpty(fullName)) {
+      errors.push('Full Mosque or Hospital Name is required for MOSQUE_HOSPITAL customers');
+    } else if (typeof fullName !== 'string' || fullName.trim().length < 3) {
+      errors.push('Full Mosque or Hospital Name must be at least 3 characters');
+    } else if (fullName.trim().length > 200) {
+      errors.push('Full Mosque or Hospital Name must be 200 characters or less');
+    }
+
+    // 3. Mosque Registration Number (required) - check both new and old field names
+    const regNumber = getValue(record, 'Mosque Registration Number', 'mosque_registration_number', 'registration_number', 'Registration Number');
+    if (isEmpty(regNumber)) {
+      errors.push('Mosque Registration Number is required for MOSQUE_HOSPITAL customers');
+    } else if (typeof regNumber !== 'string' || regNumber.trim().length < 1) {
+      errors.push('Mosque Registration Number must be a valid string');
+    } else if (regNumber.trim().length > 100) {
+      errors.push('Mosque Registration Number must be 100 characters or less');
+    }
+
+    // 4. Contact Name (required) - check both new and old field names
+    const contactName = getValue(record, 'Contact Name', 'contact_name', 'contact-name', 'Contact_Name');
+    if (isEmpty(contactName)) {
+      errors.push('Contact Name is required for MOSQUE_HOSPITAL customers');
+    } else if (typeof contactName !== 'string' || contactName.trim().length < 1) {
+      errors.push('Contact Name must be a valid string');
+    } else if (contactName.trim().length > 200) {
+      errors.push('Contact Name must be 200 characters or less');
+    }
+
+    // 5. Contact Number (required) - check both new and old field names
+    const contactNumber = getValue(record, 'Contact Number', 'mobile_number_1', 'Mobile Number 1', 'Phone 1');
+    if (isEmpty(contactNumber)) {
+      errors.push('Contact Number is required for MOSQUE_HOSPITAL customers');
+    } else if (!isValidMobileNumber(contactNumber)) {
+      errors.push('Contact Number must be in format +XXX-XXX-XXX-XXX (e.g., +252-612-345-678)');
+    }
+
+    // ALL OTHER FIELDS ARE OPTIONAL - Only validate format if provided
+    
+    // Contact Number 2 (optional)
+    const contactNumber2 = getValue(record, 'Contact Number 2', 'mobile_number_2', 'Mobile Number 2', 'Phone 2');
+    if (!isEmpty(contactNumber2) && !isValidMobileNumber(contactNumber2)) {
+      errors.push('Contact Number 2 must be in format +XXX-XXX-XXX-XXX if provided (e.g., +252-612-345-679)');
+    }
+
+    // Email (optional)
+    const email = getValue(record, 'Email', 'email', 'E-mail', 'e_mail');
+    if (!isEmpty(email)) {
+      if (!isValidEmail(email)) {
+        errors.push('Email must be a valid email address if provided');
+      } else if (email.length > 255) {
+        errors.push('Email must be 255 characters or less if provided');
+      }
+    }
+
+    // Address (optional)
+    const address = getValue(record, 'Address', 'address');
+    if (!isEmpty(address) && address.trim().length > 500) {
+      errors.push('Address must be 500 characters or less if provided');
+    }
+
+    // Size (optional)
+    const size = getValue(record, 'Size', 'size');
+    if (!isEmpty(size) && size.trim().length > 100) {
+      errors.push('Size must be 100 characters or less if provided');
+    }
+
+    // Floor (optional)
+    const floor = getValue(record, 'Floor', 'floor');
+    if (!isEmpty(floor) && floor.trim().length > 50) {
+      errors.push('Floor must be 50 characters or less if provided');
+    }
+
+    // File Number (optional)
+    const fileNumber = getValue(record, 'File Number', 'file_number', 'file-number', 'File_Number');
+    if (!isEmpty(fileNumber) && fileNumber.trim().length > 100) {
+      errors.push('File Number must be 100 characters or less if provided');
+    }
+
+    // Legacy optional fields
+    const carrierNetwork1 = getValue(record, 'Carrier Network 1', 'carrier_mobile_1', 'Carrier Mobile 1', 'Carrier 1');
+    if (!isEmpty(carrierNetwork1) && carrierNetwork1.trim().length > 100) {
+      errors.push('Carrier Network 1 must be 100 characters or less if provided');
+    }
+
+    const carrierNetwork2 = getValue(record, 'Carrier Network 2', 'carrier_mobile_2', 'Carrier Mobile 2', 'Carrier 2');
+    if (!isEmpty(carrierNetwork2) && carrierNetwork2.trim().length > 100) {
+      errors.push('Carrier Network 2 must be 100 characters or less if provided');
+    }
+
+    const district = getValue(record, 'District', 'district_id', 'District ID', 'district-id');
+    const section = getValue(record, 'Section', 'section');
+    if (!isEmpty(section) && section.trim().length > 100) {
+      errors.push('Section must be 100 characters or less if provided');
+    }
+
+    const block = getValue(record, 'Block', 'block');
+    if (!isEmpty(block) && block.trim().length > 100) {
+      errors.push('Block must be 100 characters or less if provided');
+    }
+  }
+
+  /**
+   * Validates NON_PROFIT customer fields - 5 required fields, rest optional
+   */
+  private validateNonProfitFields(record: any, errors: string[]): void {
+    // Helper functions
+    const isEmpty = (value: any): boolean => {
+      return value === null || value === undefined || value === '' || 
+             (typeof value === 'string' && value.trim() === '');
+    };
+
+    const isValidEmail = (email: string): boolean => {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    };
+
+    const isValidMobileNumber = (mobile: string): boolean => {
+      const mobileRegex = /^\+\d{1,3}-?\d{3,4}-?\d{3,4}-?\d{3,4}$/;
+      return mobileRegex.test(mobile);
+    };
+
+    // Helper function to get value with flexible column names (supports both old and new headers)
+    const getValue = (data: any, ...possibleKeys: string[]) => {
+      for (const key of possibleKeys) {
+        if (data[key] !== undefined && data[key] !== null && data[key] !== '') {
+          return data[key];
+        }
+      }
+      return null;
+    };
+
+    // 5 Required fields for NON_PROFIT customers
+    
+    // 1. PR-ID (required) - check both new and old field names
+    const prId = getValue(record, 'PR-ID', 'pr_id', 'PR-ID', 'pr-id', 'PR_ID');
+    if (isEmpty(prId)) {
+      errors.push('PR-ID is required for NON_PROFIT customers');
+    } else if (typeof prId !== 'string' || prId.trim().length < 1) {
+      errors.push('PR-ID must be a valid string');
+    } else if (prId.trim().length > 50) {
+      errors.push('PR-ID must be 50 characters or less');
+    }
+
+    // 2. NGO Name (required) - check both new and old field names
+    const ngoName = getValue(record, 'NGO Name', 'ngo_name', 'full_non_profit_name', 'Full Non-Profit Name');
+    if (isEmpty(ngoName)) {
+      errors.push('NGO Name is required for NON_PROFIT customers');
+    } else if (typeof ngoName !== 'string' || ngoName.trim().length < 3) {
+      errors.push('NGO Name must be at least 3 characters');
+    } else if (ngoName.trim().length > 200) {
+      errors.push('NGO Name must be 200 characters or less');
+    }
+
+    // 3. NGO Registration Number (required) - check both new and old field names
+    const regNumber = getValue(record, 'NGO Registration Number', 'ngo_registration_number', 'registration_number', 'Registration Number');
+    if (isEmpty(regNumber)) {
+      errors.push('NGO Registration Number is required for NON_PROFIT customers');
+    } else if (typeof regNumber !== 'string' || regNumber.trim().length < 1) {
+      errors.push('NGO Registration Number must be a valid string');
+    } else if (regNumber.trim().length > 100) {
+      errors.push('NGO Registration Number must be 100 characters or less');
+    }
+
+    // 4. Contact Name (required) - check both new and old field names
+    const contactName = getValue(record, 'Contact Name', 'contact_name', 'contact-name', 'Contact_Name');
+    if (isEmpty(contactName)) {
+      errors.push('Contact Name is required for NON_PROFIT customers');
+    } else if (typeof contactName !== 'string' || contactName.trim().length < 1) {
+      errors.push('Contact Name must be a valid string');
+    } else if (contactName.trim().length > 200) {
+      errors.push('Contact Name must be 200 characters or less');
+    }
+
+    // 5. Contact Number (required) - check both new and old field names
+    const contactNumber = getValue(record, 'Contact Number', 'mobile_number_1', 'Mobile Number 1', 'Phone 1');
+    if (isEmpty(contactNumber)) {
+      errors.push('Contact Number is required for NON_PROFIT customers');
+    } else if (!isValidMobileNumber(contactNumber)) {
+      errors.push('Contact Number must be in format +XXX-XXX-XXX-XXX (e.g., +252-612-345-678)');
+    }
+
+    // ALL OTHER FIELDS ARE OPTIONAL - Only validate format if provided
+    
+    // Contact Number 2 (optional)
+    const contactNumber2 = getValue(record, 'Contact Number 2', 'mobile_number_2', 'Mobile Number 2', 'Phone 2');
+    if (!isEmpty(contactNumber2) && !isValidMobileNumber(contactNumber2)) {
+      errors.push('Contact Number 2 must be in format +XXX-XXX-XXX-XXX if provided (e.g., +252-612-345-679)');
+    }
+
+    // Email (optional)
+    const email = getValue(record, 'Email', 'email', 'E-mail', 'e_mail');
+    if (!isEmpty(email)) {
+      if (!isValidEmail(email)) {
+        errors.push('Email must be a valid email address if provided');
+      } else if (email.length > 255) {
+        errors.push('Email must be 255 characters or less if provided');
+      }
+    }
+
+    // Size (optional)
+    const size = getValue(record, 'Size', 'size');
+    if (!isEmpty(size) && size.trim().length > 100) {
+      errors.push('Size must be 100 characters or less if provided');
+    }
+
+    // Floor (optional)
+    const floor = getValue(record, 'Floor', 'floor');
+    if (!isEmpty(floor) && floor.trim().length > 50) {
+      errors.push('Floor must be 50 characters or less if provided');
+    }
+
+    // Address (optional)
+    const address = getValue(record, 'Address', 'address');
+    if (!isEmpty(address) && address.trim().length > 500) {
+      errors.push('Address must be 500 characters or less if provided');
+    }
+
+    // File Number (optional)
+    const fileNumber = getValue(record, 'File Number', 'file_number', 'file-number', 'File_Number');
+    if (!isEmpty(fileNumber) && fileNumber.trim().length > 100) {
+      errors.push('File Number must be 100 characters or less if provided');
+    }
+  }
+
+  /**
+   * Validates RESIDENTIAL customer fields - 1 required field, rest optional
+   */
+  private validateResidentialFields(record: any, errors: string[]): void {
+    // Helper functions
+    const isEmpty = (value: any): boolean => {
+      return value === null || value === undefined || value === '' || 
+             (typeof value === 'string' && value.trim() === '');
+    };
+
+    // Helper function to get value with flexible column names (supports both old and new headers)
+    const getValue = (data: any, ...possibleKeys: string[]) => {
+      for (const key of possibleKeys) {
+        if (data[key] !== undefined && data[key] !== null && data[key] !== '') {
+          return data[key];
+        }
+      }
+      return null;
+    };
+
+    // 1 Required field for RESIDENTIAL customers
+    
+    // PR-ID (required) - check both new and old field names
+    const prId = getValue(record, 'PR-ID', 'pr_id', 'PR-ID', 'pr-id', 'PR_ID');
+    if (isEmpty(prId)) {
+      errors.push('PR-ID is required for RESIDENTIAL customers');
+    } else if (typeof prId !== 'string' || prId.trim().length < 1) {
+      errors.push('PR-ID must be a valid string');
+    } else if (prId.trim().length > 50) {
+      errors.push('PR-ID must be 50 characters or less');
+    }
+
+    // ALL OTHER FIELDS ARE OPTIONAL - Only validate format if provided
+    
+    // Size (optional)
+    const size = getValue(record, 'Size', 'size');
+    if (!isEmpty(size) && size.trim().length > 100) {
+      errors.push('Size must be 100 characters or less if provided');
+    }
+
+    // Floor (optional)
+    const floor = getValue(record, 'Floor', 'floor');
+    if (!isEmpty(floor) && floor.trim().length > 50) {
+      errors.push('Floor must be 50 characters or less if provided');
+    }
+
+    // File Number (optional)
+    const fileNumber = getValue(record, 'File Number', 'file_number', 'file-number', 'File_Number');
+    if (!isEmpty(fileNumber) && fileNumber.trim().length > 100) {
+      errors.push('File Number must be 100 characters or less if provided');
+    }
+
+    // Address (optional)
+    const address = getValue(record, 'Address', 'address');
+    if (!isEmpty(address) && address.trim().length > 500) {
+      errors.push('Address must be 500 characters or less if provided');
+    }
+  }
+
   private async createRecord(entityType: string, record: any, userId: string) {
     switch (entityType) {
       case 'customer':
@@ -771,9 +1093,11 @@ export class BulkUploadService {
     let customerType = 'PERSON'; // Default
     if (data.business_name) customerType = 'BUSINESS';
     else if (hasAnyField(data, 'Full Government / Department Name', 'full_department_name', 'Full Department Name', 'Department Name')) customerType = 'GOVERNMENT';
-    else if (data.full_name && !data.first_name && !data.pr_id) customerType = 'MOSQUE_HOSPITAL';
-    else if (data.full_non_profit_name) customerType = 'NON_PROFIT';
-    else if (data.full_contractor_name) customerType = 'CONTRACTOR';
+    else if (hasAnyField(data, 'Full Mosque or Hospital Name', 'full_mosque_hospital_name', 'mosque_registration_number', 'Mosque Registration Number') || 
+             (data.full_name && !data.first_name && !data.pr_id)) customerType = 'MOSQUE_HOSPITAL';
+    else if (hasAnyField(data, 'NGO Name', 'ngo_name', 'full_non_profit_name', 'ngo_registration_number', 'NGO Registration Number')) customerType = 'NON_PROFIT';
+    else if (hasAnyField(data, 'PR-ID', 'pr_id') && (hasAnyField(data, 'Size', 'size', 'Floor', 'floor', 'File Number', 'file_number', 'Address', 'address')) && 
+             !hasAnyField(data, 'full_name', 'ngo_name', 'business_name', 'rental_name', 'full_department_name')) customerType = 'RESIDENTIAL';
     else if (data.rental_name) customerType = 'RENTAL';
 
     // Generate unique reference ID using timestamp + random to avoid collisions
@@ -1056,6 +1380,148 @@ export class BulkUploadService {
         typeData = mappedData;
       }
 
+      // Map Excel column names to database field names for MOSQUE_HOSPITAL type
+      if (customerType === 'MOSQUE_HOSPITAL') {
+        // Helper function to get value with flexible column names
+        const getValue = (data: any, ...possibleKeys: string[]) => {
+          for (const key of possibleKeys) {
+            if (data[key] !== undefined && data[key] !== null && data[key] !== '') {
+              return data[key];
+            }
+          }
+          // Try case-insensitive and trimmed matches
+          const dataKeys = Object.keys(data);
+          for (const possibleKey of possibleKeys) {
+            for (const dataKey of dataKeys) {
+              if (dataKey.trim().toLowerCase() === possibleKey.toLowerCase()) {
+                if (data[dataKey] !== undefined && data[dataKey] !== null && data[dataKey] !== '') {
+                  return data[dataKey];
+                }
+              }
+            }
+          }
+          return null;
+        };
+
+        // Map Excel columns to database fields for MOSQUE_HOSPITAL
+        const mappedData = {
+          customer_id: customer.id,
+          pr_id: getValue(data, 'PR-ID', 'pr_id', 'PR-ID', 'pr-id', 'PR_ID'),
+          full_mosque_hospital_name: getValue(data, 'Full Mosque or Hospital Name', 'full_mosque_hospital_name', 'full_name', 'Full Name'),
+          mosque_registration_number: getValue(data, 'Mosque Registration Number', 'mosque_registration_number', 'registration_number', 'Registration Number'),
+          contact_name: getValue(data, 'Contact Name', 'contact_name', 'contact-name', 'Contact_Name'),
+          mobile_number_1: getValue(data, 'Contact Number', 'mobile_number_1', 'Mobile Number 1', 'Phone 1', 'mobile-number-1', 'Mobile_Number_1'),
+          mobile_number_2: getValue(data, 'Contact Number 2', 'mobile_number_2', 'Mobile Number 2', 'Phone 2', 'mobile-number-2', 'Mobile_Number_2'),
+          email: getValue(data, 'Email', 'email', 'E-mail', 'e_mail'),
+          address: getValue(data, 'Address', 'address'),
+          size: getValue(data, 'Size', 'size'),
+          floor: getValue(data, 'Floor', 'floor'),
+          file_number: getValue(data, 'File Number', 'file_number', 'file-number', 'File_Number'),
+          
+          // Legacy optional fields (for backward compatibility)
+          full_name: getValue(data, 'Full Mosque or Hospital Name', 'full_mosque_hospital_name', 'full_name', 'Full Name'),
+          registration_number: getValue(data, 'Mosque Registration Number', 'mosque_registration_number', 'registration_number', 'Registration Number'),
+          carrier_mobile_1: getValue(data, 'Carrier Network 1', 'carrier_mobile_1', 'Carrier Mobile 1', 'Carrier 1', 'carrier-mobile-1', 'Carrier_Mobile_1'),
+          carrier_mobile_2: getValue(data, 'Carrier Network 2', 'carrier_mobile_2', 'Carrier Mobile 2', 'Carrier 2', 'carrier-mobile-2', 'Carrier_Mobile_2'),
+          district_id: getValue(data, 'District', 'district_id', 'District ID', 'district-id', 'District_ID'),
+          section: getValue(data, 'Section', 'section'),
+          block: getValue(data, 'Block', 'block'),
+        };
+
+        // Use mapped data instead of original data
+        typeData = mappedData;
+      }
+
+      // Map Excel column names to database field names for NON_PROFIT type
+      if (customerType === 'NON_PROFIT') {
+        // Helper function to get value with flexible column names
+        const getValue = (data: any, ...possibleKeys: string[]) => {
+          for (const key of possibleKeys) {
+            if (data[key] !== undefined && data[key] !== null && data[key] !== '') {
+              return data[key];
+            }
+          }
+          // Try case-insensitive and trimmed matches
+          const dataKeys = Object.keys(data);
+          for (const possibleKey of possibleKeys) {
+            for (const dataKey of dataKeys) {
+              if (dataKey.trim().toLowerCase() === possibleKey.toLowerCase()) {
+                if (data[dataKey] !== undefined && data[dataKey] !== null && data[dataKey] !== '') {
+                  return data[dataKey];
+                }
+              }
+            }
+          }
+          return null;
+        };
+
+        // Map Excel columns to database fields for NON_PROFIT
+        const mappedData = {
+          customer_id: customer.id,
+          pr_id: getValue(data, 'PR-ID', 'pr_id', 'PR-ID', 'pr-id', 'PR_ID'),
+          ngo_name: getValue(data, 'NGO Name', 'ngo_name', 'full_non_profit_name', 'Full Non-Profit Name'),
+          ngo_registration_number: getValue(data, 'NGO Registration Number', 'ngo_registration_number', 'registration_number', 'Registration Number'),
+          contact_name: getValue(data, 'Contact Name', 'contact_name', 'contact-name', 'Contact_Name'),
+          mobile_number_1: getValue(data, 'Contact Number', 'mobile_number_1', 'Mobile Number 1', 'Phone 1', 'mobile-number-1', 'Mobile_Number_1'),
+          mobile_number_2: getValue(data, 'Contact Number 2', 'mobile_number_2', 'Mobile Number 2', 'Phone 2', 'mobile-number-2', 'Mobile_Number_2'),
+          email: getValue(data, 'Email', 'email', 'E-mail', 'e_mail'),
+          size: getValue(data, 'Size', 'size'),
+          floor: getValue(data, 'Floor', 'floor'),
+          address: getValue(data, 'Address', 'address'),
+          file_number: getValue(data, 'File Number', 'file_number', 'file-number', 'File_Number'),
+          
+          // Legacy optional fields (for backward compatibility)
+          full_non_profit_name: getValue(data, 'NGO Name', 'ngo_name', 'full_non_profit_name', 'Full Non-Profit Name'),
+          registration_number: getValue(data, 'NGO Registration Number', 'ngo_registration_number', 'registration_number', 'Registration Number'),
+          license_number: getValue(data, 'license_number', 'License Number', 'license-number', 'License_Number'),
+          carrier_mobile_1: getValue(data, 'Carrier Network 1', 'carrier_mobile_1', 'Carrier Mobile 1', 'Carrier 1', 'carrier-mobile-1', 'Carrier_Mobile_1'),
+          carrier_mobile_2: getValue(data, 'Carrier Network 2', 'carrier_mobile_2', 'Carrier Mobile 2', 'Carrier 2', 'carrier-mobile-2', 'Carrier_Mobile_2'),
+          district_id: getValue(data, 'District', 'district_id', 'District ID', 'district-id', 'District_ID'),
+          section: getValue(data, 'Section', 'section'),
+          block: getValue(data, 'Block', 'block'),
+        };
+
+        // Use mapped data instead of original data
+        typeData = mappedData;
+      }
+
+      // Map Excel column names to database field names for RESIDENTIAL type
+      if (customerType === 'RESIDENTIAL') {
+        // Helper function to get value with flexible column names
+        const getValue = (data: any, ...possibleKeys: string[]) => {
+          for (const key of possibleKeys) {
+            if (data[key] !== undefined && data[key] !== null && data[key] !== '') {
+              return data[key];
+            }
+          }
+          // Try case-insensitive and trimmed matches
+          const dataKeys = Object.keys(data);
+          for (const possibleKey of possibleKeys) {
+            for (const dataKey of dataKeys) {
+              if (dataKey.trim().toLowerCase() === possibleKey.toLowerCase()) {
+                if (data[dataKey] !== undefined && data[dataKey] !== null && data[dataKey] !== '') {
+                  return data[dataKey];
+                }
+              }
+            }
+          }
+          return null;
+        };
+
+        // Map Excel columns to database fields for RESIDENTIAL
+        const mappedData = {
+          customer_id: customer.id,
+          pr_id: getValue(data, 'PR-ID', 'pr_id', 'PR-ID', 'pr-id', 'PR_ID'),
+          size: getValue(data, 'Size', 'size'),
+          floor: getValue(data, 'Floor', 'floor'),
+          file_number: getValue(data, 'File Number', 'file_number', 'file-number', 'File_Number'),
+          address: getValue(data, 'Address', 'address'),
+        };
+
+        // Use mapped data instead of original data
+        typeData = mappedData;
+      }
+
       // Handle PERSON type data transformation and validation
       if (customerType === 'PERSON') {
         // If new fields are missing but old fields exist, construct them
@@ -1147,6 +1613,73 @@ export class BulkUploadService {
         typeData.district_id = typeData.district_id || null;
         typeData.section = typeData.section || null;
         typeData.block = typeData.block || null;
+      }
+
+      // Handle MOSQUE_HOSPITAL type data transformation and validation
+      if (customerType === 'MOSQUE_HOSPITAL') {
+        // Ensure the 5 required fields have values, set defaults if empty
+        typeData.pr_id = typeData.pr_id || `PR-MOS-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        typeData.full_mosque_hospital_name = typeData.full_mosque_hospital_name || 'Mosque/Hospital';
+        typeData.mosque_registration_number = typeData.mosque_registration_number || `MOS-REG-${Date.now()}`;
+        typeData.contact_name = typeData.contact_name || 'Contact Person';
+        typeData.mobile_number_1 = typeData.mobile_number_1 || '+252612345678';
+        
+        // All other fields are optional (can be null)
+        typeData.mobile_number_2 = typeData.mobile_number_2 || null;
+        typeData.email = typeData.email || null;
+        typeData.address = typeData.address || null;
+        typeData.size = typeData.size || null;
+        typeData.floor = typeData.floor || null;
+        typeData.file_number = typeData.file_number || null;
+        
+        // Legacy optional fields (for backward compatibility)
+        typeData.full_name = typeData.full_mosque_hospital_name;
+        typeData.registration_number = typeData.mosque_registration_number;
+        typeData.carrier_mobile_1 = typeData.carrier_mobile_1 || null;
+        typeData.carrier_mobile_2 = typeData.carrier_mobile_2 || null;
+        typeData.district_id = typeData.district_id || null;
+        typeData.section = typeData.section || null;
+        typeData.block = typeData.block || null;
+      }
+
+      // Handle NON_PROFIT type data transformation and validation
+      if (customerType === 'NON_PROFIT') {
+        // Ensure the 5 required fields have values, set defaults if empty
+        typeData.pr_id = typeData.pr_id || `PR-NGO-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        typeData.ngo_name = typeData.ngo_name || 'NGO Organization';
+        typeData.ngo_registration_number = typeData.ngo_registration_number || `NGO-REG-${Date.now()}`;
+        typeData.contact_name = typeData.contact_name || 'Contact Person';
+        typeData.mobile_number_1 = typeData.mobile_number_1 || '+252612345678';
+        
+        // All other fields are optional (can be null)
+        typeData.mobile_number_2 = typeData.mobile_number_2 || null;
+        typeData.email = typeData.email || null;
+        typeData.size = typeData.size || null;
+        typeData.floor = typeData.floor || null;
+        typeData.address = typeData.address || null;
+        typeData.file_number = typeData.file_number || null;
+        
+        // Legacy optional fields (for backward compatibility)
+        typeData.full_non_profit_name = typeData.ngo_name;
+        typeData.registration_number = typeData.ngo_registration_number;
+        typeData.license_number = typeData.license_number || null;
+        typeData.carrier_mobile_1 = typeData.carrier_mobile_1 || null;
+        typeData.carrier_mobile_2 = typeData.carrier_mobile_2 || null;
+        typeData.district_id = typeData.district_id || null;
+        typeData.section = typeData.section || null;
+        typeData.block = typeData.block || null;
+      }
+
+      // Handle RESIDENTIAL type data transformation and validation
+      if (customerType === 'RESIDENTIAL') {
+        // Ensure the 1 required field has a value, set default if empty
+        typeData.pr_id = typeData.pr_id || `PR-RES-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        
+        // All other fields are optional (can be null)
+        typeData.size = typeData.size || null;
+        typeData.floor = typeData.floor || null;
+        typeData.file_number = typeData.file_number || null;
+        typeData.address = typeData.address || null;
       }
 
       // Handle RENTAL type data transformation and validation
@@ -1436,7 +1969,7 @@ export class BulkUploadService {
     return assessment;
   }
 
-  async generateTemplate(entityType: 'customer' | 'property' | 'tax', customerType?: 'PERSON' | 'BUSINESS' | 'RENTAL') {
+  async generateTemplate(entityType: 'customer' | 'property' | 'tax', customerType?: 'PERSON' | 'BUSINESS' | 'RENTAL' | 'GOVERNMENT' | 'MOSQUE_HOSPITAL' | 'NON_PROFIT' | 'RESIDENTIAL') {
     const templates = {
       customer: {
         // PERSON customer template
@@ -1613,6 +2146,101 @@ export class BulkUploadService {
             'District': 'JJG',
             'Section': 'Section A',
             'Block': 'Block 1',
+          },
+        },
+        // MOSQUE_HOSPITAL customer template
+        mosque_hospital: {
+          headers: [
+            'PR-ID',
+            'Full Mosque or Hospital Name',
+            'Mosque Registration Number',
+            'Contact Name',
+            'Contact Number',
+            'Contact Number 2',
+            'Email',
+            'Address',
+            'Size',
+            'Floor',
+            'File Number',
+            'Carrier Network 1',
+            'Carrier Network 2',
+            'District',
+            'Section',
+            'Block',
+          ],
+          example: {
+            'PR-ID': 'PR-MOS-001',
+            'Full Mosque or Hospital Name': 'Al-Noor Mosque',
+            'Mosque Registration Number': 'MOS-REG-2025-001',
+            'Contact Name': 'Sheikh Ahmed Hassan',
+            'Contact Number': '+252-612-345-678',
+            'Contact Number 2': '+252-612-345-679',
+            'Email': 'contact@alnoor.mosque.so',
+            'Address': '123 Mosque Street, Mogadishu',
+            'Size': '500 sqm',
+            'Floor': 'Ground Floor',
+            'File Number': 'MOS-FILE-001',
+            'Carrier Network 1': 'Hormuud',
+            'Carrier Network 2': 'Telesom',
+            'District': 'JJG',
+            'Section': 'Section A',
+            'Block': 'Block 1',
+          },
+        },
+        // NON_PROFIT (NGO) customer template
+        non_profit: {
+          headers: [
+            'PR-ID',
+            'NGO Name',
+            'NGO Registration Number',
+            'Contact Name',
+            'Contact Number',
+            'Contact Number 2',
+            'Email',
+            'Size',
+            'Floor',
+            'Address',
+            'File Number',
+            'Carrier Network 1',
+            'Carrier Network 2',
+            'District',
+            'Section',
+            'Block',
+          ],
+          example: {
+            'PR-ID': 'PR-NGO-001',
+            'NGO Name': 'Hope Foundation',
+            'NGO Registration Number': 'NGO-REG-2025-001',
+            'Contact Name': 'Amina Hassan Director',
+            'Contact Number': '+252-612-345-678',
+            'Contact Number 2': '+252-612-345-679',
+            'Email': 'contact@hopefoundation.so',
+            'Size': '300 sqm',
+            'Floor': '1st Floor',
+            'Address': '456 NGO Street, Mogadishu',
+            'File Number': 'NGO-FILE-001',
+            'Carrier Network 1': 'Hormuud',
+            'Carrier Network 2': 'Telesom',
+            'District': 'JJG',
+            'Section': 'Section B',
+            'Block': 'Block 2',
+          },
+        },
+        // RESIDENTIAL customer template
+        residential: {
+          headers: [
+            'PR-ID',
+            'Size',
+            'Floor',
+            'File Number',
+            'Address',
+          ],
+          example: {
+            'PR-ID': 'PR-RES-001',
+            'Size': '150 sqm',
+            'Floor': '2nd Floor',
+            'File Number': 'RES-FILE-001',
+            'Address': '789 Residential Street, Mogadishu',
           },
         },
       },

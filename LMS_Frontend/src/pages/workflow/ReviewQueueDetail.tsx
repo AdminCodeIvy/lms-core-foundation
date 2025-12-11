@@ -538,28 +538,18 @@ const CustomerReviewContent = ({
         </>
       )}
 
-      {customer.customer_type === 'CONTRACTOR' && customer.contractor_data && (
+      {customer.customer_type === 'RESIDENTIAL' && customer.residential_data && (
         <>
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Contractor Information</CardTitle>
+              <CardTitle>Residential Information</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-6 md:grid-cols-2">
-              <InfoItem label="Full Contractor Name" value={customer.contractor_data.full_contractor_name} />
-              <InfoItem label="Contact Name" value={customer.contractor_data.contact_name} />
-            </CardContent>
-          </Card>
-
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Contact Information</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-6 md:grid-cols-2">
-              <InfoItem label="Mobile 1" value={customer.contractor_data.mobile_number_1} />
-              <InfoItem label="Carrier Mobile 1" value={customer.contractor_data.carrier_mobile_1} />
-              <InfoItem label="Mobile 2" value={customer.contractor_data.mobile_number_2} />
-              <InfoItem label="Carrier Mobile 2" value={customer.contractor_data.carrier_mobile_2} />
-              <InfoItem label="Email" value={customer.contractor_data.email} />
+              <InfoItem label="PR-ID" value={customer.residential_data.pr_id} />
+              <InfoItem label="Size" value={customer.residential_data.size} />
+              <InfoItem label="Floor" value={customer.residential_data.floor} />
+              <InfoItem label="File Number" value={customer.residential_data.file_number} />
+              <InfoItem label="Address" value={customer.residential_data.address} />
             </CardContent>
           </Card>
         </>
@@ -763,7 +753,7 @@ const PropertyReviewContent = ({
                         owner.customer?.customer_government?.[0]?.full_department_name ||
                         owner.customer?.customer_mosque_hospital?.[0]?.full_name ||
                         owner.customer?.customer_non_profit?.[0]?.full_non_profit_name ||
-                        owner.customer?.customer_contractor?.[0]?.full_contractor_name ||
+                        owner.customer?.customer_residential?.[0]?.pr_id ||
                         (owner.customer?.customer_person?.[0] 
                           ? (owner.customer.customer_person[0].full_name || `${owner.customer.customer_person[0].first_name} ${owner.customer.customer_person[0].fourth_name}`.trim())
                           : 'N/A')

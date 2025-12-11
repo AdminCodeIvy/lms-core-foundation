@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import * as XLSX from 'xlsx';
 
 type UploadType = 'CUSTOMER' | 'PROPERTY' | 'TAX_ASSESSMENT' | 'TAX_PAYMENT';
-type CustomerSubType = 'PERSON' | 'BUSINESS' | 'GOVERNMENT' | 'MOSQUE_HOSPITAL' | 'NON_PROFIT' | 'CONTRACTOR' | 'RENTAL';
+type CustomerSubType = 'PERSON' | 'BUSINESS' | 'GOVERNMENT' | 'MOSQUE_HOSPITAL' | 'NON_PROFIT' | 'RESIDENTIAL' | 'RENTAL';
 
 interface ValidationRow {
   rowNumber: number;
@@ -85,9 +85,9 @@ const customerSubTypes = [
     icon: Users,
   },
   {
-    type: 'CONTRACTOR' as CustomerSubType,
-    title: 'Contractor',
-    description: 'Construction service provider',
+    type: 'RESIDENTIAL' as CustomerSubType,
+    title: 'Residential',
+    description: 'Residential property owner',
     icon: Users,
   },
   {
@@ -352,86 +352,96 @@ export default function BulkUpload() {
           case 'MOSQUE_HOSPITAL':
             filename = 'customer_mosque_hospital_template.xlsx';
             headers = [
-              'full_name',
-              'registration_number',
-              'address',
-              'contact_name',
-              'mobile_number_1',
-              'carrier_mobile_1',
-              'mobile_number_2',
-              'carrier_mobile_2',
-              'email',
-              'district_id',
-              'section',
-              'block',
+              'PR-ID',
+              'Full Mosque or Hospital Name',
+              'Mosque Registration Number',
+              'Contact Name',
+              'Contact Number',
+              'Contact Number 2',
+              'Email',
+              'Address',
+              'Size',
+              'Floor',
+              'File Number',
+              'Carrier Network 1',
+              'Carrier Network 2',
+              'District',
+              'Section',
+              'Block',
             ];
             sampleRow = {
-              full_name: 'Central Mosque',
-              registration_number: 'MOS123456',
-              address: '789 Religious Street, Jigjiga',
-              contact_name: 'Imam Ahmed',
-              mobile_number_1: '+251913456789',
-              carrier_mobile_1: 'Ethio Telecom',
-              mobile_number_2: '',
-              carrier_mobile_2: '',
-              email: 'central.mosque@example.com',
-              district_id: 'JJG',
-              section: 'C',
-              block: '8',
+              'PR-ID': 'PR-MOS-001',
+              'Full Mosque or Hospital Name': 'Al-Noor Mosque',
+              'Mosque Registration Number': 'MOS-REG-2025-001',
+              'Contact Name': 'Sheikh Ahmed Hassan',
+              'Contact Number': '+252-612-345-678',
+              'Contact Number 2': '+252-612-345-679',
+              'Email': 'contact@alnoor.mosque.so',
+              'Address': '123 Mosque Street, Mogadishu',
+              'Size': '500 sqm',
+              'Floor': 'Ground Floor',
+              'File Number': 'MOS-FILE-001',
+              'Carrier Network 1': 'Hormuud',
+              'Carrier Network 2': 'Telesom',
+              'District': 'JJG',
+              'Section': 'Section A',
+              'Block': 'Block 1',
             };
             break;
           case 'NON_PROFIT':
             filename = 'customer_nonprofit_template.xlsx';
             headers = [
-              'full_non_profit_name',
-              'registration_number',
-              'license_number',
-              'address',
-              'contact_name',
-              'mobile_number_1',
-              'carrier_mobile_1',
-              'mobile_number_2',
-              'carrier_mobile_2',
-              'email',
-              'district_id',
-              'section',
-              'block',
+              'PR-ID',
+              'NGO Name',
+              'NGO Registration Number',
+              'Contact Name',
+              'Contact Number',
+              'Contact Number 2',
+              'Email',
+              'Size',
+              'Floor',
+              'Address',
+              'File Number',
+              'Carrier Network 1',
+              'Carrier Network 2',
+              'District',
+              'Section',
+              'Block',
             ];
             sampleRow = {
-              full_non_profit_name: 'Community Development Organization',
-              registration_number: 'NPO123456',
-              license_number: 'NPL789012',
-              address: '321 Charity Avenue, Jigjiga',
-              contact_name: 'Director',
-              mobile_number_1: '+251914567890',
-              carrier_mobile_1: 'Ethio Telecom',
-              mobile_number_2: '',
-              carrier_mobile_2: '',
-              email: 'info@cdo.org',
-              district_id: 'JJG',
-              section: 'D',
-              block: '3',
+              'PR-ID': 'PR-NGO-001',
+              'NGO Name': 'Hope Foundation',
+              'NGO Registration Number': 'NGO-REG-2025-001',
+              'Contact Name': 'Amina Hassan Director',
+              'Contact Number': '+252-612-345-678',
+              'Contact Number 2': '+252-612-345-679',
+              'Email': 'contact@hopefoundation.so',
+              'Size': '300 sqm',
+              'Floor': '1st Floor',
+              'Address': '456 NGO Street, Mogadishu',
+              'File Number': 'NGO-FILE-001',
+              'Carrier Network 1': 'Hormuud',
+              'Carrier Network 2': 'Telesom',
+              'District': 'JJG',
+              'Section': 'Section B',
+              'Block': 'Block 2',
             };
             break;
-          case 'CONTRACTOR':
-            filename = 'customer_contractor_template.xlsx';
+          case 'RESIDENTIAL':
+            filename = 'customer_residential_template.xlsx';
             headers = [
-              'full_contractor_name',
-              'contact_name',
-              'mobile_number_1',
-              'carrier_mobile_1',
-              'mobile_number_2',
-              'carrier_mobile_2',
-              'email',
+              'PR-ID',
+              'Size',
+              'Floor',
+              'File Number',
+              'Address',
             ];
             sampleRow = {
-              full_contractor_name: 'Construction Services Ltd',
-              contact_name: 'Engineer Ahmed',
-              mobile_number_1: '+251915678901',
-              carrier_mobile_1: 'Ethio Telecom',
-              mobile_number_2: '',
-              carrier_mobile_2: '',
-              email: 'ahmed@construction.com',
+              'PR-ID': 'PR-RES-001',
+              'Size': '150 sqm',
+              'Floor': '2nd Floor',
+              'File Number': 'RES-FILE-001',
+              'Address': '789 Residential Street, Mogadishu',
             };
             break;
           case 'RENTAL':
@@ -921,30 +931,85 @@ export default function BulkUpload() {
                   status = 'warning';
                 }
               } else if (selectedCustomerType === 'MOSQUE_HOSPITAL') {
-                if (!row['full_name']) {
-                  messages.push('Full name is required');
+                // 5 Required fields for MOSQUE_HOSPITAL
+                if (!row['PR-ID']) {
+                  messages.push('PR-ID is required');
                   status = 'error';
                 }
-                if (!row['mobile_number_1']) {
-                  messages.push('Mobile number 1 is required');
+                if (!row['Full Mosque or Hospital Name']) {
+                  messages.push('Full Mosque or Hospital Name is required');
                   status = 'error';
+                }
+                if (!row['Mosque Registration Number']) {
+                  messages.push('Mosque Registration Number is required');
+                  status = 'error';
+                }
+                if (!row['Contact Name']) {
+                  messages.push('Contact Name is required');
+                  status = 'error';
+                }
+                if (!row['Contact Number']) {
+                  messages.push('Contact Number is required');
+                  status = 'error';
+                }
+                
+                // Validate mobile number format if provided
+                if (row['Contact Number'] && row['Contact Number'].toString().trim() && !row['Contact Number'].toString().match(/^\+\d{1,3}-?\d{3,4}-?\d{3,4}-?\d{3,4}$/)) {
+                  messages.push('Contact Number format should be +XXX-XXX-XXX-XXX');
+                  status = 'warning';
+                }
+                if (row['Contact Number 2'] && row['Contact Number 2'].toString().trim() && !row['Contact Number 2'].toString().match(/^\+\d{1,3}-?\d{3,4}-?\d{3,4}-?\d{3,4}$/)) {
+                  messages.push('Contact Number 2 format should be +XXX-XXX-XXX-XXX');
+                  status = 'warning';
+                }
+                
+                // Validate email format if provided
+                if (row['Email'] && row['Email'].toString().trim() && !row['Email'].toString().match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+                  messages.push('Email format is invalid');
+                  status = 'warning';
                 }
               } else if (selectedCustomerType === 'NON_PROFIT') {
-                if (!row['full_non_profit_name']) {
-                  messages.push('Full non-profit name is required');
+                // 5 Required fields for NON_PROFIT
+                if (!row['PR-ID']) {
+                  messages.push('PR-ID is required');
                   status = 'error';
                 }
-                if (!row['mobile_number_1']) {
-                  messages.push('Mobile number 1 is required');
+                if (!row['NGO Name']) {
+                  messages.push('NGO Name is required');
                   status = 'error';
                 }
-              } else if (selectedCustomerType === 'CONTRACTOR') {
-                if (!row['full_contractor_name']) {
-                  messages.push('Full contractor name is required');
+                if (!row['NGO Registration Number']) {
+                  messages.push('NGO Registration Number is required');
                   status = 'error';
                 }
-                if (!row['mobile_number_1']) {
-                  messages.push('Mobile number 1 is required');
+                if (!row['Contact Name']) {
+                  messages.push('Contact Name is required');
+                  status = 'error';
+                }
+                if (!row['Contact Number']) {
+                  messages.push('Contact Number is required');
+                  status = 'error';
+                }
+                
+                // Validate mobile number format if provided
+                if (row['Contact Number'] && row['Contact Number'].toString().trim() && !row['Contact Number'].toString().match(/^\+\d{1,3}-?\d{3,4}-?\d{3,4}-?\d{3,4}$/)) {
+                  messages.push('Contact Number format should be +XXX-XXX-XXX-XXX');
+                  status = 'warning';
+                }
+                if (row['Contact Number 2'] && row['Contact Number 2'].toString().trim() && !row['Contact Number 2'].toString().match(/^\+\d{1,3}-?\d{3,4}-?\d{3,4}-?\d{3,4}$/)) {
+                  messages.push('Contact Number 2 format should be +XXX-XXX-XXX-XXX');
+                  status = 'warning';
+                }
+                
+                // Validate email format if provided
+                if (row['Email'] && row['Email'].toString().trim() && !row['Email'].toString().match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+                  messages.push('Email format is invalid');
+                  status = 'warning';
+                }
+              } else if (selectedCustomerType === 'RESIDENTIAL') {
+                // 1 Required field for RESIDENTIAL
+                if (!row['PR-ID']) {
+                  messages.push('PR-ID is required');
                   status = 'error';
                 }
               } else if (selectedCustomerType === 'RENTAL') {

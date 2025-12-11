@@ -9,7 +9,7 @@ import { BusinessForm } from '@/components/customers/BusinessForm';
 import { GovernmentForm } from '@/components/customers/GovernmentForm';
 import { MosqueHospitalForm } from '@/components/customers/MosqueHospitalForm';
 import { NonProfitForm } from '@/components/customers/NonProfitForm';
-import { ContractorForm } from '@/components/customers/ContractorForm';
+import { ResidentialForm } from '@/components/customers/ResidentialForm';
 import { RentalForm } from '@/components/customers/RentalForm';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -80,8 +80,8 @@ const CustomerEdit = () => {
         updateData.mosque_hospital_data = data;
       } else if (customer?.customer_type === 'NON_PROFIT') {
         updateData.non_profit_data = data;
-      } else if (customer?.customer_type === 'CONTRACTOR') {
-        updateData.contractor_data = data;
+      } else if (customer?.customer_type === 'RESIDENTIAL') {
+        updateData.residential_data = data;
       } else if (customer?.customer_type === 'RENTAL') {
         updateData.rental_data = data;
       }
@@ -102,7 +102,7 @@ const CustomerEdit = () => {
 
   // Check if customer has no type-specific data
   const hasNoData = !customer.person_data && !customer.business_data && !customer.government_data && 
-                     !customer.mosque_hospital_data && !customer.non_profit_data && !customer.contractor_data && !customer.rental_data;
+                     !customer.mosque_hospital_data && !customer.non_profit_data && !customer.residential_data && !customer.rental_data;
   
   if (hasNoData) {
     return (
@@ -147,7 +147,7 @@ const CustomerEdit = () => {
       {customer.customer_type === 'GOVERNMENT' && customer.government_data && <GovernmentForm defaultValues={customer.government_data} onSubmit={handleSubmit} onCancel={() => navigate(`/customers/${id}`)} isSubmitting={isSubmitting} districts={districts} carriers={carriers} />}
       {customer.customer_type === 'MOSQUE_HOSPITAL' && customer.mosque_hospital_data && <MosqueHospitalForm defaultValues={customer.mosque_hospital_data} onSubmit={handleSubmit} onCancel={() => navigate(`/customers/${id}`)} isSubmitting={isSubmitting} districts={districts} carriers={carriers} />}
       {customer.customer_type === 'NON_PROFIT' && customer.non_profit_data && <NonProfitForm defaultValues={customer.non_profit_data} onSubmit={handleSubmit} onCancel={() => navigate(`/customers/${id}`)} isSubmitting={isSubmitting} districts={districts} carriers={carriers} />}
-      {customer.customer_type === 'CONTRACTOR' && customer.contractor_data && <ContractorForm defaultValues={customer.contractor_data} onSubmit={handleSubmit} onCancel={() => navigate(`/customers/${id}`)} isSubmitting={isSubmitting} carriers={carriers} />}
+      {customer.customer_type === 'RESIDENTIAL' && customer.residential_data && <ResidentialForm defaultValues={customer.residential_data} onSubmit={handleSubmit} onCancel={() => navigate(`/customers/${id}`)} isSubmitting={isSubmitting} />}
       {customer.customer_type === 'RENTAL' && customer.rental_data && <RentalForm defaultValues={{...customer.rental_data, date_of_birth: new Date(customer.rental_data.date_of_birth), issue_date: customer.rental_data.issue_date ? new Date(customer.rental_data.issue_date) : undefined, expiry_date: customer.rental_data.expiry_date ? new Date(customer.rental_data.expiry_date) : undefined}} onSubmit={handleSubmit} onCancel={() => navigate(`/customers/${id}`)} isSubmitting={isSubmitting} carriers={carriers} countries={countries} idTypes={ID_TYPES} />}
     </div>
   );

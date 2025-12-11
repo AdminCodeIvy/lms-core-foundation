@@ -1,4 +1,4 @@
-export type CustomerType = 'PERSON' | 'BUSINESS' | 'GOVERNMENT' | 'MOSQUE_HOSPITAL' | 'NON_PROFIT' | 'CONTRACTOR' | 'RENTAL';
+export type CustomerType = 'PERSON' | 'BUSINESS' | 'GOVERNMENT' | 'MOSQUE_HOSPITAL' | 'NON_PROFIT' | 'RESIDENTIAL' | 'RENTAL';
 
 export interface CustomerTypeOption {
   type: CustomerType;
@@ -92,12 +92,10 @@ export interface NonProfitFormData {
   block?: string;
 }
 
-export interface ContractorFormData {
-  full_contractor_name: string;
-  contact_name: string;
-  mobile_number_1: string;
-  carrier_mobile_1: string;
-  mobile_number_2?: string;
-  carrier_mobile_2?: string;
-  email: string;
+export interface ResidentialFormData {
+  pr_id: string;
+  size?: string;
+  floor?: string;
+  file_number?: string;
+  address?: string;
 }

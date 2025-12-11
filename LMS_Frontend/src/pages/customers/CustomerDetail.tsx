@@ -649,36 +649,23 @@ const CustomerDetail = () => {
             </>
           )}
 
-          {/* Contractor Type */}
-          {customer.customer_type === 'CONTRACTOR' && customer.contractor_data && (
+          {/* Residential Type */}
+          {customer.customer_type === 'RESIDENTIAL' && customer.residential_data && (
             <>
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <User className="h-5 w-5" />
-                    Contractor Information
+                    Residential Information
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-0">
                   <InfoItem icon={IdCard} label="Reference ID" value={customer.reference_id} />
-                  <InfoItem icon={User} label="Contractor Name" value={customer.contractor_data.full_contractor_name} />
-                  <InfoItem icon={User} label="Contact Name" value={customer.contractor_data.contact_name} />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Phone className="h-5 w-5" />
-                    Contact Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-0">
-                  <InfoItem icon={Phone} label="Mobile Number 1" value={`${customer.contractor_data.mobile_number_1} (${customer.contractor_data.carrier_mobile_1})`} />
-                  {customer.contractor_data.mobile_number_2 && (
-                    <InfoItem icon={Phone} label="Mobile Number 2" value={`${customer.contractor_data.mobile_number_2} (${customer.contractor_data.carrier_mobile_2})`} />
-                  )}
-                  <InfoItem icon={Mail} label="Email" value={customer.contractor_data.email} />
+                  <InfoItem icon={User} label="PR-ID" value={customer.residential_data.pr_id} />
+                  <InfoItem icon={User} label="Size" value={customer.residential_data.size} />
+                  <InfoItem icon={User} label="Floor" value={customer.residential_data.floor} />
+                  <InfoItem icon={User} label="File Number" value={customer.residential_data.file_number} />
+                  <InfoItem icon={User} label="Address" value={customer.residential_data.address} />
                 </CardContent>
               </Card>
             </>

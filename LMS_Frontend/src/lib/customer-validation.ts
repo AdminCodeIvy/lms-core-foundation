@@ -94,44 +94,65 @@ export const governmentSchema = z.object({
 });
 
 export const mosqueHospitalSchema = z.object({
-  full_name: z.string().trim().min(3, "Name must be at least 3 characters").max(200),
-  registration_number: z.string().trim().min(1, "Registration number is required").max(100),
-  address: z.string().trim().min(1, "Address is required").max(500),
-  contact_name: z.string().trim().min(1, "Contact name is required").max(200),
+  // Required fields (5)
+  pr_id: z.string().trim().min(1, "PR-ID is required").max(50),
+  full_mosque_hospital_name: z.string().trim().min(3, "Full Mosque or Hospital Name must be at least 3 characters").max(200),
+  mosque_registration_number: z.string().trim().min(1, "Mosque Registration Number is required").max(100),
+  contact_name: z.string().trim().min(1, "Contact Name is required").max(200),
   mobile_number_1: z.string().trim().regex(mobileNumberRegex, "Invalid mobile number format"),
-  carrier_mobile_1: z.string().min(1, "Carrier is required"),
+  
+  // Optional fields
   mobile_number_2: z.string().trim().regex(mobileNumberRegex, "Invalid mobile number format").optional().or(z.literal("")),
+  email: z.string().trim().email("Invalid email format").max(255).optional().or(z.literal("")),
+  address: z.string().trim().max(500).optional().or(z.literal("")),
+  size: z.string().trim().max(100).optional().or(z.literal("")),
+  floor: z.string().trim().max(50).optional().or(z.literal("")),
+  file_number: z.string().trim().max(100).optional().or(z.literal("")),
+  
+  // Legacy optional fields (for backward compatibility)
+  carrier_mobile_1: z.string().optional().or(z.literal("")),
   carrier_mobile_2: z.string().optional().or(z.literal("")),
-  email: z.string().trim().email("Invalid email format").max(255),
-  district_id: z.string().min(1, "District is required"),
+  district_id: z.string().optional().or(z.literal("")),
   section: z.string().trim().max(100).optional().or(z.literal("")),
   block: z.string().trim().max(100).optional().or(z.literal("")),
 });
 
 export const nonProfitSchema = z.object({
-  full_non_profit_name: z.string().trim().min(3, "Organization name must be at least 3 characters").max(200),
-  registration_number: z.string().trim().min(1, "Registration number is required").max(100),
-  license_number: z.string().trim().min(1, "License number is required").max(100),
-  address: z.string().trim().min(1, "Address is required").max(500),
-  contact_name: z.string().trim().min(1, "Contact name is required").max(200),
+  // Required fields (5)
+  pr_id: z.string().trim().min(1, "PR-ID is required").max(50),
+  ngo_name: z.string().trim().min(3, "NGO Name must be at least 3 characters").max(200),
+  ngo_registration_number: z.string().trim().min(1, "NGO Registration Number is required").max(100),
+  contact_name: z.string().trim().min(1, "Contact Name is required").max(200),
   mobile_number_1: z.string().trim().regex(mobileNumberRegex, "Invalid mobile number format"),
-  carrier_mobile_1: z.string().min(1, "Carrier is required"),
+  
+  // Optional fields
   mobile_number_2: z.string().trim().regex(mobileNumberRegex, "Invalid mobile number format").optional().or(z.literal("")),
+  email: z.string().trim().email("Invalid email format").max(255).optional().or(z.literal("")),
+  size: z.string().trim().max(100).optional().or(z.literal("")),
+  floor: z.string().trim().max(50).optional().or(z.literal("")),
+  address: z.string().trim().max(500).optional().or(z.literal("")),
+  file_number: z.string().trim().max(100).optional().or(z.literal("")),
+  
+  // Legacy optional fields (for backward compatibility)
+  full_non_profit_name: z.string().trim().max(200).optional().or(z.literal("")),
+  registration_number: z.string().trim().max(100).optional().or(z.literal("")),
+  license_number: z.string().trim().max(100).optional().or(z.literal("")),
+  carrier_mobile_1: z.string().optional().or(z.literal("")),
   carrier_mobile_2: z.string().optional().or(z.literal("")),
-  email: z.string().trim().email("Invalid email format").max(255),
-  district_id: z.string().min(1, "District is required"),
+  district_id: z.string().optional().or(z.literal("")),
   section: z.string().trim().max(100).optional().or(z.literal("")),
   block: z.string().trim().max(100).optional().or(z.literal("")),
 });
 
-export const contractorSchema = z.object({
-  full_contractor_name: z.string().trim().min(3, "Contractor name must be at least 3 characters").max(200),
-  contact_name: z.string().trim().min(1, "Contact name is required").max(200),
-  mobile_number_1: z.string().trim().regex(mobileNumberRegex, "Invalid mobile number format"),
-  carrier_mobile_1: z.string().min(1, "Carrier is required"),
-  mobile_number_2: z.string().trim().regex(mobileNumberRegex, "Invalid mobile number format").optional().or(z.literal("")),
-  carrier_mobile_2: z.string().optional().or(z.literal("")),
-  email: z.string().trim().email("Invalid email format").max(255),
+export const residentialSchema = z.object({
+  // Required field (1)
+  pr_id: z.string().trim().min(1, "PR-ID is required").max(50),
+  
+  // Optional fields
+  size: z.string().trim().max(100).optional().or(z.literal("")),
+  floor: z.string().trim().max(50).optional().or(z.literal("")),
+  file_number: z.string().trim().max(100).optional().or(z.literal("")),
+  address: z.string().trim().max(500).optional().or(z.literal("")),
 });
 
 export const rentalSchema = z.object({
@@ -175,5 +196,5 @@ export type BusinessFormData = z.infer<typeof businessSchema>;
 export type GovernmentFormData = z.infer<typeof governmentSchema>;
 export type MosqueHospitalFormData = z.infer<typeof mosqueHospitalSchema>;
 export type NonProfitFormData = z.infer<typeof nonProfitSchema>;
-export type ContractorFormData = z.infer<typeof contractorSchema>;
+export type ResidentialFormData = z.infer<typeof residentialSchema>;
 export type RentalFormData = z.infer<typeof rentalSchema>;

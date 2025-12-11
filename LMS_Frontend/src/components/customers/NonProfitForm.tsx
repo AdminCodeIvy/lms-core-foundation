@@ -27,16 +27,23 @@ export const NonProfitForm = ({
   const form = useForm<NonProfitFormData>({
     resolver: zodResolver(nonProfitSchema),
     defaultValues: defaultValues || {
+      pr_id: '',
+      ngo_name: '',
+      ngo_registration_number: '',
+      contact_name: '',
+      mobile_number_1: '',
+      mobile_number_2: '',
+      email: '',
+      size: '',
+      floor: '',
+      address: '',
+      file_number: '',
+      // Legacy fields
       full_non_profit_name: '',
       registration_number: '',
       license_number: '',
-      address: '',
-      contact_name: '',
-      mobile_number_1: '',
       carrier_mobile_1: '',
-      mobile_number_2: '',
       carrier_mobile_2: '',
-      email: '',
       district_id: '',
       section: '',
       block: '',
@@ -48,17 +55,17 @@ export const NonProfitForm = ({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Organization Information</CardTitle>
+            <CardTitle>NGO Information</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="full_non_profit_name"
+              name="pr_id"
               render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel>Full Non-Profit Name <span className="text-destructive">*</span></FormLabel>
+                <FormItem>
+                  <FormLabel>PR-ID <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter full organization name" />
+                    <Input {...field} placeholder="Enter PR-ID" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -67,12 +74,12 @@ export const NonProfitForm = ({
 
             <FormField
               control={form.control}
-              name="registration_number"
+              name="ngo_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Registration Number <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>NGO Name <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter registration number" />
+                    <Input {...field} placeholder="Enter NGO name" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -81,12 +88,26 @@ export const NonProfitForm = ({
 
             <FormField
               control={form.control}
-              name="license_number"
+              name="ngo_registration_number"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>License Number <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>NGO Registration Number <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter license number" />
+                    <Input {...field} placeholder="Enter NGO registration number" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="contact_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Contact Name <span className="text-destructive">*</span></FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter contact name" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -98,9 +119,51 @@ export const NonProfitForm = ({
               name="address"
               render={({ field }) => (
                 <FormItem className="md:col-span-2">
-                  <FormLabel>Address <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>Address</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter address" />
+                    <Input {...field} placeholder="Enter address (optional)" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="size"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Size</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter size (optional)" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="floor"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Floor</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter floor (optional)" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="file_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>File Number</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter file number (optional)" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -116,52 +179,13 @@ export const NonProfitForm = ({
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="contact_name"
-              render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel>Contact Name <span className="text-destructive">*</span></FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Enter contact name" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name="mobile_number_1"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mobile Number 1 <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>Contact Number <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="+251-912-345-678" />
+                    <Input {...field} placeholder="+252-612-345-678" />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="carrier_mobile_1"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Carrier Mobile 1 <span className="text-destructive">*</span></FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select carrier" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {carriers.map((carrier) => (
-                        <SelectItem key={carrier.id} value={carrier.name}>
-                          {carrier.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -172,9 +196,9 @@ export const NonProfitForm = ({
               name="mobile_number_2"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mobile Number 2</FormLabel>
+                  <FormLabel>Contact Number 2</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="+251-912-345-678 (optional)" />
+                    <Input {...field} placeholder="+252-612-345-679 (optional)" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -183,10 +207,31 @@ export const NonProfitForm = ({
 
             <FormField
               control={form.control}
-              name="carrier_mobile_2"
+              name="email"
+              render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="email" placeholder="email@example.com (optional)" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Additional Information (Optional)</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="carrier_mobile_1"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Carrier Mobile 2</FormLabel>
+                  <FormLabel>Carrier Network 1</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -208,35 +253,39 @@ export const NonProfitForm = ({
 
             <FormField
               control={form.control}
-              name="email"
+              name="carrier_mobile_2"
               render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel>Email <span className="text-destructive">*</span></FormLabel>
-                  <FormControl>
-                    <Input {...field} type="email" placeholder="email@example.com" />
-                  </FormControl>
+                <FormItem>
+                  <FormLabel>Carrier Network 2</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select carrier (optional)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {carriers.map((carrier) => (
+                        <SelectItem key={carrier.id} value={carrier.name}>
+                          {carrier.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Location</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="district_id"
               render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel>District <span className="text-destructive">*</span></FormLabel>
+                <FormItem>
+                  <FormLabel>District</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select district" />
+                        <SelectValue placeholder="Select district (optional)" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>

@@ -10,7 +10,7 @@ import { BusinessForm } from '@/components/customers/BusinessForm';
 import { GovernmentForm } from '@/components/customers/GovernmentForm';
 import { MosqueHospitalForm } from '@/components/customers/MosqueHospitalForm';
 import { NonProfitForm } from '@/components/customers/NonProfitForm';
-import { ContractorForm } from '@/components/customers/ContractorForm';
+import { ResidentialForm } from '@/components/customers/ResidentialForm';
 import { RentalForm } from '@/components/customers/RentalForm';
 import { Button } from '@/components/ui/button';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
@@ -22,7 +22,7 @@ import type {
   GovernmentFormData,
   MosqueHospitalFormData,
   NonProfitFormData,
-  ContractorFormData,
+  ResidentialFormData,
   RentalFormData,
 } from '@/lib/customer-validation';
 
@@ -200,12 +200,12 @@ const CustomerNew = () => {
     }
   };
 
-  const handleContractorSubmit = async (data: ContractorFormData) => {
+  const handleResidentialSubmit = async (data: ResidentialFormData) => {
     setIsSubmitting(true);
     try {
       const customer = await customerService.createCustomer({
-        customer_type: 'CONTRACTOR',
-        contractor_data: data,
+        customer_type: 'RESIDENTIAL',
+        residential_data: data,
       });
 
       toast({
@@ -272,8 +272,8 @@ const CustomerNew = () => {
         return 'Mosque/Hospital';
       case 'NON_PROFIT':
         return 'Non-Profit';
-      case 'CONTRACTOR':
-        return 'Contractor';
+      case 'RESIDENTIAL':
+        return 'Residential';
       case 'RENTAL':
         return 'Rental';
     }
@@ -373,9 +373,9 @@ const CustomerNew = () => {
         />
       )}
 
-      {selectedType === 'CONTRACTOR' && (
-        <ContractorForm
-          onSubmit={handleContractorSubmit}
+      {selectedType === 'RESIDENTIAL' && (
+        <ResidentialForm
+          onSubmit={handleResidentialSubmit}
           onCancel={handleCancel}
           isSubmitting={isSubmitting}
           carriers={carriers}

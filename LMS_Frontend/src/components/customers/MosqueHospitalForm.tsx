@@ -27,15 +27,20 @@ export const MosqueHospitalForm = ({
   const form = useForm<MosqueHospitalFormData>({
     resolver: zodResolver(mosqueHospitalSchema),
     defaultValues: defaultValues || {
-      full_name: '',
-      registration_number: '',
-      address: '',
+      pr_id: '',
+      full_mosque_hospital_name: '',
+      mosque_registration_number: '',
       contact_name: '',
       mobile_number_1: '',
-      carrier_mobile_1: '',
       mobile_number_2: '',
-      carrier_mobile_2: '',
       email: '',
+      address: '',
+      size: '',
+      floor: '',
+      file_number: '',
+      // Legacy fields
+      carrier_mobile_1: '',
+      carrier_mobile_2: '',
       district_id: '',
       section: '',
       block: '',
@@ -47,17 +52,17 @@ export const MosqueHospitalForm = ({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Basic Information</CardTitle>
+            <CardTitle>Mosque / Hospital Information</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="full_name"
+              name="pr_id"
               render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel>Full Name <span className="text-destructive">*</span></FormLabel>
+                <FormItem>
+                  <FormLabel>PR-ID <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter full name" />
+                    <Input {...field} placeholder="Enter PR-ID" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -66,12 +71,40 @@ export const MosqueHospitalForm = ({
 
             <FormField
               control={form.control}
-              name="registration_number"
+              name="full_mosque_hospital_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Registration Number <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>Full Mosque or Hospital Name <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter registration number" />
+                    <Input {...field} placeholder="Enter full mosque or hospital name" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="mosque_registration_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Mosque Registration Number <span className="text-destructive">*</span></FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter mosque registration number" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="contact_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Contact Name <span className="text-destructive">*</span></FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter contact name" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -82,10 +115,52 @@ export const MosqueHospitalForm = ({
               control={form.control}
               name="address"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Address <span className="text-destructive">*</span></FormLabel>
+                <FormItem className="md:col-span-2">
+                  <FormLabel>Address</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter address" />
+                    <Input {...field} placeholder="Enter address (optional)" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="size"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Size</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter size (optional)" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="floor"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Floor</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter floor (optional)" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="file_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>File Number</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter file number (optional)" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -101,52 +176,13 @@ export const MosqueHospitalForm = ({
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="contact_name"
-              render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel>Contact Name <span className="text-destructive">*</span></FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Enter contact name" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name="mobile_number_1"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mobile Number 1 <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>Contact Number <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="+251-912-345-678" />
+                    <Input {...field} placeholder="+252-612-345-678" />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="carrier_mobile_1"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Carrier Mobile 1 <span className="text-destructive">*</span></FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select carrier" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {carriers.map((carrier) => (
-                        <SelectItem key={carrier.id} value={carrier.name}>
-                          {carrier.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -157,9 +193,9 @@ export const MosqueHospitalForm = ({
               name="mobile_number_2"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mobile Number 2</FormLabel>
+                  <FormLabel>Contact Number 2</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="+251-912-345-678 (optional)" />
+                    <Input {...field} placeholder="+252-612-345-679 (optional)" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -168,10 +204,31 @@ export const MosqueHospitalForm = ({
 
             <FormField
               control={form.control}
-              name="carrier_mobile_2"
+              name="email"
+              render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="email" placeholder="email@example.com (optional)" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Additional Information (Optional)</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="carrier_mobile_1"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Carrier Mobile 2</FormLabel>
+                  <FormLabel>Carrier Network 1</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -193,35 +250,39 @@ export const MosqueHospitalForm = ({
 
             <FormField
               control={form.control}
-              name="email"
+              name="carrier_mobile_2"
               render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel>Email <span className="text-destructive">*</span></FormLabel>
-                  <FormControl>
-                    <Input {...field} type="email" placeholder="email@example.com" />
-                  </FormControl>
+                <FormItem>
+                  <FormLabel>Carrier Network 2</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select carrier (optional)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {carriers.map((carrier) => (
+                        <SelectItem key={carrier.id} value={carrier.name}>
+                          {carrier.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Location</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="district_id"
               render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel>District <span className="text-destructive">*</span></FormLabel>
+                <FormItem>
+                  <FormLabel>District</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select district" />
+                        <SelectValue placeholder="Select district (optional)" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>

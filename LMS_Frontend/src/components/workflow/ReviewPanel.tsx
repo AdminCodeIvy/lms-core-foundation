@@ -148,11 +148,11 @@ export const ReviewPanel = ({
                     <div className="grid grid-cols-2 gap-4">
                       <InfoItem 
                         label="Full Name" 
-                        value={customer.person_data.full_name || `${customer.person_data.first_name} ${customer.person_data.father_name} ${customer.person_data.grandfather_name}${customer.person_data.fourth_name ? ' ' + customer.person_data.fourth_name : ''}`.trim()} 
+                        value={`${customer.person_data.first_name} ${customer.person_data.father_name} ${customer.person_data.grandfather_name}${customer.person_data.fourth_name ? ' ' + customer.person_data.fourth_name : ''}`.trim()} 
                       />
                       <InfoItem 
                         label="Mother's Name" 
-                        value={customer.person_data.mothers_name || customer.person_data.fourth_name || 'N/A'} 
+                        value={customer.person_data.fourth_name || 'N/A'} 
                       />
                       <InfoItem 
                         label="Date of Birth" 
@@ -344,21 +344,19 @@ export const ReviewPanel = ({
                 </>
               )}
 
-              {/* CONTRACTOR Details */}
-              {customer.customer_type === 'CONTRACTOR' && customer.contractor_data && (
+              {/* RESIDENTIAL Details */}
+              {customer.customer_type === 'RESIDENTIAL' && customer.residential_data && (
                 <div className="rounded-lg border p-4 space-y-4">
                   <div className="flex items-center gap-2">
                     <Building2 className="h-5 w-5 text-primary" />
-                    <h3 className="font-semibold">Contractor Information</h3>
+                    <h3 className="font-semibold">Residential Information</h3>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <InfoItem label="Contractor Name" value={customer.contractor_data.full_contractor_name} />
-                    <InfoItem label="Contact Name" value={customer.contractor_data.contact_name} />
-                    <InfoItem label="Mobile Number 1" value={customer.contractor_data.mobile_number_1} />
-                    <InfoItem label="Carrier 1" value={customer.contractor_data.carrier_mobile_1} />
-                    <InfoItem label="Mobile Number 2" value={customer.contractor_data.mobile_number_2} />
-                    <InfoItem label="Carrier 2" value={customer.contractor_data.carrier_mobile_2} />
-                    <InfoItem label="Email" value={customer.contractor_data.email} />
+                    <InfoItem label="PR-ID" value={customer.residential_data.pr_id} />
+                    <InfoItem label="Size" value={customer.residential_data.size} />
+                    <InfoItem label="Floor" value={customer.residential_data.floor} />
+                    <InfoItem label="File Number" value={customer.residential_data.file_number} />
+                    <InfoItem label="Address" value={customer.residential_data.address} />
                   </div>
                 </div>
               )}

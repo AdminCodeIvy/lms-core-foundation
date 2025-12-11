@@ -135,7 +135,7 @@ const CustomerList = () => {
       case 'GOVERNMENT': return 'bg-purple-500/10 text-purple-500 hover:bg-purple-500/20';
       case 'MOSQUE_HOSPITAL': return 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20';
       case 'NON_PROFIT': return 'bg-teal-500/10 text-teal-500 hover:bg-teal-500/20';
-      case 'CONTRACTOR': return 'bg-pink-500/10 text-pink-500 hover:bg-pink-500/20';
+      case 'RESIDENTIAL': return 'bg-pink-500/10 text-pink-500 hover:bg-pink-500/20';
       default: return 'bg-gray-500/10 text-gray-500';
     }
   };
@@ -304,7 +304,7 @@ const CustomerList = () => {
               <SelectItem value="GOVERNMENT">Government</SelectItem>
               <SelectItem value="MOSQUE_HOSPITAL">Mosque/Hospital</SelectItem>
               <SelectItem value="NON_PROFIT">Non-Profit</SelectItem>
-              <SelectItem value="CONTRACTOR">Contractor</SelectItem>
+              <SelectItem value="RESIDENTIAL">Residential</SelectItem>
               <SelectItem value="RENTAL">Rental</SelectItem>
             </SelectContent>
           </Select>

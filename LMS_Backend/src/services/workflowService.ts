@@ -154,7 +154,7 @@ export class WorkflowService {
           customer_government(*),
           customer_mosque_hospital(*),
           customer_non_profit(*),
-          customer_contractor(*)
+          customer_residential(*)
         `
         )
         .eq('id', id)

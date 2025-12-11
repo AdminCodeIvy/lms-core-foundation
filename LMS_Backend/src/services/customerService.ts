@@ -42,7 +42,7 @@ export class CustomerService {
         customer_government(full_department_name, districts(name)),
         customer_mosque_hospital(full_name, districts(name)),
         customer_non_profit(full_non_profit_name, districts(name)),
-        customer_contractor(full_contractor_name)
+        customer_residential(pr_id)
       `,
         { count: 'exact' }
       );
@@ -120,9 +120,9 @@ export class CustomerService {
             name = customer.customer_non_profit[0].full_non_profit_name;
           }
           break;
-        case 'CONTRACTOR':
-          if (customer.customer_contractor && customer.customer_contractor.length > 0) {
-            name = customer.customer_contractor[0].full_contractor_name;
+        case 'RESIDENTIAL':
+          if (customer.customer_residential && customer.customer_residential.length > 0) {
+            name = customer.customer_residential[0].pr_id;
           }
           break;
         case 'RENTAL':
@@ -164,7 +164,7 @@ export class CustomerService {
         customer_government(*),
         customer_mosque_hospital(*),
         customer_non_profit(*),
-        customer_contractor(*),
+        customer_residential(*),
         customer_rental(*),
         created_by_user:users!customers_created_by_fkey(full_name),
         approved_by_user:users!customers_approved_by_fkey(full_name)
@@ -194,9 +194,9 @@ export class CustomerService {
       customer_non_profit: Array.isArray(data.customer_non_profit) && data.customer_non_profit.length > 0 
         ? data.customer_non_profit[0] 
         : data.customer_non_profit,
-      customer_contractor: Array.isArray(data.customer_contractor) && data.customer_contractor.length > 0 
-        ? data.customer_contractor[0] 
-        : data.customer_contractor,
+      customer_residential: Array.isArray(data.customer_residential) && data.customer_residential.length > 0 
+        ? data.customer_residential[0] 
+        : data.customer_residential,
       person_data: Array.isArray(data.customer_person) && data.customer_person.length > 0 
         ? data.customer_person[0] 
         : data.customer_person,
@@ -212,9 +212,9 @@ export class CustomerService {
       non_profit_data: Array.isArray(data.customer_non_profit) && data.customer_non_profit.length > 0 
         ? data.customer_non_profit[0] 
         : data.customer_non_profit,
-      contractor_data: Array.isArray(data.customer_contractor) && data.customer_contractor.length > 0 
-        ? data.customer_contractor[0] 
-        : data.customer_contractor,
+      residential_data: Array.isArray(data.customer_residential) && data.customer_residential.length > 0 
+        ? data.customer_residential[0] 
+        : data.customer_residential,
     };
 
     return transformedData;
@@ -223,9 +223,9 @@ export class CustomerService {
   async createCustomer(customerData: any, userId: string) {
     const { customer_type, 
             customer_person, customer_business, customer_government, 
-            customer_mosque_hospital, customer_non_profit, customer_contractor, customer_rental,
+            customer_mosque_hospital, customer_non_profit, customer_residential, customer_rental,
             person_data, business_data, government_data,
-            mosque_hospital_data, non_profit_data, contractor_data, rental_data } = customerData;
+            mosque_hospital_data, non_profit_data, residential_data, rental_data } = customerData;
 
     // Generate reference ID
     const { data: refId, error: refError } = await supabase.rpc(
@@ -267,8 +267,8 @@ export class CustomerService {
       case 'NON_PROFIT':
         details = customer_non_profit || non_profit_data;
         break;
-      case 'CONTRACTOR':
-        details = customer_contractor || contractor_data;
+      case 'RESIDENTIAL':
+        details = customer_residential || residential_data;
         break;
       case 'RENTAL':
         details = customer_rental || rental_data;
@@ -325,9 +325,9 @@ export class CustomerService {
   async updateCustomer(id: string, customerData: any, userId: string) {
     const { customer_type, 
             customer_person, customer_business, customer_government, 
-            customer_mosque_hospital, customer_non_profit, customer_contractor, customer_rental,
+            customer_mosque_hospital, customer_non_profit, customer_residential, customer_rental,
             person_data, business_data, government_data,
-            mosque_hospital_data, non_profit_data, contractor_data, rental_data } = customerData;
+            mosque_hospital_data, non_profit_data, residential_data, rental_data } = customerData;
 
     // Get current customer status
     const { data: currentCustomer } = await supabase
@@ -376,8 +376,8 @@ export class CustomerService {
       case 'NON_PROFIT':
         details = customer_non_profit || non_profit_data;
         break;
-      case 'CONTRACTOR':
-        details = customer_contractor || contractor_data;
+      case 'RESIDENTIAL':
+        details = customer_residential || residential_data;
         break;
       case 'RENTAL':
         details = customer_rental || rental_data;
@@ -454,7 +454,7 @@ export class CustomerService {
     // First, get the customer to check if it has details
     const { data: customer, error: fetchError } = await supabase
       .from('customers')
-      .select('*, customer_person(*), customer_business(*), customer_government(*), customer_mosque_hospital(*), customer_non_profit(*), customer_contractor(*), customer_rental(*)')
+      .select('*, customer_person(*), customer_business(*), customer_government(*), customer_mosque_hospital(*), customer_non_profit(*), customer_residential(*), customer_rental(*)')
       .eq('id', id)
       .single();
 
@@ -479,8 +479,8 @@ export class CustomerService {
       case 'NON_PROFIT':
         hasDetails = customer.customer_non_profit && (Array.isArray(customer.customer_non_profit) ? customer.customer_non_profit.length > 0 : !!customer.customer_non_profit);
         break;
-      case 'CONTRACTOR':
-        hasDetails = customer.customer_contractor && (Array.isArray(customer.customer_contractor) ? customer.customer_contractor.length > 0 : !!customer.customer_contractor);
+      case 'RESIDENTIAL':
+        hasDetails = customer.customer_residential && (Array.isArray(customer.customer_residential) ? customer.customer_residential.length > 0 : !!customer.customer_residential);
         break;
       case 'RENTAL':
         hasDetails = customer.customer_rental && (Array.isArray(customer.customer_rental) ? customer.customer_rental.length > 0 : !!customer.customer_rental);
