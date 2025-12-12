@@ -42,11 +42,6 @@ export const PersonForm = ({
       place_of_birth: '',
       nationality: '',
       mobile_number_1: '',
-      carrier_mobile_1: '',
-      mobile_number_2: '',
-      carrier_mobile_2: '',
-      emergency_contact_name: '',
-      emergency_contact_number: '',
       email: '',
       id_type: '',
       id_number: '',
@@ -57,7 +52,7 @@ export const PersonForm = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Personal Information */}
+        {/* Required Fields */}
         <Card>
           <CardHeader>
             <CardTitle>Personal Information</CardTitle>
@@ -70,7 +65,7 @@ export const PersonForm = ({
                 <FormItem>
                   <FormLabel>PR-ID <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter unique Personal Registration ID" />
+                    <Input {...field} placeholder="Enter PR-ID" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -96,9 +91,9 @@ export const PersonForm = ({
               name="mothers_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mother's Name <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>Mothers Name <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter mother's name" />
+                    <Input {...field} placeholder="Enter mothers name" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -121,7 +116,7 @@ export const PersonForm = ({
                             !field.value && 'text-muted-foreground'
                           )}
                         >
-                          {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
+                          {field.value ? format(field.value, 'PPP') : <span>Pick date of birth</span>}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                       </FormControl>
@@ -147,7 +142,7 @@ export const PersonForm = ({
               name="place_of_birth"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>POB (Place of Birth) <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>POB <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="Enter place of birth" />
                   </FormControl>
@@ -258,110 +253,10 @@ export const PersonForm = ({
           </CardContent>
         </Card>
 
-        {/* Additional Contact Information (Optional) */}
+        {/* Optional Fields */}
         <Card>
           <CardHeader>
-            <CardTitle>Additional Contact Information</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="carrier_mobile_1"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Carrier Mobile 1</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select carrier (optional)" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {carriers.map((carrier) => (
-                        <SelectItem key={carrier.id} value={carrier.name}>
-                          {carrier.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="mobile_number_2"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Mobile Number 2</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="+251-912-345-678 (optional)" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="carrier_mobile_2"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Carrier Mobile 2</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select carrier (optional)" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {carriers.map((carrier) => (
-                        <SelectItem key={carrier.id} value={carrier.name}>
-                          {carrier.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="emergency_contact_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Emergency Contact Name</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Enter emergency contact name (optional)" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="emergency_contact_number"
-              render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel>Emergency Contact Number</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="+251-912-345-678 (optional)" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
-
-        {/* ID Document Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>ID Document Information</CardTitle>
+            <CardTitle>Additional Information (Optional)</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
@@ -391,11 +286,12 @@ export const PersonForm = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {countries.map((country) => (
-                        <SelectItem key={country.id} value={country.name}>
-                          {country.name}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="Djibouti">Djibouti</SelectItem>
+                      <SelectItem value="Ethiopia">Ethiopia</SelectItem>
+                      <SelectItem value="Kenya">Kenya</SelectItem>
+                      <SelectItem value="Somalia">Somalia</SelectItem>
+                      <SelectItem value="United Kingdom">United Kingdom</SelectItem>
+                      <SelectItem value="United States">United States</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

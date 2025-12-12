@@ -8,26 +8,23 @@ export interface CustomerTypeOption {
 }
 
 export interface PersonFormData {
-  first_name: string;
-  father_name: string;
-  grandfather_name: string;
-  fourth_name?: string;
+  // Required fields (10)
+  pr_id: string;
+  full_name: string;
+  mothers_name: string;
   date_of_birth: Date;
   place_of_birth: string;
   gender: 'MALE' | 'FEMALE';
   nationality: string;
   mobile_number_1: string;
-  carrier_mobile_1: string;
-  mobile_number_2?: string;
-  carrier_mobile_2?: string;
-  emergency_contact_name: string;
-  emergency_contact_number: string;
   email: string;
   id_type: string;
-  id_number: string;
-  place_of_issue: string;
-  issue_date: Date;
-  expiry_date: Date;
+  
+  // Optional fields (4)
+  id_number?: string;
+  place_of_issue?: string;
+  issue_date?: Date;
+  expiry_date?: Date;
 }
 
 export interface BusinessFormData {

@@ -147,18 +147,22 @@ export const ReviewPanel = ({
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <InfoItem 
+                        label="PR-ID" 
+                        value={customer.person_data.pr_id} 
+                      />
+                      <InfoItem 
                         label="Full Name" 
-                        value={`${customer.person_data.first_name} ${customer.person_data.father_name} ${customer.person_data.grandfather_name}${customer.person_data.fourth_name ? ' ' + customer.person_data.fourth_name : ''}`.trim()} 
+                        value={customer.person_data.full_name} 
                       />
                       <InfoItem 
                         label="Mother's Name" 
-                        value={customer.person_data.fourth_name || 'N/A'} 
+                        value={customer.person_data.mothers_name} 
                       />
                       <InfoItem 
                         label="Date of Birth" 
                         value={format(new Date(customer.person_data.date_of_birth), 'MMM dd, yyyy')} 
                       />
-                      <InfoItem label="Place of Birth" value={customer.person_data.place_of_birth} />
+                      <InfoItem label="POB" value={customer.person_data.place_of_birth} />
                       <InfoItem label="Gender" value={customer.person_data.gender} />
                       <InfoItem label="Nationality" value={customer.person_data.nationality} />
                     </div>
@@ -171,12 +175,7 @@ export const ReviewPanel = ({
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <InfoItem label="Mobile Number 1" value={customer.person_data.mobile_number_1} />
-                      <InfoItem label="Carrier 1" value={customer.person_data.carrier_mobile_1} />
-                      <InfoItem label="Mobile Number 2" value={customer.person_data.mobile_number_2} />
-                      <InfoItem label="Carrier 2" value={customer.person_data.carrier_mobile_2} />
                       <InfoItem label="Email" value={customer.person_data.email} />
-                      <InfoItem label="Emergency Contact" value={customer.person_data.emergency_contact_name} />
-                      <InfoItem label="Emergency Number" value={customer.person_data.emergency_contact_number} />
                     </div>
                   </div>
 
@@ -187,16 +186,24 @@ export const ReviewPanel = ({
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <InfoItem label="ID Type" value={customer.person_data.id_type} />
-                      <InfoItem label="ID Number" value={customer.person_data.id_number} />
-                      <InfoItem label="Place of Issue" value={customer.person_data.place_of_issue} />
-                      <InfoItem 
-                        label="Issue Date" 
-                        value={format(new Date(customer.person_data.issue_date), 'MMM dd, yyyy')} 
-                      />
-                      <InfoItem 
-                        label="Expiry Date" 
-                        value={format(new Date(customer.person_data.expiry_date), 'MMM dd, yyyy')} 
-                      />
+                      {customer.person_data.id_number && (
+                        <InfoItem label="ID Number" value={customer.person_data.id_number} />
+                      )}
+                      {customer.person_data.place_of_issue && (
+                        <InfoItem label="Place of Issue" value={customer.person_data.place_of_issue} />
+                      )}
+                      {customer.person_data.issue_date && (
+                        <InfoItem 
+                          label="Issue Date" 
+                          value={format(new Date(customer.person_data.issue_date), 'MMM dd, yyyy')} 
+                        />
+                      )}
+                      {customer.person_data.expiry_date && (
+                        <InfoItem 
+                          label="Expiry Date" 
+                          value={format(new Date(customer.person_data.expiry_date), 'MMM dd, yyyy')} 
+                        />
+                      )}
                     </div>
                   </div>
                 </>

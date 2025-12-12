@@ -377,12 +377,7 @@ const CustomerReviewContent = ({
               <CardTitle>Contact Information</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-6 md:grid-cols-2">
-              <InfoItem label="Mobile 1" value={customer.person_data.mobile_number_1} />
-              <InfoItem label="Carrier 1" value={customer.person_data.carrier_mobile_1} />
-              <InfoItem label="Mobile 2" value={customer.person_data.mobile_number_2} />
-              <InfoItem label="Carrier 2" value={customer.person_data.carrier_mobile_2} />
-              <InfoItem label="Emergency Contact Name" value={customer.person_data.emergency_contact_name} />
-              <InfoItem label="Emergency Contact Number" value={customer.person_data.emergency_contact_number} />
+              <InfoItem label="Mobile Number 1" value={customer.person_data.mobile_number_1} />
               <InfoItem label="Email" value={customer.person_data.email} />
             </CardContent>
           </Card>

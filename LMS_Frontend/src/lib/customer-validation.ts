@@ -20,7 +20,7 @@ export const personSchema = z.object({
   date_of_birth: z.date({
     required_error: "Date of birth is required",
   }).refine((date) => calculateAge(date) >= 18, "Person must be at least 18 years old"),
-  place_of_birth: z.string().trim().min(1, "Place of birth is required").max(200),
+  place_of_birth: z.string().trim().min(1, "POB is required").max(200),
   gender: z.enum(["MALE", "FEMALE"], { required_error: "Gender is required" }),
   nationality: z.string().min(1, "Nationality is required"),
   mobile_number_1: z.string().trim().regex(mobileNumberRegex, "Invalid mobile number format (e.g., +251-912-345-678)"),
@@ -29,14 +29,9 @@ export const personSchema = z.object({
   
   // Optional additional fields
   id_number: z.string().trim().max(100).optional().or(z.literal("")),
-  place_of_issue: z.string().optional().or(z.literal("")),
+  place_of_issue: z.enum(["", "Djibouti", "Ethiopia", "Kenya", "Somalia", "United Kingdom", "United States"]).optional(),
   issue_date: z.date().optional().refine((date) => !date || date <= new Date(), "Issue date cannot be in the future"),
   expiry_date: z.date().optional(),
-  carrier_mobile_1: z.string().optional().or(z.literal("")),
-  mobile_number_2: z.string().trim().regex(mobileNumberRegex, "Invalid mobile number format").optional().or(z.literal("")),
-  carrier_mobile_2: z.string().optional().or(z.literal("")),
-  emergency_contact_name: z.string().trim().max(200).optional().or(z.literal("")),
-  emergency_contact_number: z.string().trim().regex(mobileNumberRegex, "Invalid mobile number format").optional().or(z.literal("")),
 }).refine((data) => {
   // Only validate expiry > issue if both dates are provided
   if (data.expiry_date && data.issue_date) {

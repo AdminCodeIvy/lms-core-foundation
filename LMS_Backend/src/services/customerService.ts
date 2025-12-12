@@ -37,7 +37,7 @@ export class CustomerService {
         customer_type,
         status,
         updated_at,
-        customer_person(first_name, fourth_name, full_name, pr_id, mothers_name),
+        customer_person(full_name, pr_id, mothers_name),
         customer_business(business_name, districts(name)),
         customer_government(full_department_name, districts(name)),
         customer_mosque_hospital(full_name, districts(name)),
@@ -88,14 +88,9 @@ export class CustomerService {
           const personData = customer.customer_person;
           const person = Array.isArray(personData) ? personData[0] : personData;
           if (person) {
-            // Use new full_name field if available, otherwise construct from old fields
+            // Use full_name field
             if (person.full_name) {
               name = person.full_name;
-            } else {
-              name =
-                person.fourth_name && person.fourth_name.trim()
-                  ? `${person.first_name} ${person.fourth_name}`.trim()
-                  : person.first_name;
             }
           }
           break;
@@ -284,10 +279,11 @@ export class CustomerService {
 
     // Create customer type-specific details
     const tableName = `customer_${customer_type.toLowerCase()}`;
-    const { error: detailsError } = await supabase.from(tableName).insert({
-      customer_id: customer.id,
-      ...details,
-    });
+    
+    // Insert only the new simplified fields
+    let insertData = { customer_id: customer.id, ...details };
+    
+    const { error: detailsError } = await supabase.from(tableName).insert(insertData);
 
     if (detailsError) {
       // Rollback customer creation
@@ -392,9 +388,13 @@ export class CustomerService {
 
     // Update customer type-specific details
     const tableName = `customer_${customer_type.toLowerCase()}`;
+    
+    // Update only the new simplified fields
+    let detailsUpdateData = { ...details };
+    
     const { error: detailsError } = await supabase
       .from(tableName)
-      .update(details)
+      .update(detailsUpdateData)
       .eq('customer_id', id);
 
     if (detailsError) throw new AppError(detailsError.message, 500);

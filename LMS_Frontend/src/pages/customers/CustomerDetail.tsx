@@ -322,14 +322,19 @@ const CustomerDetail = () => {
                     value={customer.reference_id}
                   />
                   <InfoItem
+                    icon={IdCard}
+                    label="PR-ID"
+                    value={customer.person_data.pr_id}
+                  />
+                  <InfoItem
                     icon={User}
                     label="Full Name"
-                    value={customer.person_data.full_name || `${customer.person_data.first_name} ${customer.person_data.father_name} ${customer.person_data.grandfather_name}${customer.person_data.fourth_name ? ' ' + customer.person_data.fourth_name : ''}`.trim()}
+                    value={customer.person_data.full_name}
                   />
                   <InfoItem
                     icon={User}
                     label="Mother's Name"
-                    value={customer.person_data.mothers_name || customer.person_data.fourth_name || 'N/A'}
+                    value={customer.person_data.mothers_name}
                   />
                   <InfoItem
                     icon={Calendar}
@@ -338,7 +343,7 @@ const CustomerDetail = () => {
                   />
                   <InfoItem
                     icon={MapPin}
-                    label="Place of Birth"
+                    label="POB"
                     value={customer.person_data.place_of_birth}
                   />
                   <InfoItem
@@ -365,24 +370,12 @@ const CustomerDetail = () => {
                   <InfoItem
                     icon={Phone}
                     label="Mobile Number 1"
-                    value={`${customer.person_data.mobile_number_1} (${customer.person_data.carrier_mobile_1})`}
+                    value={customer.person_data.mobile_number_1}
                   />
-                  {customer.person_data.mobile_number_2 && (
-                    <InfoItem
-                      icon={Phone}
-                      label="Mobile Number 2"
-                      value={`${customer.person_data.mobile_number_2} (${customer.person_data.carrier_mobile_2})`}
-                    />
-                  )}
                   <InfoItem
                     icon={Mail}
                     label="Email"
                     value={customer.person_data.email}
-                  />
-                  <InfoItem
-                    icon={Phone}
-                    label="Emergency Contact"
-                    value={`${customer.person_data.emergency_contact_name} - ${customer.person_data.emergency_contact_number}`}
                   />
                 </CardContent>
               </Card>
@@ -400,26 +393,34 @@ const CustomerDetail = () => {
                     label="ID Type"
                     value={customer.person_data.id_type}
                   />
-                  <InfoItem
-                    icon={IdCard}
-                    label="ID Number"
-                    value={customer.person_data.id_number}
-                  />
-                  <InfoItem
-                    icon={MapPin}
-                    label="Place of Issue"
-                    value={customer.person_data.place_of_issue}
-                  />
-                  <InfoItem
-                    icon={Calendar}
-                    label="Issue Date"
-                    value={format(new Date(customer.person_data.issue_date), 'MMM dd, yyyy')}
-                  />
-                  <InfoItem
-                    icon={Calendar}
-                    label="Expiry Date"
-                    value={format(new Date(customer.person_data.expiry_date), 'MMM dd, yyyy')}
-                  />
+                  {customer.person_data.id_number && (
+                    <InfoItem
+                      icon={IdCard}
+                      label="ID Number"
+                      value={customer.person_data.id_number}
+                    />
+                  )}
+                  {customer.person_data.place_of_issue && (
+                    <InfoItem
+                      icon={MapPin}
+                      label="Place of Issue"
+                      value={customer.person_data.place_of_issue}
+                    />
+                  )}
+                  {customer.person_data.issue_date && (
+                    <InfoItem
+                      icon={Calendar}
+                      label="Issue Date"
+                      value={format(new Date(customer.person_data.issue_date), 'MMM dd, yyyy')}
+                    />
+                  )}
+                  {customer.person_data.expiry_date && (
+                    <InfoItem
+                      icon={Calendar}
+                      label="Expiry Date"
+                      value={format(new Date(customer.person_data.expiry_date), 'MMM dd, yyyy')}
+                    />
+                  )}
                 </CardContent>
               </Card>
             </>

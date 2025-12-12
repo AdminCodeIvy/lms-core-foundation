@@ -1257,22 +1257,13 @@ export class BulkUploadService {
           email: getValue(data, 'email', 'Email', 'E-mail', 'e_mail'),
           id_type: getValue(data, 'id_type', 'ID Type', 'Type of ID', 'id-type', 'ID_Type'),
           
-          // Backward compatibility fields (required by database)
-          first_name: firstName,
-          father_name: nameParts[1] || '',
-          grandfather_name: nameParts[2] || '',
-          fourth_name: getValue(data, 'mothers_name', 'Mothers Name', 'Mothers Name ', ' Mothers Name', 'mothers-name', 'Mothers_Name', 'Mother Name', 'mother_name') || '',
-          
           // Optional fields
-          mobile_number_2: getValue(data, 'mobile_number_2', 'Mobile Number 2', 'mobile-number-2', 'Mobile_Number_2', 'phone2', 'Phone 2'),
-          carrier_mobile_1: getValue(data, 'carrier_mobile_1', 'Carrier Mobile 1', 'carrier-mobile-1', 'Carrier_Mobile_1'),
-          carrier_mobile_2: getValue(data, 'carrier_mobile_2', 'Carrier Mobile 2', 'carrier-mobile-2', 'Carrier_Mobile_2'),
-          emergency_contact_name: getValue(data, 'emergency_contact_name', 'Emergency Contact Name', 'emergency-contact-name', 'Emergency_Contact_Name'),
-          emergency_contact_number: getValue(data, 'emergency_contact_number', 'Emergency Contact Number', 'emergency-contact-number', 'Emergency_Contact_Number'),
           id_number: getValue(data, 'id_number', 'ID Number', 'id-number', 'ID_Number'),
           place_of_issue: getValue(data, 'place_of_issue', 'Place of Issue', 'place-of-issue', 'Place_of_Issue'),
           issue_date: convertExcelDate(getValue(data, 'issue_date', 'Issue Date', 'issue-date', 'Issue_Date')),
           expiry_date: convertExcelDate(getValue(data, 'expiry_date', 'Expiry Date', 'expiry-date', 'Expiry_Date')),
+          
+
         };
 
         // Use mapped data instead of original data
@@ -1986,11 +1977,6 @@ export class BulkUploadService {
             'mobile_number_1',
             'email',
             'id_type',
-            'carrier_mobile_1',
-            'mobile_number_2',
-            'carrier_mobile_2',
-            'emergency_contact_name',
-            'emergency_contact_number',
             'id_number',
             'place_of_issue',
             'issue_date',
@@ -2008,13 +1994,8 @@ export class BulkUploadService {
             mobile_number_1: '+252-612-345-678',
             email: 'john@example.com',
             id_type: 'National ID Card',
-            carrier_mobile_1: 'Hormuud',
-            mobile_number_2: '+252-612-345-679',
-            carrier_mobile_2: 'Hormuud',
-            emergency_contact_name: 'Jane Doe',
-            emergency_contact_number: '+252-612-345-680',
             id_number: '123456789',
-            place_of_issue: 'Mogadishu',
+            place_of_issue: 'Ethiopia',
             issue_date: '2020-01-01',
             expiry_date: '2030-01-01',
           },

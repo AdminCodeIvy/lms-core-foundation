@@ -33,7 +33,7 @@ export class WorkflowService {
           created_by,
           created_at,
           submitted_at,
-          customer_person(first_name, fourth_name, full_name, pr_id),
+          customer_person(full_name, pr_id),
           customer_business(business_name),
           customer_government(full_department_name)
         `
@@ -49,15 +49,8 @@ export class WorkflowService {
               const person = Array.isArray(customer.customer_person) 
                 ? customer.customer_person[0] 
                 : customer.customer_person;
-              if (person) {
-                // Use new full_name field if available, otherwise construct from old fields
-                if (person.full_name) {
-                  name = person.full_name;
-                } else {
-                  name = person.fourth_name 
-                    ? `${person.first_name} ${person.fourth_name}` 
-                    : person.first_name;
-                }
+              if (person && person.full_name) {
+                name = person.full_name;
               }
               break;
             case 'BUSINESS':

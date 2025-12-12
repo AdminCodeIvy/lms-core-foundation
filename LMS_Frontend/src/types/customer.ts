@@ -26,26 +26,32 @@ export interface Customer {
 
 export interface CustomerPerson {
   customer_id: string;
-  first_name: string;
-  father_name: string;
-  grandfather_name: string;
-  fourth_name: string | null;
+  // Required fields (10)
+  pr_id: string;
+  full_name: string;
+  mothers_name: string;
   date_of_birth: string;
   place_of_birth: string;
   gender: 'MALE' | 'FEMALE';
   nationality: string;
   mobile_number_1: string;
-  carrier_mobile_1: string;
-  mobile_number_2: string | null;
-  carrier_mobile_2: string | null;
-  emergency_contact_name: string;
-  emergency_contact_number: string;
   email: string;
   id_type: string;
-  id_number: string;
-  place_of_issue: string;
-  issue_date: string;
-  expiry_date: string;
+  // Optional fields (4)
+  id_number?: string | null;
+  place_of_issue?: string | null;
+  issue_date?: string | null;
+  expiry_date?: string | null;
+  // Legacy fields (may still exist in database but not used in forms)
+  first_name?: string | null;
+  father_name?: string | null;
+  grandfather_name?: string | null;
+  fourth_name?: string | null;
+  carrier_mobile_1?: string | null;
+  carrier_mobile_2?: string | null;
+  mobile_number_2?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_number?: string | null;
 }
 
 export interface CustomerBusiness {

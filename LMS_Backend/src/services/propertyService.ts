@@ -109,7 +109,7 @@ export class PropertyService {
             id,
             reference_id,
             customer_type,
-            customer_person(first_name, father_name, grandfather_name, full_name, pr_id),
+            customer_person(full_name, pr_id),
             customer_business(business_name)
           )
         )
