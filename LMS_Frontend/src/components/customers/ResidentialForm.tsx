@@ -22,7 +22,7 @@ export const ResidentialForm = ({
   const form = useForm<ResidentialFormData>({
     resolver: zodResolver(residentialSchema),
     defaultValues: defaultValues || {
-      pr_id: '',
+      property_id: '',
       size: '',
       floor: '',
       file_number: '',
@@ -40,12 +40,12 @@ export const ResidentialForm = ({
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="pr_id"
+              name="property_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>PR-ID <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>Property ID <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter PR-ID" />
+                    <Input {...field} placeholder="Enter Property ID" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

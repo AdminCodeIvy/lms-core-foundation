@@ -147,8 +147,8 @@ export const ReviewPanel = ({
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <InfoItem 
-                        label="PR-ID" 
-                        value={customer.person_data.pr_id} 
+                        label="Property ID" 
+                        value={customer.person_data.property_id} 
                       />
                       <InfoItem 
                         label="Full Name" 
@@ -283,12 +283,13 @@ export const ReviewPanel = ({
                       <h3 className="font-semibold">Organization Information</h3>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                      <InfoItem label="Full Name" value={customer.mosque_hospital_data.full_name} />
-                      <InfoItem label="Registration Number" value={customer.mosque_hospital_data.registration_number} />
+                      <InfoItem label="Property ID" value={customer.mosque_hospital_data.property_id} />
+                      <InfoItem label="Full Mosque/Hospital Name" value={customer.mosque_hospital_data.full_mosque_hospital_name} />
+                      <InfoItem label="Registration Number" value={customer.mosque_hospital_data.mosque_registration_number} />
                       <InfoItem label="Address" value={customer.mosque_hospital_data.address} />
-                      <InfoItem label="District" value={customer.mosque_hospital_data.districts?.name} />
-                      <InfoItem label="Section" value={customer.mosque_hospital_data.section} />
-                      <InfoItem label="Block" value={customer.mosque_hospital_data.block} />
+                      <InfoItem label="Size" value={customer.mosque_hospital_data.size} />
+                      <InfoItem label="Floor" value={customer.mosque_hospital_data.floor} />
+                      <InfoItem label="File Number" value={customer.mosque_hospital_data.file_number} />
                     </div>
                   </div>
 
@@ -313,16 +314,16 @@ export const ReviewPanel = ({
                   <div className="rounded-lg border p-4 space-y-4">
                     <div className="flex items-center gap-2">
                       <Building2 className="h-5 w-5 text-primary" />
-                      <h3 className="font-semibold">Non-Profit Information</h3>
+                      <h3 className="font-semibold">NGO Information</h3>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                      <InfoItem label="Organization Name" value={customer.non_profit_data.full_non_profit_name} />
-                      <InfoItem label="Registration Number" value={customer.non_profit_data.registration_number} />
-                      <InfoItem label="License Number" value={customer.non_profit_data.license_number} />
+                      <InfoItem label="Property ID" value={customer.non_profit_data.property_id} />
+                      <InfoItem label="NGO Name" value={customer.non_profit_data.ngo_name} />
+                      <InfoItem label="Registration Number" value={customer.non_profit_data.ngo_registration_number} />
                       <InfoItem label="Address" value={customer.non_profit_data.address} />
-                      <InfoItem label="District" value={customer.non_profit_data.districts?.name} />
-                      <InfoItem label="Section" value={customer.non_profit_data.section} />
-                      <InfoItem label="Block" value={customer.non_profit_data.block} />
+                      <InfoItem label="Size" value={customer.non_profit_data.size} />
+                      <InfoItem label="Floor" value={customer.non_profit_data.floor} />
+                      <InfoItem label="File Number" value={customer.non_profit_data.file_number} />
                     </div>
                   </div>
 
@@ -349,13 +350,47 @@ export const ReviewPanel = ({
                     <h3 className="font-semibold">Residential Information</h3>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <InfoItem label="PR-ID" value={customer.residential_data.pr_id} />
+                    <InfoItem label="Property ID" value={customer.residential_data.property_id} />
                     <InfoItem label="Size" value={customer.residential_data.size} />
                     <InfoItem label="Floor" value={customer.residential_data.floor} />
                     <InfoItem label="File Number" value={customer.residential_data.file_number} />
                     <InfoItem label="Address" value={customer.residential_data.address} />
                   </div>
                 </div>
+              )}
+
+              {/* RENTAL Details */}
+              {customer.customer_type === 'RENTAL' && customer.rental_data && (
+                <>
+                  <div className="rounded-lg border p-4 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-5 w-5 text-primary" />
+                      <h3 className="font-semibold">Rental Information</h3>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <InfoItem label="Property ID" value={customer.rental_data.property_id} />
+                      <InfoItem label="Rental Name" value={customer.rental_data.rental_name} />
+                      <InfoItem label="Rental Mother's Name" value={customer.rental_data.rental_mothers_name} />
+                      <InfoItem label="Date of Birth" value={customer.rental_data.date_of_birth} />
+                      <InfoItem label="Place of Birth" value={customer.rental_data.place_of_birth} />
+                      <InfoItem label="Gender" value={customer.rental_data.gender} />
+                      <InfoItem label="Nationality" value={customer.rental_data.nationality} />
+                      <InfoItem label="ID Type" value={customer.rental_data.id_type} />
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border p-4 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-5 w-5 text-primary" />
+                      <h3 className="font-semibold">Contact Information</h3>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <InfoItem label="Mobile Number 1" value={customer.rental_data.mobile_number_1} />
+                      <InfoItem label="Mobile Number 2" value={customer.rental_data.mobile_number_2} />
+                      <InfoItem label="Email" value={customer.rental_data.email} />
+                    </div>
+                  </div>
+                </>
               )}
 
               {/* Days Pending Warning */}

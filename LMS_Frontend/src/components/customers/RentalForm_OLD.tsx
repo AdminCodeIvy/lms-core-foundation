@@ -47,9 +47,10 @@ export const RentalForm = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Required Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Basic Information</CardTitle>
+            <CardTitle>Required Information</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
@@ -73,7 +74,7 @@ export const RentalForm = ({
                 <FormItem>
                   <FormLabel>Rental Name <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter rental name" />
+                    <Input {...field} placeholder="Enter full rental name" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -104,17 +105,13 @@ export const RentalForm = ({
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
-                          variant={"outline"}
+                          variant="outline"
                           className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
+                            'w-full pl-3 text-left font-normal',
+                            !field.value && 'text-muted-foreground'
                           )}
                         >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
+                          {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                       </FormControl>
@@ -124,10 +121,9 @@ export const RentalForm = ({
                         mode="single"
                         selected={field.value}
                         onSelect={field.onChange}
-                        disabled={(date) =>
-                          date > new Date() || date < new Date("1900-01-01")
-                        }
+                        disabled={(date) => date > new Date() || date < new Date('1900-01-01')}
                         initialFocus
+                        defaultMonth={field.value || new Date(2000, 0)}
                       />
                     </PopoverContent>
                   </Popover>
@@ -199,44 +195,12 @@ export const RentalForm = ({
 
             <FormField
               control={form.control}
-              name="id_type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Type of ID <span className="text-destructive">*</span></FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select ID type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {idTypes.map((idType) => (
-                        <SelectItem key={idType} value={idType}>
-                          {idType}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Contact Information</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
               name="mobile_number_1"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Mobile Number 1 <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="+252-612-345-678" />
+                    <Input {...field} placeholder="+251-912-345-678" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -248,9 +212,9 @@ export const RentalForm = ({
               name="mobile_number_2"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mobile Number 2</FormLabel>
+                  <FormLabel>Mobile Number 2 <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="+252-612-345-679 (optional)" />
+                    <Input {...field} placeholder="+251-912-345-679" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -261,7 +225,7 @@ export const RentalForm = ({
               control={form.control}
               name="email"
               render={({ field }) => (
-                <FormItem className="md:col-span-2">
+                <FormItem>
                   <FormLabel>Email <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
                     <Input {...field} type="email" placeholder="email@example.com" />
@@ -270,9 +234,234 @@ export const RentalForm = ({
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="id_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Type of ID <span className="text-destructive">*</span></FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select ID type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {idTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </CardContent>
         </Card>
 
+        {/* Optional Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Optional Information</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="carrier_mobile_1"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Carrier Mobile 1</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select carrier (optional)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {carriers.map((carrier) => (
+                        <SelectItem key={carrier.id} value={carrier.name}>
+                          {carrier.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="carrier_mobile_2"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Carrier Mobile 2</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select carrier (optional)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {carriers.map((carrier) => (
+                        <SelectItem key={carrier.id} value={carrier.name}>
+                          {carrier.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="emergency_contact_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Emergency Contact Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter emergency contact name (optional)" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="emergency_contact_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Emergency Contact Number</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="+251-912-345-680 (optional)" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="id_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>ID Number</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter ID number (optional)" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="place_of_issue"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Place of Issue</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select place of issue (optional)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {countries.map((country) => (
+                        <SelectItem key={country.id} value={country.name}>
+                          {country.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="issue_date"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Issue Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            'w-full pl-3 text-left font-normal',
+                            !field.value && 'text-muted-foreground'
+                          )}
+                        >
+                          {field.value ? format(field.value, 'PPP') : <span>Pick issue date (optional)</span>}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) => date > new Date()}
+                        initialFocus
+                        defaultMonth={field.value || new Date()}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="expiry_date"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Expiry Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            'w-full pl-3 text-left font-normal',
+                            !field.value && 'text-muted-foreground'
+                          )}
+                        >
+                          {field.value ? format(field.value, 'PPP') : <span>Pick expiry date (optional)</span>}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) => date < new Date()}
+                        initialFocus
+                        defaultMonth={field.value || new Date()}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Form Actions */}
         <div className="flex gap-4 justify-end">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
             Cancel

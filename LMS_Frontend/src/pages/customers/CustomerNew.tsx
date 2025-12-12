@@ -358,8 +358,6 @@ const CustomerNew = () => {
           onSubmit={handleMosqueHospitalSubmit}
           onCancel={handleCancel}
           isSubmitting={isSubmitting}
-          districts={districts}
-          carriers={carriers}
         />
       )}
 
@@ -368,8 +366,6 @@ const CustomerNew = () => {
           onSubmit={handleNonProfitSubmit}
           onCancel={handleCancel}
           isSubmitting={isSubmitting}
-          districts={districts}
-          carriers={carriers}
         />
       )}
 
@@ -387,7 +383,6 @@ const CustomerNew = () => {
           onSubmit={handleRentalSubmit}
           onCancel={handleCancel}
           isSubmitting={isSubmitting}
-          carriers={carriers}
           countries={countries}
           idTypes={ID_TYPES}
         />

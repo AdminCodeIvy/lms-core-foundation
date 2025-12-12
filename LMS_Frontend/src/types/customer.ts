@@ -27,7 +27,7 @@ export interface Customer {
 export interface CustomerPerson {
   customer_id: string;
   // Required fields (10)
-  pr_id: string;
+  property_id: string;
   full_name: string;
   mothers_name: string;
   date_of_birth: string;
@@ -56,7 +56,7 @@ export interface CustomerPerson {
 
 export interface CustomerBusiness {
   customer_id: string;
-  pr_id?: string | null;
+  property_id?: string | null;
   business_name?: string | null;
   business_registration_number?: string | null;
   business_license_number?: string | null;
@@ -81,7 +81,7 @@ export interface CustomerBusiness {
 
 export interface CustomerGovernment {
   customer_id: string;
-  pr_id?: string | null;
+  property_id?: string | null;
   full_department_name?: string | null;
   department_address?: string | null;
   contact_name?: string | null;
@@ -97,46 +97,43 @@ export interface CustomerGovernment {
 
 export interface CustomerMosqueHospital {
   customer_id: string;
-  full_name: string;
-  registration_number: string;
-  address: string;
+  // Required fields (7)
+  property_id: string;
+  full_mosque_hospital_name: string;
+  mosque_registration_number: string;
   contact_name: string;
   mobile_number_1: string;
-  carrier_mobile_1: string;
-  mobile_number_2: string | null;
-  carrier_mobile_2: string | null;
   email: string;
-  district_id: string;
-  section: string | null;
-  block: string | null;
-  districts?: {
-    name: string;
-  };
+  // Optional fields (5)
+  mobile_number_2: string | null;
+  address: string | null;
+  size: string | null;
+  floor: string | null;
+  file_number: string | null;
 }
 
 export interface CustomerNonProfit {
   customer_id: string;
-  full_non_profit_name: string;
-  registration_number: string;
-  address: string;
+  // Required fields (7)
+  property_id: string;
+  ngo_name: string;
+  ngo_registration_number: string;
   contact_name: string;
   mobile_number_1: string;
-  carrier_mobile_1: string;
-  mobile_number_2: string | null;
-  carrier_mobile_2: string | null;
   email: string;
-  district_id: string;
-  license_number: string;
-  section: string | null;
-  block: string | null;
-  districts?: {
-    name: string;
-  };
+  // Optional fields (5)
+  mobile_number_2: string | null;
+  size: string | null;
+  floor: string | null;
+  address: string | null;
+  file_number: string | null;
 }
 
 export interface CustomerResidential {
   customer_id: string;
-  pr_id: string;
+  // Required field (1)
+  property_id: string;
+  // Optional fields (4)
   size: string | null;
   floor: string | null;
   file_number: string | null;
@@ -145,7 +142,8 @@ export interface CustomerResidential {
 
 export interface CustomerRental {
   customer_id: string;
-  pr_id: string;
+  // Required fields (11)
+  property_id: string;
   rental_name: string;
   rental_mothers_name: string;
   date_of_birth: string;
@@ -153,17 +151,10 @@ export interface CustomerRental {
   gender: 'MALE' | 'FEMALE';
   nationality: string;
   mobile_number_1: string;
-  mobile_number_2: string;
   email: string;
   id_type: string;
-  id_number: string | null;
-  place_of_issue: string | null;
-  issue_date: string | null;
-  expiry_date: string | null;
-  carrier_mobile_1: string | null;
-  carrier_mobile_2: string | null;
-  emergency_contact_name: string | null;
-  emergency_contact_number: string | null;
+  // Optional field (1)
+  mobile_number_2: string | null;
 }
 
 export interface CustomerWithDetails extends Customer {

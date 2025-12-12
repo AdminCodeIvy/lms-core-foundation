@@ -37,12 +37,13 @@ export class CustomerService {
         customer_type,
         status,
         updated_at,
-        customer_person(full_name, pr_id, mothers_name),
-        customer_business(business_name, districts(name)),
-        customer_government(full_department_name),
-        customer_mosque_hospital(full_name, districts(name)),
-        customer_non_profit(full_non_profit_name, districts(name)),
-        customer_residential(pr_id)
+        customer_person(full_name, property_id, mothers_name),
+        customer_business(business_name, property_id),
+        customer_government(full_department_name, property_id),
+        customer_mosque_hospital(property_id, full_mosque_hospital_name),
+        customer_non_profit(property_id, ngo_name),
+        customer_residential(property_id),
+        customer_rental(property_id, rental_name)
       `,
         { count: 'exact' }
       );
@@ -107,17 +108,17 @@ export class CustomerService {
           break;
         case 'MOSQUE_HOSPITAL':
           if (customer.customer_mosque_hospital && customer.customer_mosque_hospital.length > 0) {
-            name = customer.customer_mosque_hospital[0].full_name;
+            name = customer.customer_mosque_hospital[0].full_mosque_hospital_name;
           }
           break;
         case 'NON_PROFIT':
           if (customer.customer_non_profit && customer.customer_non_profit.length > 0) {
-            name = customer.customer_non_profit[0].full_non_profit_name;
+            name = customer.customer_non_profit[0].ngo_name;
           }
           break;
         case 'RESIDENTIAL':
           if (customer.customer_residential && customer.customer_residential.length > 0) {
-            name = customer.customer_residential[0].pr_id;
+            name = customer.customer_residential[0].property_id;
           }
           break;
         case 'RENTAL':
@@ -210,6 +211,9 @@ export class CustomerService {
       residential_data: Array.isArray(data.customer_residential) && data.customer_residential.length > 0 
         ? data.customer_residential[0] 
         : data.customer_residential,
+      rental_data: Array.isArray(data.customer_rental) && data.customer_rental.length > 0 
+        ? data.customer_rental[0] 
+        : data.customer_rental,
     };
 
     return transformedData;

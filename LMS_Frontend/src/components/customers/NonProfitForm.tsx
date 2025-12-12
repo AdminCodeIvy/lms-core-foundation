@@ -4,7 +4,7 @@ import { nonProfitSchema, type NonProfitFormData } from '@/lib/customer-validati
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface NonProfitFormProps {
@@ -12,8 +12,6 @@ interface NonProfitFormProps {
   onSubmit: (data: NonProfitFormData) => Promise<void>;
   onCancel: () => void;
   isSubmitting: boolean;
-  districts: { id: string; name: string }[];
-  carriers: { id: string; name: string }[];
 }
 
 export const NonProfitForm = ({
@@ -21,32 +19,21 @@ export const NonProfitForm = ({
   onSubmit,
   onCancel,
   isSubmitting,
-  districts,
-  carriers,
 }: NonProfitFormProps) => {
   const form = useForm<NonProfitFormData>({
     resolver: zodResolver(nonProfitSchema),
     defaultValues: defaultValues || {
-      pr_id: '',
+      property_id: '',
       ngo_name: '',
       ngo_registration_number: '',
       contact_name: '',
       mobile_number_1: '',
-      mobile_number_2: '',
       email: '',
+      mobile_number_2: '',
       size: '',
       floor: '',
       address: '',
       file_number: '',
-      // Legacy fields
-      full_non_profit_name: '',
-      registration_number: '',
-      license_number: '',
-      carrier_mobile_1: '',
-      carrier_mobile_2: '',
-      district_id: '',
-      section: '',
-      block: '',
     },
   });
 
@@ -60,12 +47,12 @@ export const NonProfitForm = ({
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="pr_id"
+              name="property_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>PR-ID <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>Property ID <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter PR-ID" />
+                    <Input {...field} placeholder="Enter Property ID" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -210,9 +197,9 @@ export const NonProfitForm = ({
               name="email"
               render={({ field }) => (
                 <FormItem className="md:col-span-2">
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Email <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input {...field} type="email" placeholder="email@example.com (optional)" />
+                    <Input {...field} type="email" placeholder="email@example.com" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -221,115 +208,7 @@ export const NonProfitForm = ({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Additional Information (Optional)</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="carrier_mobile_1"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Carrier Network 1</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select carrier (optional)" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {carriers.map((carrier) => (
-                        <SelectItem key={carrier.id} value={carrier.name}>
-                          {carrier.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
-            <FormField
-              control={form.control}
-              name="carrier_mobile_2"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Carrier Network 2</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select carrier (optional)" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {carriers.map((carrier) => (
-                        <SelectItem key={carrier.id} value={carrier.name}>
-                          {carrier.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="district_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>District</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select district (optional)" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {districts.map((district) => (
-                        <SelectItem key={district.id} value={district.id}>
-                          {district.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="section"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Section</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Enter section (optional)" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="block"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Block</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Enter block (optional)" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
 
         <div className="flex gap-4 justify-end">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>

@@ -27,7 +27,7 @@ export const BusinessForm = ({
   const form = useForm<BusinessFormData>({
     resolver: zodResolver(businessSchema),
     defaultValues: defaultValues || {
-      pr_id: '',
+      property_id: '',
       business_name: '',
       business_license_number: '',
       business_address: '',
@@ -58,12 +58,12 @@ export const BusinessForm = ({
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="pr_id"
+              name="property_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>PR-ID</FormLabel>
+                  <FormLabel>Property ID</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter PR-ID (optional)" />
+                    <Input {...field} placeholder="Enter Property ID (optional)" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
