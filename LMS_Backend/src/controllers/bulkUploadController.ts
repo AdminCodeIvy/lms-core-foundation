@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express';
 import { AuthRequest } from '../middleware/auth';
-import { BulkUploadService } from '../services/bulkUploadService';
+import { BulkUploadService } from '../services/bulkUpload';
 import { ResponseHandler } from '../utils/response';
 import { logger } from '../utils/logger';
 
@@ -21,6 +21,26 @@ export class BulkUploadController {
     try {
       const result = await bulkUploadService.commitUpload(req.body, req.user!.id);
       logger.info(`Bulk upload committed: ${result.successful} successful, ${result.failed} failed by ${req.user!.email}`);
+      
+      // Create audit log entry for bulk upload
+      try {
+        const { supabase } = require('../config/database');
+        await supabase.from('audit_logs').insert({
+          user_id: req.user!.id,
+          action: 'BULK_UPLOAD',
+          entity_type: req.body.entityType?.toUpperCase() || 'UNKNOWN',
+          entity_id: null,
+          details: {
+            successful: result.successful,
+            failed: result.failed,
+            total_records: result.successful + result.failed,
+            entity_type: req.body.entityType
+          }
+        });
+      } catch (auditError) {
+        logger.warn('Failed to create audit log for bulk upload:', auditError);
+      }
+      
       ResponseHandler.success(res, result, 'Upload committed successfully');
     } catch (error) {
       next(error);

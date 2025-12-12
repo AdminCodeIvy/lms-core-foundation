@@ -55,7 +55,7 @@ export const PersonForm = ({
         {/* Required Fields */}
         <Card>
           <CardHeader>
-            <CardTitle>Personal Information</CardTitle>
+            <CardTitle>Required Information</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
@@ -65,7 +65,7 @@ export const PersonForm = ({
                 <FormItem>
                   <FormLabel>Property ID <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter Property ID" />
+                    <Input {...field} placeholder="Enter Property ID (e.g., PID001)" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -99,13 +99,21 @@ export const PersonForm = ({
                 </FormItem>
               )}
             />
+          </CardContent>
+        </Card>
 
+        {/* Optional Fields */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Personal Details (Optional)</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="date_of_birth"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Date of Birth <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>Date of Birth</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -116,7 +124,7 @@ export const PersonForm = ({
                             !field.value && 'text-muted-foreground'
                           )}
                         >
-                          {field.value ? format(field.value, 'PPP') : <span>Pick date of birth</span>}
+                          {field.value ? format(field.value, 'PPP') : <span>Pick date of birth (optional)</span>}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                       </FormControl>
@@ -142,9 +150,9 @@ export const PersonForm = ({
               name="place_of_birth"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>POB <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>POB (Place of Birth)</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter place of birth" />
+                    <Input {...field} placeholder="Enter place of birth (optional)" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -156,11 +164,11 @@ export const PersonForm = ({
               name="gender"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Gender <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>Gender</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select gender" />
+                        <SelectValue placeholder="Select gender (optional)" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -178,11 +186,11 @@ export const PersonForm = ({
               name="nationality"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nationality <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>Nationality</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select nationality" />
+                        <SelectValue placeholder="Select nationality (optional)" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -203,9 +211,9 @@ export const PersonForm = ({
               name="mobile_number_1"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mobile Number 1 <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>Mobile Number 1</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="+251-912-345-678" />
+                    <Input {...field} placeholder="+251-912-345-678 (optional)" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -217,9 +225,9 @@ export const PersonForm = ({
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input {...field} type="email" placeholder="email@example.com" />
+                    <Input {...field} type="email" placeholder="email@example.com (optional)" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -231,11 +239,11 @@ export const PersonForm = ({
               name="id_type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Type of ID <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>Type of ID</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select ID type" />
+                        <SelectValue placeholder="Select ID type (optional)" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -253,10 +261,10 @@ export const PersonForm = ({
           </CardContent>
         </Card>
 
-        {/* Optional Fields */}
+        {/* ID Information (Optional) */}
         <Card>
           <CardHeader>
-            <CardTitle>Additional Information (Optional)</CardTitle>
+            <CardTitle>ID Information (Optional)</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField

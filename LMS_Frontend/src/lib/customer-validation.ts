@@ -13,21 +13,19 @@ const calculateAge = (birthDate: Date): number => {
 };
 
 export const personSchema = z.object({
-  // Required core fields (10 fields)
+  // Required core fields (only 3 fields)
   property_id: z.string().trim().min(1, "Property ID is required").max(50),
   full_name: z.string().trim().min(2, "Full name must be at least 2 characters").max(200),
   mothers_name: z.string().trim().min(2, "Mother's name must be at least 2 characters").max(100),
-  date_of_birth: z.date({
-    required_error: "Date of birth is required",
-  }).refine((date) => calculateAge(date) >= 18, "Person must be at least 18 years old"),
-  place_of_birth: z.string().trim().min(1, "POB is required").max(200),
-  gender: z.enum(["MALE", "FEMALE"], { required_error: "Gender is required" }),
-  nationality: z.string().min(1, "Nationality is required"),
-  mobile_number_1: z.string().trim().regex(mobileNumberRegex, "Invalid mobile number format (e.g., +251-912-345-678)"),
-  email: z.string().trim().email("Invalid email format").max(255),
-  id_type: z.string().min(1, "Type of ID is required"),
   
-  // Optional additional fields
+  // Optional fields (all others are now optional)
+  date_of_birth: z.date().optional().refine((date) => !date || calculateAge(date) >= 18, "Person must be at least 18 years old if provided"),
+  place_of_birth: z.string().trim().max(200).optional().or(z.literal("")),
+  gender: z.enum(["MALE", "FEMALE"]).optional(),
+  nationality: z.string().max(100).optional().or(z.literal("")),
+  mobile_number_1: z.string().trim().regex(mobileNumberRegex, "Invalid mobile number format (e.g., +251-912-345-678)").optional().or(z.literal("")),
+  email: z.string().trim().email("Invalid email format").max(255).optional().or(z.literal("")),
+  id_type: z.string().max(100).optional().or(z.literal("")),
   id_number: z.string().trim().max(100).optional().or(z.literal("")),
   place_of_issue: z.enum(["", "Djibouti", "Ethiopia", "Kenya", "Somalia", "United Kingdom", "United States"]).optional(),
   issue_date: z.date().optional().refine((date) => !date || date <= new Date(), "Issue date cannot be in the future"),
