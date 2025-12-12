@@ -45,10 +45,20 @@ export class CustomerController {
         return;
       }
 
+      // Debug logging
+      logger.info(`Creating customer - User ID: ${req.user.id}, Customer Type: ${req.body.customer_type}`);
+
+      if (!req.user.id) {
+        logger.error('User ID is missing from authenticated request');
+        ResponseHandler.badRequest(res, 'User authentication error');
+        return;
+      }
+
       const customer = await customerService.createCustomer(req.body, req.user.id);
       logger.info(`Customer created: ${customer.reference_id} by ${req.user.email}`);
       ResponseHandler.created(res, customer, 'Customer created successfully');
     } catch (error) {
+      logger.error('Customer creation error:', error);
       next(error);
     }
   }

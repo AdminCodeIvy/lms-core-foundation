@@ -41,7 +41,6 @@ export const BusinessForm = ({
       // Optional fields
       business_registration_number: '',
       contact_name: '',
-      carrier_network: '',
       street: '',
       district_id: '',
       section: '',
@@ -253,30 +252,7 @@ export const BusinessForm = ({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="carrier_network"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Carrier Network</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select carrier (optional)" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {carriers.map((carrier) => (
-                        <SelectItem key={carrier.id} value={carrier.name}>
-                          {carrier.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
 
             <FormField
               control={form.control}

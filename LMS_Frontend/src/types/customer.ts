@@ -56,19 +56,24 @@ export interface CustomerPerson {
 
 export interface CustomerBusiness {
   customer_id: string;
-  business_name: string;
-  business_registration_number: string;
-  business_address: string;
-  contact_name: string;
-  mobile_number_1: string;
-  mobile_number_2: string | null;
-  carrier_network: string;
-  email: string;
-  street: string;
-  district_id: string;
-  business_license_number: string;
-  section: string | null;
-  block: string | null;
+  pr_id?: string | null;
+  business_name?: string | null;
+  business_registration_number?: string | null;
+  business_license_number?: string | null;
+  business_address?: string | null;
+  rental_name?: string | null;
+  size?: string | null;
+  floor?: string | null;
+  file_number?: string | null;
+  contact_name?: string | null;
+  mobile_number_1?: string | null;
+  mobile_number_2?: string | null;
+  carrier_network?: string | null; // Optional field
+  email?: string | null;
+  street?: string | null;
+  district_id?: string | null;
+  section?: string | null;
+  block?: string | null;
   districts?: {
     name: string;
   };
@@ -76,18 +81,15 @@ export interface CustomerBusiness {
 
 export interface CustomerGovernment {
   customer_id: string;
-  full_department_name: string;
-  department_address: string;
-  contact_name: string;
-  mobile_number_1: string;
-  carrier_mobile_1: string;
-  mobile_number_2: string | null;
-  carrier_mobile_2: string | null;
-  email: string;
-  street: string;
-  district_id: string;
-  section: string | null;
-  block: string | null;
+  pr_id?: string | null;
+  full_department_name?: string | null;
+  department_address?: string | null;
+  contact_name?: string | null;
+  mobile_number_1?: string | null;
+  mobile_number_2?: string | null;
+  email?: string | null;
+  file_number?: string | null;
+  size?: string | null;
   districts?: {
     name: string;
   };

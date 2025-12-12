@@ -438,9 +438,28 @@ const CustomerDetail = () => {
                 </CardHeader>
                 <CardContent className="space-y-0">
                   <InfoItem icon={IdCard} label="Reference ID" value={customer.reference_id} />
+                  {customer.business_data.pr_id && (
+                    <InfoItem icon={IdCard} label="PR-ID" value={customer.business_data.pr_id} />
+                  )}
                   <InfoItem icon={Building2} label="Business Name" value={customer.business_data.business_name} />
-                  <InfoItem icon={IdCard} label="Registration Number" value={customer.business_data.business_registration_number} />
-                  <InfoItem icon={IdCard} label="License Number" value={customer.business_data.business_license_number} />
+                  {customer.business_data.business_license_number && (
+                    <InfoItem icon={IdCard} label="Business / Commercial License Number" value={customer.business_data.business_license_number} />
+                  )}
+                  {customer.business_data.business_address && (
+                    <InfoItem icon={MapPin} label="Business Address" value={customer.business_data.business_address} />
+                  )}
+                  {customer.business_data.rental_name && (
+                    <InfoItem icon={Building2} label="Rental Name" value={customer.business_data.rental_name} />
+                  )}
+                  {customer.business_data.size && (
+                    <InfoItem icon={Building2} label="Size" value={customer.business_data.size} />
+                  )}
+                  {customer.business_data.floor && (
+                    <InfoItem icon={Building2} label="Floor" value={customer.business_data.floor} />
+                  )}
+                  {customer.business_data.file_number && (
+                    <InfoItem icon={IdCard} label="File Number" value={customer.business_data.file_number} />
+                  )}
                 </CardContent>
               </Card>
 
@@ -452,13 +471,15 @@ const CustomerDetail = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-0">
-                  <InfoItem icon={User} label="Contact Name" value={customer.business_data.contact_name} />
-                  <InfoItem icon={Phone} label="Mobile Number 1" value={customer.business_data.mobile_number_1} />
-                  {customer.business_data.mobile_number_2 && (
-                    <InfoItem icon={Phone} label="Mobile Number 2" value={customer.business_data.mobile_number_2} />
+                  {customer.business_data.mobile_number_1 && (
+                    <InfoItem icon={Phone} label="Contact Number" value={customer.business_data.mobile_number_1} />
                   )}
-                  <InfoItem icon={Phone} label="Carrier Network" value={customer.business_data.carrier_network} />
-                  <InfoItem icon={Mail} label="Email" value={customer.business_data.email} />
+                  {customer.business_data.mobile_number_2 && (
+                    <InfoItem icon={Phone} label="Contact Number 2" value={customer.business_data.mobile_number_2} />
+                  )}
+                  {customer.business_data.email && (
+                    <InfoItem icon={Mail} label="Email" value={customer.business_data.email} />
+                  )}
                 </CardContent>
               </Card>
 
@@ -466,13 +487,23 @@ const CustomerDetail = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <MapPin className="h-5 w-5" />
-                    Address
+                    Additional Information
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-0">
-                  <InfoItem icon={MapPin} label="Business Address" value={customer.business_data.business_address} />
-                  <InfoItem icon={MapPin} label="Street" value={customer.business_data.street} />
-                  <InfoItem icon={MapPin} label="District" value={customer.business_data.districts?.name} />
+                  {customer.business_data.business_registration_number && (
+                    <InfoItem icon={IdCard} label="Registration Number" value={customer.business_data.business_registration_number} />
+                  )}
+                  {customer.business_data.contact_name && (
+                    <InfoItem icon={User} label="Contact Name" value={customer.business_data.contact_name} />
+                  )}
+
+                  {customer.business_data.street && (
+                    <InfoItem icon={MapPin} label="Street" value={customer.business_data.street} />
+                  )}
+                  {customer.business_data.districts?.name && (
+                    <InfoItem icon={MapPin} label="District" value={customer.business_data.districts.name} />
+                  )}
                   {customer.business_data.section && (
                     <InfoItem icon={MapPin} label="Section" value={customer.business_data.section} />
                   )}
@@ -491,13 +522,23 @@ const CustomerDetail = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Building2 className="h-5 w-5" />
-                    Government Entity Information
+                    Government Information
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-0">
                   <InfoItem icon={IdCard} label="Reference ID" value={customer.reference_id} />
-                  <InfoItem icon={Building2} label="Department Name" value={customer.government_data.full_department_name} />
-                  <InfoItem icon={MapPin} label="District" value={customer.government_data.districts?.name} />
+                  {customer.government_data.pr_id && (
+                    <InfoItem icon={IdCard} label="PR-ID" value={customer.government_data.pr_id} />
+                  )}
+                  {customer.government_data.full_department_name && (
+                    <InfoItem icon={Building2} label="Full Government / Department Name" value={customer.government_data.full_department_name} />
+                  )}
+                  {customer.government_data.department_address && (
+                    <InfoItem icon={MapPin} label="Department Address" value={customer.government_data.department_address} />
+                  )}
+                  {customer.government_data.contact_name && (
+                    <InfoItem icon={User} label="Contact Name" value={customer.government_data.contact_name} />
+                  )}
                 </CardContent>
               </Card>
 
@@ -509,33 +550,36 @@ const CustomerDetail = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-0">
-                  <InfoItem icon={User} label="Contact Name" value={customer.government_data.contact_name} />
-                  <InfoItem icon={Phone} label="Mobile Number 1" value={`${customer.government_data.mobile_number_1} (${customer.government_data.carrier_mobile_1})`} />
-                  {customer.government_data.mobile_number_2 && (
-                    <InfoItem icon={Phone} label="Mobile Number 2" value={`${customer.government_data.mobile_number_2} (${customer.government_data.carrier_mobile_2})`} />
+                  {customer.government_data.mobile_number_1 && (
+                    <InfoItem icon={Phone} label="Contact Number1" value={customer.government_data.mobile_number_1} />
                   )}
-                  <InfoItem icon={Mail} label="Email" value={customer.government_data.email} />
+                  {customer.government_data.mobile_number_2 && (
+                    <InfoItem icon={Phone} label="Contact Number2" value={customer.government_data.mobile_number_2} />
+                  )}
+                  {customer.government_data.email && (
+                    <InfoItem icon={Mail} label="Email" value={customer.government_data.email} />
+                  )}
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MapPin className="h-5 w-5" />
-                    Department Address
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-0">
-                  <InfoItem icon={MapPin} label="Department Address" value={customer.government_data.department_address} />
-                  <InfoItem icon={MapPin} label="Street" value={customer.government_data.street} />
-                  {customer.government_data.section && (
-                    <InfoItem icon={MapPin} label="Section" value={customer.government_data.section} />
-                  )}
-                  {customer.government_data.block && (
-                    <InfoItem icon={MapPin} label="Block" value={customer.government_data.block} />
-                  )}
-                </CardContent>
-              </Card>
+              {(customer.government_data.file_number || customer.government_data.size) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <IdCard className="h-5 w-5" />
+                      Additional Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-0">
+                    {customer.government_data.file_number && (
+                      <InfoItem icon={IdCard} label="File Number" value={customer.government_data.file_number} />
+                    )}
+                    {customer.government_data.size && (
+                      <InfoItem icon={IdCard} label="Size" value={customer.government_data.size} />
+                    )}
+                  </CardContent>
+                </Card>
+              )}
             </>
           )}
 

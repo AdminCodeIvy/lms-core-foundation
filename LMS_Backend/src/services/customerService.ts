@@ -39,7 +39,7 @@ export class CustomerService {
         updated_at,
         customer_person(full_name, pr_id, mothers_name),
         customer_business(business_name, districts(name)),
-        customer_government(full_department_name, districts(name)),
+        customer_government(full_department_name),
         customer_mosque_hospital(full_name, districts(name)),
         customer_non_profit(full_non_profit_name, districts(name)),
         customer_residential(pr_id)
@@ -216,18 +216,75 @@ export class CustomerService {
   }
 
   async createCustomer(customerData: any, userId: string) {
+    // Validate userId
+    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+      console.error('Invalid userId received:', { userId, type: typeof userId });
+      throw new AppError('Invalid user ID provided', 400);
+    }
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId)) {
+      console.error('Invalid UUID format for userId:', userId);
+      throw new AppError('Invalid user ID format', 400);
+    }
+
     const { customer_type, 
             customer_person, customer_business, customer_government, 
             customer_mosque_hospital, customer_non_profit, customer_residential, customer_rental,
             person_data, business_data, government_data,
             mosque_hospital_data, non_profit_data, residential_data, rental_data } = customerData;
 
-    // Generate reference ID
-    const { data: refId, error: refError } = await supabase.rpc(
-      'generate_customer_reference_id'
-    );
+    // Generate reference ID with improved retry mechanism
+    let refId: string;
+    let attempts = 0;
+    const maxAttempts = 3;
 
-    if (refError) throw new AppError('Failed to generate reference ID', 500);
+    do {
+      attempts++;
+      
+      // Use fallback generator directly since database function is broken
+      refId = await this.generateFallbackReferenceId();
+
+      // Check if this reference ID already exists
+      const { data: existingCustomer } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('reference_id', refId)
+        .single();
+
+      if (!existingCustomer) {
+        // Reference ID is unique, we can use it
+        console.log(`Generated unique reference ID: ${refId} on attempt ${attempts}`);
+        break;
+      }
+
+      console.warn(`Reference ID ${refId} already exists, attempt ${attempts}/${maxAttempts}`);
+
+      if (attempts >= maxAttempts) {
+        // Last resort: use timestamp-based ID
+        const timestamp = Date.now();
+        const random = Math.floor(Math.random() * 10000);
+        refId = `CUS-${new Date().getFullYear()}-${timestamp}-${random}`;
+        
+        // Final check
+        const { data: finalCheck } = await supabase
+          .from('customers')
+          .select('id')
+          .eq('reference_id', refId)
+          .single();
+          
+        if (!finalCheck) {
+          console.log(`Using timestamp-based reference ID: ${refId}`);
+          break;
+        }
+        
+        throw new AppError('Failed to generate unique reference ID after multiple attempts', 500);
+      }
+
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, 200 * attempts));
+    } while (attempts < maxAttempts);
 
     // Create customer
     const { data: customer, error: customerError } = await supabase
@@ -241,7 +298,16 @@ export class CustomerService {
       .select()
       .single();
 
-    if (customerError) throw new AppError(customerError.message, 500);
+    if (customerError) {
+      if (customerError.code === '23505' && customerError.message.includes('reference_id')) {
+        throw new AppError('Reference ID conflict detected. Please try again.', 409);
+      }
+      throw new AppError(customerError.message, 500);
+    }
+
+    if (!customer || !customer.id) {
+      throw new AppError('Failed to create customer - no ID returned', 500);
+    }
 
     // Get the appropriate details based on customer type
     // Support both naming conventions: customer_person OR person_data
@@ -280,6 +346,12 @@ export class CustomerService {
     // Create customer type-specific details
     const tableName = `customer_${customer_type.toLowerCase()}`;
     
+    // Validate customer ID before inserting details
+    if (!customer.id || typeof customer.id !== 'string' || customer.id.trim() === '') {
+      await supabase.from('customers').delete().eq('reference_id', refId);
+      throw new AppError('Invalid customer ID generated', 500);
+    }
+    
     // Insert only the new simplified fields
     let insertData = { customer_id: customer.id, ...details };
     
@@ -288,7 +360,27 @@ export class CustomerService {
     if (detailsError) {
       // Rollback customer creation
       await supabase.from('customers').delete().eq('id', customer.id);
-      throw new AppError(detailsError.message, 500);
+      
+      // Provide user-friendly error messages
+      if (detailsError.code === '23502') { // NOT NULL constraint violation
+        const match = detailsError.message.match(/column "([^"]+)"/);
+        if (match) {
+          const fieldName = match[1];
+          const friendlyFieldNames: { [key: string]: string } = {
+            'carrier_network': 'Carrier Network',
+            'business_name': 'Business Name',
+            'contact_name': 'Contact Name',
+            'mobile_number_1': 'Contact Number',
+            'email': 'Email',
+            'pr_id': 'PR-ID'
+          };
+          const friendlyName = friendlyFieldNames[fieldName] || fieldName;
+          throw new AppError(`${friendlyName} is required. Please fill in this field.`, 400);
+        }
+      }
+      
+      // Generic database error
+      throw new AppError('Failed to save customer details. Please check all required fields.', 400);
     }
 
     // Create activity log
@@ -605,10 +697,52 @@ export class CustomerService {
   }
 
   async generateReferenceId(): Promise<string> {
-    const { data, error } = await supabase.rpc('generate_customer_reference_id');
+    try {
+      const { data, error } = await supabase.rpc('generate_customer_reference_id');
 
-    if (error) throw new AppError('Failed to generate reference ID', 500);
+      if (error) {
+        console.warn('Database function failed, using fallback generator:', error.message);
+        return this.generateFallbackReferenceId();
+      }
 
-    return data;
+      return data;
+    } catch (error) {
+      console.warn('Reference ID generation failed, using fallback:', error);
+      return this.generateFallbackReferenceId();
+    }
+  }
+
+  private async generateFallbackReferenceId(): Promise<string> {
+    // Fallback: Generate reference ID using timestamp and random number
+    const year = new Date().getFullYear();
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 100000); // Larger random number
+    
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    while (attempts < maxAttempts) {
+      // Create more unique ID with microseconds and larger random
+      const microseconds = (timestamp + attempts * 1000).toString().slice(-8);
+      const randomPart = (random + attempts * 123).toString().padStart(5, '0');
+      const refId = `CUS-${year}-${microseconds}${randomPart}`;
+      
+      // Check if this ID exists
+      const { data: existing } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('reference_id', refId)
+        .single();
+
+      if (!existing) {
+        return refId;
+      }
+
+      attempts++;
+      // Add small delay to ensure timestamp changes
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+
+    throw new AppError('Failed to generate unique fallback reference ID', 500);
   }
 }

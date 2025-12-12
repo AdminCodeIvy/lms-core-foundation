@@ -238,7 +238,6 @@ export const ReviewPanel = ({
                       <InfoItem label="Contact Name" value={customer.business_data.contact_name} />
                       <InfoItem label="Mobile Number 1" value={customer.business_data.mobile_number_1} />
                       <InfoItem label="Mobile Number 2" value={customer.business_data.mobile_number_2} />
-                      <InfoItem label="Carrier Network" value={customer.business_data.carrier_network} />
                       <InfoItem label="Email" value={customer.business_data.email} />
                     </div>
                   </div>
@@ -256,10 +255,7 @@ export const ReviewPanel = ({
                     <div className="grid grid-cols-2 gap-4">
                       <InfoItem label="Department Name" value={customer.government_data.full_department_name} />
                       <InfoItem label="Department Address" value={customer.government_data.department_address} />
-                      <InfoItem label="Street" value={customer.government_data.street} />
-                      <InfoItem label="District" value={customer.government_data.districts?.name} />
-                      <InfoItem label="Section" value={customer.government_data.section} />
-                      <InfoItem label="Block" value={customer.government_data.block} />
+
                     </div>
                   </div>
 
@@ -271,9 +267,7 @@ export const ReviewPanel = ({
                     <div className="grid grid-cols-2 gap-4">
                       <InfoItem label="Contact Name" value={customer.government_data.contact_name} />
                       <InfoItem label="Mobile Number 1" value={customer.government_data.mobile_number_1} />
-                      <InfoItem label="Carrier 1" value={customer.government_data.carrier_mobile_1} />
                       <InfoItem label="Mobile Number 2" value={customer.government_data.mobile_number_2} />
-                      <InfoItem label="Carrier 2" value={customer.government_data.carrier_mobile_2} />
                       <InfoItem label="Email" value={customer.government_data.email} />
                     </div>
                   </div>
@@ -306,9 +300,7 @@ export const ReviewPanel = ({
                     <div className="grid grid-cols-2 gap-4">
                       <InfoItem label="Contact Name" value={customer.mosque_hospital_data.contact_name} />
                       <InfoItem label="Mobile Number 1" value={customer.mosque_hospital_data.mobile_number_1} />
-                      <InfoItem label="Carrier 1" value={customer.mosque_hospital_data.carrier_mobile_1} />
                       <InfoItem label="Mobile Number 2" value={customer.mosque_hospital_data.mobile_number_2} />
-                      <InfoItem label="Carrier 2" value={customer.mosque_hospital_data.carrier_mobile_2} />
                       <InfoItem label="Email" value={customer.mosque_hospital_data.email} />
                     </div>
                   </div>
@@ -342,9 +334,7 @@ export const ReviewPanel = ({
                     <div className="grid grid-cols-2 gap-4">
                       <InfoItem label="Contact Name" value={customer.non_profit_data.contact_name} />
                       <InfoItem label="Mobile Number 1" value={customer.non_profit_data.mobile_number_1} />
-                      <InfoItem label="Carrier 1" value={customer.non_profit_data.carrier_mobile_1} />
                       <InfoItem label="Mobile Number 2" value={customer.non_profit_data.mobile_number_2} />
-                      <InfoItem label="Carrier 2" value={customer.non_profit_data.carrier_mobile_2} />
                       <InfoItem label="Email" value={customer.non_profit_data.email} />
                     </div>
                   </div>

@@ -58,7 +58,7 @@ export const businessSchema = z.object({
   file_number: z.string().trim().max(100).optional().or(z.literal("")),
   business_registration_number: z.string().trim().max(100).optional().or(z.literal("")),
   contact_name: z.string().trim().max(200).optional().or(z.literal("")),
-  carrier_network: z.string().optional().or(z.literal("")),
+
   street: z.string().trim().max(200).optional().or(z.literal("")),
   district_id: z.string().optional().or(z.literal("")),
   section: z.string().trim().max(100).optional().or(z.literal("")),
@@ -71,21 +71,13 @@ export const governmentSchema = z.object({
   full_department_name: z.string().trim().min(3, "Full Government / Department Name must be at least 3 characters").max(200),
   contact_name: z.string().trim().min(1, "Contact Name is required").max(200),
   
-  // Optional fields (all others)
+  // Optional fields
   department_address: z.string().trim().max(500).optional().or(z.literal("")),
   mobile_number_1: z.string().trim().regex(mobileNumberRegex, "Invalid mobile number format").optional().or(z.literal("")),
   mobile_number_2: z.string().trim().regex(mobileNumberRegex, "Invalid mobile number format").optional().or(z.literal("")),
   email: z.string().trim().email("Invalid email format").max(255).optional().or(z.literal("")),
   file_number: z.string().trim().max(100).optional().or(z.literal("")),
   size: z.string().trim().max(100).optional().or(z.literal("")),
-  
-  // Legacy optional fields (for backward compatibility)
-  carrier_mobile_1: z.string().optional().or(z.literal("")),
-  carrier_mobile_2: z.string().optional().or(z.literal("")),
-  street: z.string().trim().max(200).optional().or(z.literal("")),
-  district_id: z.string().optional().or(z.literal("")),
-  section: z.string().trim().max(100).optional().or(z.literal("")),
-  block: z.string().trim().max(100).optional().or(z.literal("")),
 });
 
 export const mosqueHospitalSchema = z.object({

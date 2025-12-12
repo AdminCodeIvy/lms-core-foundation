@@ -425,10 +425,8 @@ const CustomerReviewContent = ({
             <CardContent className="grid gap-6 md:grid-cols-2">
               <InfoItem label="Mobile 1" value={customer.business_data.mobile_number_1} />
               <InfoItem label="Mobile 2" value={customer.business_data.mobile_number_2} />
-              <InfoItem label="Carrier Network" value={customer.business_data.carrier_network} />
               <InfoItem label="Email" value={customer.business_data.email} />
               <InfoItem label="Street" value={customer.business_data.street} />
-              <InfoItem label="District" value={customer.business_data.districts?.name} />
               <InfoItem label="Section" value={customer.business_data.section} />
               <InfoItem label="Block" value={customer.business_data.block} />
             </CardContent>
@@ -455,14 +453,11 @@ const CustomerReviewContent = ({
             <CardContent className="grid gap-6 md:grid-cols-2">
               <InfoItem label="Contact Name" value={customer.government_data.contact_name} />
               <InfoItem label="Mobile 1" value={customer.government_data.mobile_number_1} />
-              <InfoItem label="Carrier Mobile 1" value={customer.government_data.carrier_mobile_1} />
+
               <InfoItem label="Mobile 2" value={customer.government_data.mobile_number_2} />
-              <InfoItem label="Carrier Mobile 2" value={customer.government_data.carrier_mobile_2} />
+
               <InfoItem label="Email" value={customer.government_data.email} />
-              <InfoItem label="Street" value={customer.government_data.street} />
-              <InfoItem label="District" value={customer.government_data.districts?.name} />
-              <InfoItem label="Section" value={customer.government_data.section} />
-              <InfoItem label="Block" value={customer.government_data.block} />
+
             </CardContent>
           </Card>
         </>
@@ -488,11 +483,8 @@ const CustomerReviewContent = ({
             <CardContent className="grid gap-6 md:grid-cols-2">
               <InfoItem label="Contact Name" value={customer.mosque_hospital_data.contact_name} />
               <InfoItem label="Mobile 1" value={customer.mosque_hospital_data.mobile_number_1} />
-              <InfoItem label="Carrier Mobile 1" value={customer.mosque_hospital_data.carrier_mobile_1} />
               <InfoItem label="Mobile 2" value={customer.mosque_hospital_data.mobile_number_2} />
-              <InfoItem label="Carrier Mobile 2" value={customer.mosque_hospital_data.carrier_mobile_2} />
               <InfoItem label="Email" value={customer.mosque_hospital_data.email} />
-              <InfoItem label="District" value={customer.mosque_hospital_data.districts?.name} />
               <InfoItem label="Section" value={customer.mosque_hospital_data.section} />
               <InfoItem label="Block" value={customer.mosque_hospital_data.block} />
             </CardContent>
@@ -521,11 +513,8 @@ const CustomerReviewContent = ({
             <CardContent className="grid gap-6 md:grid-cols-2">
               <InfoItem label="Contact Name" value={customer.non_profit_data.contact_name} />
               <InfoItem label="Mobile 1" value={customer.non_profit_data.mobile_number_1} />
-              <InfoItem label="Carrier Mobile 1" value={customer.non_profit_data.carrier_mobile_1} />
               <InfoItem label="Mobile 2" value={customer.non_profit_data.mobile_number_2} />
-              <InfoItem label="Carrier Mobile 2" value={customer.non_profit_data.carrier_mobile_2} />
               <InfoItem label="Email" value={customer.non_profit_data.email} />
-              <InfoItem label="District" value={customer.non_profit_data.districts?.name} />
               <InfoItem label="Section" value={customer.non_profit_data.section} />
               <InfoItem label="Block" value={customer.non_profit_data.block} />
             </CardContent>

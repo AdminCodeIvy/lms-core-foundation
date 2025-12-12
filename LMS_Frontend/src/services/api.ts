@@ -40,6 +40,22 @@ class ApiClient {
       async (error: AxiosError<any>) => {
         const originalRequest = error.config as InternalAxiosRequestConfig;
         
+        // Handle network errors gracefully (don't logout)
+        if (error.code === 'NETWORK_ERROR' || 
+            error.code === 'ECONNABORTED' ||
+            error.message?.includes('timeout') ||
+            error.message?.includes('fetch failed')) {
+          console.warn('Network error detected, not logging out user:', error.message);
+          return Promise.reject(new Error('Connection error. Please check your internet connection and try again.'));
+        }
+
+        // Handle 503 Service Unavailable (don't logout)
+        if (error.response?.status === 503) {
+          console.warn('Service unavailable, not logging out user');
+          return Promise.reject(new Error('Service temporarily unavailable. Please try again in a moment.'));
+        }
+        
+        // Only handle 401 for actual authentication failures
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
           
@@ -60,15 +76,23 @@ class ApiClient {
                 return this.client(originalRequest);
               }
             }
-          } catch (refreshError) {
+          } catch (refreshError: any) {
             console.error('Token refresh failed:', refreshError);
+            
+            // Only logout if refresh fails due to invalid token, not network issues
+            if (refreshError.response?.status === 401) {
+              // Actual auth failure - logout
+              localStorage.removeItem('auth_token');
+              localStorage.removeItem('refresh_token');
+              localStorage.removeItem('user');
+              window.location.href = '/login';
+            } else {
+              // Network error during refresh - don't logout
+              console.warn('Network error during token refresh, keeping user logged in');
+              return Promise.reject(new Error('Connection error during authentication. Please try again.'));
+            }
           }
           
-          // If refresh fails, redirect to login
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('refresh_token');
-          localStorage.removeItem('user');
-          window.location.href = '/login';
           return Promise.reject(error);
         }
         

@@ -24,14 +24,45 @@ export class AuthService {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const { email, password } = credentials;
 
-    // Authenticate with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    let authData: any;
 
-    if (authError || !authData.user) {
-      throw new AppError('Invalid email or password', 401);
+    try {
+      // Authenticate with Supabase Auth
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) {
+        // Check if it's a network error vs auth error
+        if (authError.message?.includes('fetch failed') || 
+            authError.message?.includes('timeout') ||
+            authError.message?.includes('network')) {
+          throw new AppError('Connection error. Please check your internet connection and try again.', 503);
+        }
+        throw new AppError('Invalid email or password', 401);
+      }
+
+      if (!data.user) {
+        throw new AppError('Invalid email or password', 401);
+      }
+
+      authData = data;
+    } catch (error: any) {
+      // Handle network timeouts and connection errors
+      if (error.code === 'UND_ERR_CONNECT_TIMEOUT' || 
+          error.message?.includes('fetch failed') ||
+          error.message?.includes('timeout')) {
+        throw new AppError('Connection timeout. Please check your internet connection and try again.', 503);
+      }
+      
+      // Re-throw AppErrors as-is
+      if (error instanceof AppError) {
+        throw error;
+      }
+      
+      // Generic network error
+      throw new AppError('Connection error. Please try again.', 503);
     }
 
     // Fetch user profile
@@ -112,7 +143,17 @@ export class AuthService {
         .eq('id', decoded.userId)
         .single();
 
-      if (error || !user || !user.is_active) {
+      if (error) {
+        // Check if it's a network error
+        if (error.message?.includes('fetch failed') || 
+            error.message?.includes('timeout') ||
+            error.code === 'UND_ERR_CONNECT_TIMEOUT') {
+          throw new AppError('Connection error during token refresh. Please try again.', 503);
+        }
+        throw new AppError('Invalid refresh token', 401);
+      }
+
+      if (!user || !user.is_active) {
         throw new AppError('Invalid refresh token', 401);
       }
 
@@ -125,7 +166,19 @@ export class AuthService {
       const token = JwtUtil.generateToken(payload);
 
       return { token };
-    } catch (error) {
+    } catch (error: any) {
+      // Handle network errors gracefully
+      if (error.code === 'UND_ERR_CONNECT_TIMEOUT' || 
+          error.message?.includes('fetch failed') ||
+          error.message?.includes('timeout')) {
+        throw new AppError('Connection timeout during token refresh. Please try again.', 503);
+      }
+      
+      // Re-throw AppErrors as-is
+      if (error instanceof AppError) {
+        throw error;
+      }
+      
       throw new AppError('Invalid refresh token', 401);
     }
   }
