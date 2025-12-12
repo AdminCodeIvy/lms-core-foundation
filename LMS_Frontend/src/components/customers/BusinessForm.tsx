@@ -4,7 +4,7 @@ import { businessSchema, type BusinessFormData } from '@/lib/customer-validation
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface BusinessFormProps {
@@ -12,8 +12,6 @@ interface BusinessFormProps {
   onSubmit: (data: BusinessFormData) => Promise<void>;
   onCancel: () => void;
   isSubmitting: boolean;
-  districts: { id: string; name: string }[];
-  carriers: { id: string; name: string }[];
 }
 
 export const BusinessForm = ({
@@ -21,8 +19,6 @@ export const BusinessForm = ({
   onSubmit,
   onCancel,
   isSubmitting,
-  districts,
-  carriers,
 }: BusinessFormProps) => {
   const form = useForm<BusinessFormData>({
     resolver: zodResolver(businessSchema),
@@ -38,13 +34,6 @@ export const BusinessForm = ({
       size: '',
       floor: '',
       file_number: '',
-      // Optional fields
-      business_registration_number: '',
-      contact_name: '',
-      street: '',
-      district_id: '',
-      section: '',
-      block: '',
     },
   });
 
@@ -54,6 +43,9 @@ export const BusinessForm = ({
         <Card>
           <CardHeader>
             <CardTitle>Business Information</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Fields marked with * are required. All other fields are optional.
+            </p>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
@@ -61,9 +53,9 @@ export const BusinessForm = ({
               name="property_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Property ID</FormLabel>
+                  <FormLabel>Property ID *</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter Property ID (optional)" />
+                    <Input {...field} placeholder="Enter Property ID (required)" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -75,9 +67,9 @@ export const BusinessForm = ({
               name="business_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Business Name</FormLabel>
+                  <FormLabel>Full Business Name *</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter full business name (optional)" />
+                    <Input {...field} placeholder="Enter full business name (required)" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -219,109 +211,7 @@ export const BusinessForm = ({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Additional Information</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="business_registration_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Registration Number</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Enter registration number (optional)" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
-            <FormField
-              control={form.control}
-              name="contact_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Contact Name</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Enter contact name (optional)" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-
-
-            <FormField
-              control={form.control}
-              name="street"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Street</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Enter street (optional)" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="district_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>District</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select district (optional)" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {districts.map((district) => (
-                        <SelectItem key={district.id} value={district.id}>
-                          {district.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="section"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Section</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Enter section (optional)" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="block"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Block</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Enter block (optional)" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
 
         <div className="flex gap-4 justify-end">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>

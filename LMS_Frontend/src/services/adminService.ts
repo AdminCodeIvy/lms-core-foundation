@@ -61,10 +61,10 @@ export interface AuditLog {
   new_value: string | null;
   changed_by: string;
   timestamp: string;
-  users?: {
+  user?: {
     id: string;
     full_name: string;
-  };
+  } | null;
 }
 
 export interface AuditLogFilters {

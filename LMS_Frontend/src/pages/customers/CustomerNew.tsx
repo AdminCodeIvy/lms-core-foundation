@@ -338,8 +338,6 @@ const CustomerNew = () => {
           onSubmit={handleBusinessSubmit}
           onCancel={handleCancel}
           isSubmitting={isSubmitting}
-          districts={districts}
-          carriers={carriers}
         />
       )}
 

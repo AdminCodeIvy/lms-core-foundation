@@ -356,12 +356,31 @@ export class CustomerService {
       throw new AppError('Invalid customer ID generated', 500);
     }
     
-    // Insert only the new simplified fields
-    let insertData = { customer_id: customer.id, ...details };
+    // Convert empty strings to null for database insertion
+    const cleanDetails = Object.fromEntries(
+      Object.entries(details).map(([key, value]) => [
+        key, 
+        value === '' || value === undefined ? null : value
+      ])
+    );
     
+    // Insert only the new simplified fields
+    let insertData = { customer_id: customer.id, ...cleanDetails };
+    
+    console.log('Inserting customer details:', {
+      tableName,
+      insertData: JSON.stringify(insertData, null, 2)
+    });
+
     const { error: detailsError } = await supabase.from(tableName).insert(insertData);
 
     if (detailsError) {
+      console.error('Database error details:', {
+        code: detailsError.code,
+        message: detailsError.message,
+        details: detailsError.details,
+        hint: detailsError.hint
+      });
       // Rollback customer creation
       await supabase.from('customers').delete().eq('id', customer.id);
       
@@ -376,12 +395,23 @@ export class CustomerService {
             'contact_name': 'Contact Name',
             'mobile_number_1': 'Contact Number',
             'email': 'Email',
-            'pr_id': 'PR-ID'
+            'pr_id': 'Property ID',
+            'property_id': 'Property ID'
           };
           const friendlyName = friendlyFieldNames[fieldName] || fieldName;
           throw new AppError(`${friendlyName} is required. Please fill in this field.`, 400);
         }
       }
+      
+      // Log the full error for debugging
+      console.error('Full database error:', {
+        code: detailsError.code,
+        message: detailsError.message,
+        details: detailsError.details,
+        hint: detailsError.hint,
+        tableName,
+        insertData
+      });
       
       // Generic database error
       throw new AppError('Failed to save customer details. Please check all required fields.', 400);

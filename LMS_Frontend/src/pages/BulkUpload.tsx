@@ -271,7 +271,7 @@ export default function BulkUpload() {
             filename = 'customer_business_template.xlsx';
             headers = [
               'customer_type',
-              'pr_id',
+              'property_id',
               'business_name',
               'business_license_number',
               'business_address',
@@ -282,17 +282,10 @@ export default function BulkUpload() {
               'size',
               'floor',
               'file_number',
-              'business_registration_number',
-              'contact_name',
-              'carrier_network',
-              'street',
-              'district_id',
-              'section',
-              'block',
             ];
             sampleRow = {
               customer_type: 'BUSINESS',
-              pr_id: 'PR-BUS-001',
+              property_id: 'PR-BUS-001',
               business_name: 'ABC Trading Company',
               business_license_number: 'BL-2025-001',
               business_address: '123 Business Street, Mogadishu',
@@ -303,13 +296,6 @@ export default function BulkUpload() {
               size: '500 sqm',
               floor: '2nd Floor',
               file_number: 'FILE-2025-001',
-              business_registration_number: 'REG-2025-001',
-              contact_name: 'Ahmed Hassan',
-              carrier_network: 'Hormuud',
-              street: 'Business Street',
-              district_id: 'JJG',
-              section: 'Section A',
-              block: 'Block 1',
             };
             break;
           case 'GOVERNMENT':

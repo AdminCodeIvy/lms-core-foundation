@@ -117,11 +117,11 @@ export class BulkUploadService {
     switch (entityType) {
       case 'customer':
         // Detect customer type from data
-        if (record.first_name || record.full_name || record.pr_id) {
+        if (record.first_name || record.full_name || record.property_id) {
           // PERSON type - validate the 10 required fields
           this.validatePersonFields(record, errors);
         } else if (record.business_name) {
-          // BUSINESS type - all fields are optional, just validate format if provided
+          // BUSINESS type - property_id and business_name are required
           this.validateBusinessFields(record, errors);
         } else if (record.full_department_name) {
           // GOVERNMENT type - validate the 3 required fields
@@ -132,7 +132,7 @@ export class BulkUploadService {
         } else if (record.full_non_profit_name || record.ngo_name || record['NGO Name']) {
           // NON_PROFIT type - validate the 5 required fields
           this.validateNonProfitFields(record, errors);
-        } else if (record.pr_id && (record.size || record.floor || record.file_number || record.address) && !record.full_name && !record.ngo_name && !record.business_name) {
+        } else if (record.property_id && (record.size || record.floor || record.file_number || record.address) && !record.full_name && !record.ngo_name && !record.business_name) {
           // RESIDENTIAL type - validate the 1 required field
           this.validateResidentialFields(record, errors);
         } else if (record.rental_name) {
@@ -207,13 +207,13 @@ export class BulkUploadService {
       return age;
     };
 
-    // 1. PR-ID (required)
-    if (isEmpty(record.pr_id)) {
-      errors.push('pr_id is required');
-    } else if (typeof record.pr_id !== 'string' || record.pr_id.trim().length < 1) {
-      errors.push('pr_id must be a valid string');
-    } else if (record.pr_id.trim().length > 50) {
-      errors.push('pr_id must be 50 characters or less');
+    // 1. Property ID (required)
+    if (isEmpty(record.property_id)) {
+      errors.push('property_id is required');
+    } else if (typeof record.property_id !== 'string' || record.property_id.trim().length < 1) {
+      errors.push('property_id must be a valid string');
+    } else if (record.property_id.trim().length > 50) {
+      errors.push('property_id must be 50 characters or less');
     }
 
     // 2. Full Name (required)
@@ -368,13 +368,13 @@ export class BulkUploadService {
 
     // 11 Required fields for RENTAL customers
     
-    // 1. PR-ID (required)
-    if (isEmpty(record.pr_id)) {
-      errors.push('pr_id is required');
-    } else if (typeof record.pr_id !== 'string' || record.pr_id.trim().length < 1) {
-      errors.push('pr_id must be a valid string');
-    } else if (record.pr_id.trim().length > 50) {
-      errors.push('pr_id must be 50 characters or less');
+    // 1. Property ID (required)
+    if (isEmpty(record.property_id)) {
+      errors.push('property_id is required');
+    } else if (typeof record.property_id !== 'string' || record.property_id.trim().length < 1) {
+      errors.push('property_id must be a valid string');
+    } else if (record.property_id.trim().length > 50) {
+      errors.push('property_id must be 50 characters or less');
     }
 
     // 2. Rental Name (required)
@@ -513,17 +513,35 @@ export class BulkUploadService {
       return mobileRegex.test(mobile);
     };
 
-    // ALL FIELDS ARE OPTIONAL - Only validate format if provided
+    // Helper function to get value with flexible column names
+    const getValue = (data: any, ...possibleKeys: string[]) => {
+      for (const key of possibleKeys) {
+        if (data[key] !== undefined && data[key] !== null && data[key] !== '') {
+          return data[key];
+        }
+      }
+      return null;
+    };
+
+    // REQUIRED FIELDS
     
-    // PR-ID (optional)
-    if (!isEmpty(record.pr_id) && record.pr_id.trim().length > 50) {
-      errors.push('pr_id must be 50 characters or less if provided');
+    // Property ID (required)
+    const propertyId = getValue(record, 'property_id', 'Property ID', 'Property-ID', 'property-id', 'PROPERTY_ID', 'pr_id', 'PR-ID');
+    if (isEmpty(propertyId)) {
+      errors.push('Property ID is required for business customers');
+    } else if (propertyId.trim().length > 50) {
+      errors.push('Property ID must be 50 characters or less');
     }
 
-    // Business Name (optional)
-    if (!isEmpty(record.business_name) && record.business_name.trim().length > 200) {
-      errors.push('business_name must be 200 characters or less if provided');
+    // Business Name (required)
+    const businessName = getValue(record, 'business_name', 'Business Name', 'Full Business Name', 'business-name', 'Business_Name');
+    if (isEmpty(businessName)) {
+      errors.push('Business Name is required for business customers');
+    } else if (businessName.trim().length > 200) {
+      errors.push('Business Name must be 200 characters or less');
     }
+
+    // OPTIONAL FIELDS - Only validate format if provided
 
     // Business License Number (optional)
     if (!isEmpty(record.business_license_number) && record.business_license_number.trim().length > 100) {
@@ -574,35 +592,7 @@ export class BulkUploadService {
       errors.push('file_number must be 100 characters or less if provided');
     }
 
-    // Business Registration Number (optional)
-    if (!isEmpty(record.business_registration_number) && record.business_registration_number.trim().length > 100) {
-      errors.push('business_registration_number must be 100 characters or less if provided');
-    }
 
-    // Contact Name (optional)
-    if (!isEmpty(record.contact_name) && record.contact_name.trim().length > 200) {
-      errors.push('contact_name must be 200 characters or less if provided');
-    }
-
-    // Carrier Network (optional)
-    if (!isEmpty(record.carrier_network) && record.carrier_network.trim().length > 100) {
-      errors.push('carrier_network must be 100 characters or less if provided');
-    }
-
-    // Street (optional)
-    if (!isEmpty(record.street) && record.street.trim().length > 200) {
-      errors.push('street must be 200 characters or less if provided');
-    }
-
-    // Section (optional)
-    if (!isEmpty(record.section) && record.section.trim().length > 100) {
-      errors.push('section must be 100 characters or less if provided');
-    }
-
-    // Block (optional)
-    if (!isEmpty(record.block) && record.block.trim().length > 100) {
-      errors.push('block must be 100 characters or less if provided');
-    }
   }
 
   /**
@@ -637,14 +627,14 @@ export class BulkUploadService {
 
     // 3 Required fields for GOVERNMENT customers
     
-    // 1. PR-ID (required) - check both new and old field names
-    const prId = getValue(record, 'PR-ID', 'pr_id', 'PR-ID', 'pr-id', 'PR_ID');
-    if (isEmpty(prId)) {
-      errors.push('PR-ID is required for GOVERNMENT customers');
-    } else if (typeof prId !== 'string' || prId.trim().length < 1) {
-      errors.push('PR-ID must be a valid string');
-    } else if (prId.trim().length > 50) {
-      errors.push('PR-ID must be 50 characters or less');
+    // 1. Property ID (required) - check both new and old field names
+    const propertyId = getValue(record, 'Property ID', 'property_id', 'Property-ID', 'property-id', 'PROPERTY_ID', 'PR-ID', 'pr_id');
+    if (isEmpty(propertyId)) {
+      errors.push('Property ID is required for GOVERNMENT customers');
+    } else if (typeof propertyId !== 'string' || propertyId.trim().length < 1) {
+      errors.push('Property ID must be a valid string');
+    } else if (propertyId.trim().length > 50) {
+      errors.push('Property ID must be 50 characters or less');
     }
 
     // 2. Full Department Name (required) - check both new and old field names
@@ -768,14 +758,14 @@ export class BulkUploadService {
 
     // 5 Required fields for MOSQUE_HOSPITAL customers
     
-    // 1. PR-ID (required) - check both new and old field names
-    const prId = getValue(record, 'PR-ID', 'pr_id', 'PR-ID', 'pr-id', 'PR_ID');
-    if (isEmpty(prId)) {
-      errors.push('PR-ID is required for MOSQUE_HOSPITAL customers');
-    } else if (typeof prId !== 'string' || prId.trim().length < 1) {
-      errors.push('PR-ID must be a valid string');
-    } else if (prId.trim().length > 50) {
-      errors.push('PR-ID must be 50 characters or less');
+    // 1. Property ID (required) - check both new and old field names
+    const propertyId = getValue(record, 'Property ID', 'property_id', 'Property-ID', 'property-id', 'PROPERTY_ID', 'PR-ID', 'pr_id');
+    if (isEmpty(propertyId)) {
+      errors.push('Property ID is required for MOSQUE_HOSPITAL customers');
+    } else if (typeof propertyId !== 'string' || propertyId.trim().length < 1) {
+      errors.push('Property ID must be a valid string');
+    } else if (propertyId.trim().length > 50) {
+      errors.push('Property ID must be 50 characters or less');
     }
 
     // 2. Full Mosque or Hospital Name (required) - check both new and old field names
@@ -913,14 +903,14 @@ export class BulkUploadService {
 
     // 5 Required fields for NON_PROFIT customers
     
-    // 1. PR-ID (required) - check both new and old field names
-    const prId = getValue(record, 'PR-ID', 'pr_id', 'PR-ID', 'pr-id', 'PR_ID');
-    if (isEmpty(prId)) {
-      errors.push('PR-ID is required for NON_PROFIT customers');
-    } else if (typeof prId !== 'string' || prId.trim().length < 1) {
-      errors.push('PR-ID must be a valid string');
-    } else if (prId.trim().length > 50) {
-      errors.push('PR-ID must be 50 characters or less');
+    // 1. Property ID (required) - check both new and old field names
+    const propertyId = getValue(record, 'Property ID', 'property_id', 'Property-ID', 'property-id', 'PROPERTY_ID', 'PR-ID', 'pr_id');
+    if (isEmpty(propertyId)) {
+      errors.push('Property ID is required for NON_PROFIT customers');
+    } else if (typeof propertyId !== 'string' || propertyId.trim().length < 1) {
+      errors.push('Property ID must be a valid string');
+    } else if (propertyId.trim().length > 50) {
+      errors.push('Property ID must be 50 characters or less');
     }
 
     // 2. NGO Name (required) - check both new and old field names
@@ -1026,14 +1016,14 @@ export class BulkUploadService {
 
     // 1 Required field for RESIDENTIAL customers
     
-    // PR-ID (required) - check both new and old field names
-    const prId = getValue(record, 'PR-ID', 'pr_id', 'PR-ID', 'pr-id', 'PR_ID');
-    if (isEmpty(prId)) {
-      errors.push('PR-ID is required for RESIDENTIAL customers');
-    } else if (typeof prId !== 'string' || prId.trim().length < 1) {
-      errors.push('PR-ID must be a valid string');
-    } else if (prId.trim().length > 50) {
-      errors.push('PR-ID must be 50 characters or less');
+    // Property ID (required) - check both new and old field names
+    const propertyId = getValue(record, 'Property ID', 'property_id', 'Property-ID', 'property-id', 'PROPERTY_ID', 'PR-ID', 'pr_id');
+    if (isEmpty(propertyId)) {
+      errors.push('Property ID is required for RESIDENTIAL customers');
+    } else if (typeof propertyId !== 'string' || propertyId.trim().length < 1) {
+      errors.push('Property ID must be a valid string');
+    } else if (propertyId.trim().length > 50) {
+      errors.push('Property ID must be 50 characters or less');
     }
 
     // ALL OTHER FIELDS ARE OPTIONAL - Only validate format if provided
@@ -1293,10 +1283,10 @@ export class BulkUploadService {
           return null;
         };
 
-        // Map Excel columns to database fields for BUSINESS
+        // Map Excel columns to database fields for BUSINESS - simplified fields only
         const mappedData = {
           customer_id: customer.id,
-          pr_id: getValue(data, 'pr_id', 'PR-ID', 'pr-id', 'PR_ID'),
+          property_id: getValue(data, 'property_id', 'Property ID', 'Property-ID', 'property-id', 'PROPERTY_ID', 'pr_id', 'PR-ID'),
           business_name: getValue(data, 'business_name', 'Business Name', 'Full Business Name', 'business-name', 'Business_Name'),
           business_license_number: getValue(data, 'business_license_number', 'Business License Number', 'License Number', 'Commercial License Number', 'business-license-number', 'Business_License_Number'),
           business_address: getValue(data, 'business_address', 'Business Address', 'Address', 'business-address', 'Business_Address'),
@@ -1307,15 +1297,6 @@ export class BulkUploadService {
           size: getValue(data, 'size', 'Size'),
           floor: getValue(data, 'floor', 'Floor'),
           file_number: getValue(data, 'file_number', 'File Number', 'file-number', 'File_Number'),
-          
-          // Optional fields
-          business_registration_number: getValue(data, 'business_registration_number', 'Registration Number', 'Reg Number', 'business-registration-number', 'Business_Registration_Number'),
-          contact_name: getValue(data, 'contact_name', 'Contact Name', 'contact-name', 'Contact_Name'),
-          carrier_network: getValue(data, 'carrier_network', 'Carrier Network', 'Carrier', 'carrier-network', 'Carrier_Network'),
-          street: getValue(data, 'street', 'Street'),
-          district_id: getValue(data, 'district_id', 'District ID', 'District', 'district-id', 'District_ID'),
-          section: getValue(data, 'section', 'Section'),
-          block: getValue(data, 'block', 'Block'),
         };
 
         // Use mapped data instead of original data
@@ -1348,7 +1329,7 @@ export class BulkUploadService {
         // Map Excel columns to database fields for GOVERNMENT
         const mappedData = {
           customer_id: customer.id,
-          pr_id: getValue(data, 'PR-ID', 'pr_id', 'PR-ID', 'pr-id', 'PR_ID'),
+          property_id: getValue(data, 'Property ID', 'property_id', 'Property-ID', 'property-id', 'PROPERTY_ID', 'PR-ID', 'pr_id'),
           full_department_name: getValue(data, 'Full Government / Department Name', 'full_department_name', 'Full Department Name', 'Department Name', 'full-department-name', 'Full_Department_Name'),
           contact_name: getValue(data, 'Contact Name', 'contact_name', 'contact-name', 'Contact_Name'),
           department_address: getValue(data, 'Department Address', 'department_address', 'Address', 'department-address', 'Department_Address'),
@@ -1397,7 +1378,7 @@ export class BulkUploadService {
         // Map Excel columns to database fields for MOSQUE_HOSPITAL
         const mappedData = {
           customer_id: customer.id,
-          pr_id: getValue(data, 'PR-ID', 'pr_id', 'PR-ID', 'pr-id', 'PR_ID'),
+          property_id: getValue(data, 'Property ID', 'property_id', 'Property-ID', 'property-id', 'PROPERTY_ID', 'PR-ID', 'pr_id'),
           full_mosque_hospital_name: getValue(data, 'Full Mosque or Hospital Name', 'full_mosque_hospital_name', 'full_name', 'Full Name'),
           mosque_registration_number: getValue(data, 'Mosque Registration Number', 'mosque_registration_number', 'registration_number', 'Registration Number'),
           contact_name: getValue(data, 'Contact Name', 'contact_name', 'contact-name', 'Contact_Name'),
@@ -1449,7 +1430,7 @@ export class BulkUploadService {
         // Map Excel columns to database fields for NON_PROFIT
         const mappedData = {
           customer_id: customer.id,
-          pr_id: getValue(data, 'PR-ID', 'pr_id', 'PR-ID', 'pr-id', 'PR_ID'),
+          property_id: getValue(data, 'Property ID', 'property_id', 'Property-ID', 'property-id', 'PROPERTY_ID', 'PR-ID', 'pr_id'),
           ngo_name: getValue(data, 'NGO Name', 'ngo_name', 'full_non_profit_name', 'Full Non-Profit Name'),
           ngo_registration_number: getValue(data, 'NGO Registration Number', 'ngo_registration_number', 'registration_number', 'Registration Number'),
           contact_name: getValue(data, 'Contact Name', 'contact_name', 'contact-name', 'Contact_Name'),
@@ -1502,7 +1483,7 @@ export class BulkUploadService {
         // Map Excel columns to database fields for RESIDENTIAL
         const mappedData = {
           customer_id: customer.id,
-          pr_id: getValue(data, 'PR-ID', 'pr_id', 'PR-ID', 'pr-id', 'PR_ID'),
+          property_id: getValue(data, 'Property ID', 'property_id', 'Property-ID', 'property-id', 'PROPERTY_ID', 'PR-ID', 'pr_id'),
           size: getValue(data, 'Size', 'size'),
           floor: getValue(data, 'Floor', 'floor'),
           file_number: getValue(data, 'File Number', 'file_number', 'file-number', 'File_Number'),
@@ -1529,12 +1510,12 @@ export class BulkUploadService {
           typeData.mothers_name = typeData.fourth_name;
         }
         
-        if (!typeData.pr_id && typeData.id_number && typeData.id_number !== 'N/A') {
-          typeData.pr_id = typeData.id_number;
+        if (!typeData.property_id && typeData.id_number && typeData.id_number !== 'N/A') {
+          typeData.property_id = typeData.id_number;
         }
         
         // Ensure all 10 required fields have values
-        typeData.pr_id = typeData.pr_id || `PR-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        typeData.property_id = typeData.property_id || `PR-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         typeData.full_name = typeData.full_name || 'Unknown';
         typeData.mothers_name = typeData.mothers_name || 'Unknown Mother';
         typeData.date_of_birth = typeData.date_of_birth || '1990-01-01';
@@ -1559,8 +1540,8 @@ export class BulkUploadService {
 
       // Handle BUSINESS type data transformation and validation
       if (customerType === 'BUSINESS') {
-        // All fields are optional for business customers, just set defaults for empty values
-        typeData.pr_id = typeData.pr_id || null;
+        // Simplified business fields - all optional, set defaults for empty values
+        typeData.property_id = typeData.property_id || null;
         typeData.business_name = typeData.business_name || null;
         typeData.business_license_number = typeData.business_license_number || null;
         typeData.business_address = typeData.business_address || null;
@@ -1571,21 +1552,12 @@ export class BulkUploadService {
         typeData.size = typeData.size || null;
         typeData.floor = typeData.floor || null;
         typeData.file_number = typeData.file_number || null;
-        
-        // Optional fields
-        typeData.business_registration_number = typeData.business_registration_number || null;
-        typeData.contact_name = typeData.contact_name || null;
-        typeData.carrier_network = typeData.carrier_network || null;
-        typeData.street = typeData.street || null;
-        typeData.district_id = typeData.district_id || null;
-        typeData.section = typeData.section || null;
-        typeData.block = typeData.block || null;
       }
 
       // Handle GOVERNMENT type data transformation and validation
       if (customerType === 'GOVERNMENT') {
         // Ensure the 3 required fields have values, set defaults if empty
-        typeData.pr_id = typeData.pr_id || `PR-GOV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        typeData.property_id = typeData.property_id || `PR-GOV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         typeData.full_department_name = typeData.full_department_name || 'Government Department';
         typeData.contact_name = typeData.contact_name || 'Contact Person';
         
@@ -1609,7 +1581,7 @@ export class BulkUploadService {
       // Handle MOSQUE_HOSPITAL type data transformation and validation
       if (customerType === 'MOSQUE_HOSPITAL') {
         // Ensure the 5 required fields have values, set defaults if empty
-        typeData.pr_id = typeData.pr_id || `PR-MOS-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        typeData.property_id = typeData.property_id || `PR-MOS-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         typeData.full_mosque_hospital_name = typeData.full_mosque_hospital_name || 'Mosque/Hospital';
         typeData.mosque_registration_number = typeData.mosque_registration_number || `MOS-REG-${Date.now()}`;
         typeData.contact_name = typeData.contact_name || 'Contact Person';
@@ -1636,7 +1608,7 @@ export class BulkUploadService {
       // Handle NON_PROFIT type data transformation and validation
       if (customerType === 'NON_PROFIT') {
         // Ensure the 5 required fields have values, set defaults if empty
-        typeData.pr_id = typeData.pr_id || `PR-NGO-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        typeData.property_id = typeData.property_id || `PR-NGO-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         typeData.ngo_name = typeData.ngo_name || 'NGO Organization';
         typeData.ngo_registration_number = typeData.ngo_registration_number || `NGO-REG-${Date.now()}`;
         typeData.contact_name = typeData.contact_name || 'Contact Person';
@@ -1664,7 +1636,7 @@ export class BulkUploadService {
       // Handle RESIDENTIAL type data transformation and validation
       if (customerType === 'RESIDENTIAL') {
         // Ensure the 1 required field has a value, set default if empty
-        typeData.pr_id = typeData.pr_id || `PR-RES-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        typeData.property_id = typeData.property_id || `PR-RES-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         
         // All other fields are optional (can be null)
         typeData.size = typeData.size || null;
@@ -1676,7 +1648,7 @@ export class BulkUploadService {
       // Handle RENTAL type data transformation and validation
       if (customerType === 'RENTAL') {
         // Ensure all 11 required fields have values
-        typeData.pr_id = typeData.pr_id || `PR-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        typeData.property_id = typeData.property_id || `PR-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         typeData.rental_name = typeData.rental_name || 'Unknown Rental';
         typeData.rental_mothers_name = typeData.rental_mothers_name || 'Unknown Mother';
         typeData.date_of_birth = typeData.date_of_birth || '1990-01-01';
@@ -2000,11 +1972,11 @@ export class BulkUploadService {
             expiry_date: '2030-01-01',
           },
         },
-        // BUSINESS customer template
+        // BUSINESS customer template - simplified fields only
         business: {
           headers: [
             'customer_type',
-            'pr_id',
+            'property_id',
             'business_name',
             'business_license_number',
             'business_address',
@@ -2015,17 +1987,10 @@ export class BulkUploadService {
             'size',
             'floor',
             'file_number',
-            'business_registration_number',
-            'contact_name',
-            'carrier_network',
-            'street',
-            'district_id',
-            'section',
-            'block',
           ],
           example: {
             customer_type: 'BUSINESS',
-            pr_id: 'PR-BUS-001',
+            property_id: 'PR-BUS-001',
             business_name: 'ABC Trading Company',
             business_license_number: 'BL-2025-001',
             business_address: '123 Business Street, Mogadishu',
@@ -2036,13 +2001,6 @@ export class BulkUploadService {
             size: '500 sqm',
             floor: '2nd Floor',
             file_number: 'FILE-2025-001',
-            business_registration_number: 'REG-2025-001',
-            contact_name: 'Ahmed Hassan',
-            carrier_network: 'Hormuud',
-            street: 'Business Street',
-            district_id: 'JJG',
-            section: 'Section A',
-            block: 'Block 1',
           },
         },
         // RENTAL customer template

@@ -18,10 +18,10 @@ interface AuditLog {
   new_value: string | null;
   changed_by: string;
   timestamp: string;
-  users: {
+  user: {
     id: string;
     full_name: string;
-  };
+  } | null;
 }
 
 interface AuditLogViewerProps {
@@ -174,7 +174,7 @@ export const AuditLogViewer = ({ entityType, entityId, title = 'Activity Log' }:
                     <TableCell>{formatValue(log.old_value)}</TableCell>
                     <TableCell>{formatValue(log.new_value)}</TableCell>
                     <TableCell className="whitespace-nowrap">
-                      {log.users?.full_name || 'Unknown User'}
+                      {log.user?.full_name || 'Unknown User'}
                     </TableCell>
                   </TableRow>
                 ))}

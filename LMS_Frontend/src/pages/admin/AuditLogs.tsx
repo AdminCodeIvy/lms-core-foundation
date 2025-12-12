@@ -323,7 +323,7 @@ const AuditLogs = () => {
                       <TableCell>{formatValue(log.old_value)}</TableCell>
                       <TableCell>{formatValue(log.new_value)}</TableCell>
                       <TableCell className="whitespace-nowrap">
-                        {log.users?.full_name || 'Unknown User'}
+                        {log.user?.full_name || 'Unknown User'}
                       </TableCell>
                     </TableRow>
                   ))}

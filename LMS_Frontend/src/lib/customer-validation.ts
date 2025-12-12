@@ -44,9 +44,11 @@ export const personSchema = z.object({
 });
 
 export const businessSchema = z.object({
-  // All fields are now optional
-  property_id: z.string().trim().max(50).optional().or(z.literal("")),
-  business_name: z.string().trim().max(200).optional().or(z.literal("")),
+  // Required fields
+  property_id: z.string().trim().min(1, "Property ID is required").max(50),
+  business_name: z.string().trim().min(1, "Business Name is required").max(200),
+  
+  // Optional fields
   business_license_number: z.string().trim().max(100).optional().or(z.literal("")),
   business_address: z.string().trim().max(500).optional().or(z.literal("")),
   rental_name: z.string().trim().max(200).optional().or(z.literal("")),
@@ -56,13 +58,6 @@ export const businessSchema = z.object({
   size: z.string().trim().max(100).optional().or(z.literal("")),
   floor: z.string().trim().max(50).optional().or(z.literal("")),
   file_number: z.string().trim().max(100).optional().or(z.literal("")),
-  business_registration_number: z.string().trim().max(100).optional().or(z.literal("")),
-  contact_name: z.string().trim().max(200).optional().or(z.literal("")),
-
-  street: z.string().trim().max(200).optional().or(z.literal("")),
-  district_id: z.string().optional().or(z.literal("")),
-  section: z.string().trim().max(100).optional().or(z.literal("")),
-  block: z.string().trim().max(100).optional().or(z.literal("")),
 });
 
 export const governmentSchema = z.object({
